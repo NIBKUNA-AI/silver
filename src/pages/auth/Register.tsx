@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Loader2, User, Mail, Lock, Hospital, Users } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function Register() {
@@ -67,21 +67,25 @@ export function Register() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-10">
-            <div className="w-full max-w-md bg-white p-8 rounded-[40px] shadow-xl border border-slate-100">
-                <div className="text-center mb-8">
-                    <div className="text-4xl mb-4">🏠</div>
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-10 relative">
+            <div className="w-full max-w-md bg-white p-8 rounded-[40px] shadow-xl border border-slate-100 relative">
+                {/* Close Button */}
+                <Link to="/" className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 transition-colors">
+                    <X className="w-5 h-5 text-slate-400" />
+                </Link>
+
+                <div className="text-center mb-8 pt-4">
                     <h2 className="text-2xl font-black text-slate-900 tracking-tight">서비스 시작하기</h2>
                     <p className="mt-2 text-sm text-slate-500 font-medium text-balance">
-                        소속 센터와 역할을 선택하여 가입해 주세요.
+                        소속 센터와 가입 유형을 선택해 주세요.
                     </p>
                 </div>
 
                 <form className="space-y-5" onSubmit={handleRegister}>
                     {/* 센터 선택 */}
                     <div className="space-y-1">
-                        <label className="text-xs font-black text-slate-400 ml-1 flex items-center gap-1">
-                            <Hospital className="w-3 h-3" /> 소속 센터
+                        <label className="text-xs font-black text-slate-400 ml-1">
+                            소속 센터
                         </label>
                         <select
                             required
@@ -90,7 +94,7 @@ export function Register() {
                             className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-primary/10 outline-none transition-all"
                         >
                             <option value="">다니시는 센터 선택</option>
-                            {centers.map((c) => (
+                            {centers.map((c: any) => (
                                 <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
                         </select>
@@ -98,15 +102,14 @@ export function Register() {
 
                     {/* ✨ 역할 선택 */}
                     <div className="space-y-1">
-                        <label className="text-xs font-black text-slate-400 ml-1 flex items-center gap-1">
-                            <Users className="w-3 h-3" /> 가입 유형
+                        <label className="text-xs font-black text-slate-400 ml-1">
+                            가입 유형
                         </label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {/* value를 DB enum값과 맞춤: parent, therapist, admin */}
+                        <div className="grid grid-cols-2 gap-2">
+                            {/* value를 DB enum값과 맞춤: parent, therapist */}
                             {[
                                 { value: 'parent', label: '학부모' },
-                                { value: 'therapist', label: '치료사' }, // employee -> therapist
-                                { value: 'admin', label: '관리자' }
+                                { value: 'therapist', label: '치료사' },
                             ].map((r) => (
                                 <button
                                     key={r.value}
@@ -126,9 +129,9 @@ export function Register() {
                     </div>
 
                     <div className="space-y-4 pt-2">
-                        <InputField label="이름" icon={<User className="w-3 h-3" />} placeholder="성함 입력" value={name} onChange={setName} />
-                        <InputField label="이메일" icon={<Mail className="w-3 h-3" />} type="email" placeholder="example@email.com" value={email} onChange={setEmail} />
-                        <InputField label="비밀번호" icon={<Lock className="w-3 h-3" />} type="password" placeholder="8자 이상" value={password} onChange={setPassword} />
+                        <InputField label="이름" placeholder="성함 입력" value={name} onChange={setName} />
+                        <InputField label="이메일" type="email" placeholder="example@email.com" value={email} onChange={setEmail} />
+                        <InputField label="비밀번호" type="password" placeholder="8자 이상" value={password} onChange={setPassword} />
                     </div>
 
                     {error && <div className="p-4 bg-red-50 rounded-2xl text-xs font-bold text-red-500 border border-red-100">{error}</div>}
@@ -141,9 +144,15 @@ export function Register() {
                         {loading ? <Loader2 className="animate-spin w-5 h-5" /> : '가입하기'}
                     </button>
 
-                    <div className="text-center mt-4">
-                        <Link to="/login" className="text-xs font-bold text-slate-400 hover:text-slate-600">
-                            이미 계정이 있으신가요? <span className="text-slate-900 underline">로그인</span>
+                    <div className="text-center mt-6 space-y-4">
+                        <div className="text-xs font-medium text-slate-500">
+                            이미 계정이 있으신가요?
+                            <Link to="/login" className="ml-1 font-bold text-slate-900 underline hover:text-primary">
+                                로그인
+                            </Link>
+                        </div>
+                        <Link to="/" className="block text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors">
+                            ← 홈으로 돌아가기
                         </Link>
                     </div>
                 </form>
@@ -152,11 +161,11 @@ export function Register() {
     );
 }
 
-function InputField({ label, icon, type = "text", placeholder, value, onChange }: any) {
+function InputField({ label, type = "text", placeholder, value, onChange }: any) {
     return (
         <div className="space-y-1">
-            <label className="text-xs font-black text-slate-400 ml-1 flex items-center gap-1">
-                {icon} {label}
+            <label className="text-xs font-black text-slate-400 ml-1">
+                {label}
             </label>
             <input
                 required

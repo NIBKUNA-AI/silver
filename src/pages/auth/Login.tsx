@@ -4,10 +4,14 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Helmet } from 'react-helmet-async';
-import { Loader2, Lock, Mail } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAdminSettings } from '@/hooks/useAdminSettings'; // Import hook
 
 export function Login() {
+    const { getSetting } = useAdminSettings(); // Get settings
+    const centerName = getSetting('center_name') || '아동발달센터'; // Get name
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -50,6 +54,7 @@ export function Login() {
                         navigate('/app/dashboard'); // 관리자: 모든 기능 액세스
                         break;
                     case 'employee':
+                    case 'therapist': // Handle both if needed
                         navigate('/app/schedule');  // 직원: 치료일정 및 상담일지 중심
                         break;
                     case 'parent':
@@ -69,13 +74,17 @@ export function Login() {
     return (
         <>
             <Helmet>
-                <title>로그인 - 행복아동발달센터</title>
+                <title>로그인 - {centerName}</title>
             </Helmet>
 
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-                <div className="w-full max-w-md space-y-8 bg-white p-10 rounded-[40px] shadow-xl border border-slate-100">
-                    <div className="text-center">
-                        <div className="inline-flex items-center justify-center text-4xl mb-4 bg-orange-50 w-20 h-20 rounded-3xl">🧸</div>
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 relative">
+                <div className="w-full max-w-md space-y-8 bg-white p-10 rounded-[40px] shadow-xl border border-slate-100 relative">
+                    {/* Close Button */}
+                    <Link to="/" className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 transition-colors">
+                        <X className="w-5 h-5 text-slate-400" />
+                    </Link>
+
+                    <div className="text-center pt-2">
                         <h2 className="text-2xl font-black text-slate-900 tracking-tight">다시 오신 걸 환영해요!</h2>
                         <p className="mt-2 text-sm text-slate-500 font-medium">
                             센터 서비스를 위해 로그인이 필요합니다.
@@ -85,8 +94,8 @@ export function Login() {
                     <form className="mt-8 space-y-5" onSubmit={handleLogin}>
                         <div className="space-y-4">
                             <div>
-                                <label htmlFor="email" className="block text-xs font-black text-slate-400 ml-1 mb-1 flex items-center gap-1">
-                                    <Mail className="w-3 h-3" /> 이메일 주소
+                                <label htmlFor="email" className="block text-xs font-black text-slate-400 ml-1 mb-1">
+                                    이메일 주소
                                 </label>
                                 <input
                                     id="email"
@@ -100,8 +109,8 @@ export function Login() {
                             </div>
 
                             <div>
-                                <label htmlFor="password" className="block text-xs font-black text-slate-400 ml-1 mb-1 flex items-center gap-1">
-                                    <Lock className="w-3 h-3" /> 비밀번호
+                                <label htmlFor="password" className="block text-xs font-black text-slate-400 ml-1 mb-1">
+                                    비밀번호
                                 </label>
                                 <input
                                     id="password"
@@ -134,10 +143,15 @@ export function Login() {
                             </button>
                         </div>
 
-                        <div className="text-center text-sm font-medium">
-                            <span className="text-slate-500">계정이 없으신가요? </span>
-                            <Link to="/register" className="font-bold text-primary hover:underline">
-                                회원가입
+                        <div className="text-center space-y-4">
+                            <div className="text-sm font-medium text-slate-500">
+                                계정이 없으신가요?
+                                <Link to="/register" className="ml-1 font-bold text-primary hover:underline">
+                                    회원가입
+                                </Link>
+                            </div>
+                            <Link to="/" className="block text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors">
+                                ← 홈으로 돌아가기
                             </Link>
                         </div>
                     </form>

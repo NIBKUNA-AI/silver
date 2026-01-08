@@ -3,7 +3,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, Calendar, Users, CreditCard, LogOut, Menu, X,
-    Coins, Briefcase, Baby, Stethoscope, Home, BookOpen
+    Coins, Briefcase, Baby, Stethoscope, Home, BookOpen, Settings
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
@@ -63,6 +63,18 @@ export const MENU_ITEMS = [
         path: '/app/settlement',
         icon: Coins,
         roles: ['admin'] // ✨ 관리자 전용
+    },
+    {
+        name: '블로그 관리',
+        path: '/app/blog', // 아까 추가한 라우트
+        icon: BookOpen, // 적절한 아이콘 선택
+        roles: ['admin', 'manager']
+    },
+    {
+        name: '사이트 관리',
+        path: '/app/settings',
+        icon: Settings,
+        roles: ['admin', 'manager'] // ✨ 관리자와 매니저
     },
 ];
 

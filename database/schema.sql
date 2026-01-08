@@ -125,7 +125,41 @@ CREATE TABLE children (
   medical_history TEXT,                -- 병력
   notes TEXT,
   photo_url TEXT,
+  inflow_source VARCHAR(100),          -- 유입 경로 (추가됨)
   is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 초기 상담 신청서 (상담 예약)
+CREATE TABLE consultations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  center_id UUID REFERENCES centers(id),
+  child_id UUID REFERENCES children(id) ON DELETE SET NULL, -- 기존 아동인 경우 연결
+  
+  -- 아동 정보 (비회원/신규 포함)
+  child_name VARCHAR(100) NOT NULL,
+  child_gender gender_type,
+  child_birth_date DATE,
+  
+  -- 상담 내용
+  concern TEXT,                        -- 주 호소 문제 (어려움을 보이는 점)
+  diagnosis VARCHAR(100),              -- 장애 진단 여부 (예, 아니오, 진행중 등)
+  consultation_area VARCHAR(100)[],    -- 희망 상담 영역 (언어, 놀이 등 - 다중 선택 가능)
+  
+  -- 희망 일정
+  preferred_consult_schedule VARCHAR(200), -- 상담 희망 시간 (요일/시간)
+  preferred_class_schedule VARCHAR(200),   -- 정규 수업 희망 시간 (요일/시간)
+  
+  -- 보호자 정보
+  guardian_name VARCHAR(100),
+  guardian_phone VARCHAR(20),
+  guardian_relationship VARCHAR(50),
+  
+  -- 기타
+  inflow_source VARCHAR(100),          -- 내원 경로
+  status VARCHAR(20) DEFAULT 'pending', -- pending, scheduled, completed, cancelled
+  
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -387,6 +421,44 @@ CREATE TABLE payment_items (
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- ============================================
+-- 5.5 Content Management (Blog)
+-- ============================================
+
+CREATE TABLE blog_posts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  center_id UUID REFERENCES centers(id),
+  author_id UUID REFERENCES profiles(id),
+  
+  title VARCHAR(200) NOT NULL,
+  slug VARCHAR(250) NOT NULL,          -- URL-friendly ID (e.g., my-first-post)
+  excerpt TEXT,                        -- Short summary for cards/SEO
+  content TEXT,                        -- HTML or Markdown content
+  cover_image_url TEXT,
+  
+  -- SEO Metadata
+  seo_title VARCHAR(200),
+  seo_description TEXT,
+  keywords VARCHAR(200),
+  
+  is_published BOOLEAN DEFAULT FALSE,
+  published_at TIMESTAMPTZ,
+  
+  view_count INTEGER DEFAULT 0,
+  
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  UNIQUE(center_id, slug)              -- 센터별 슬러그 중복 방지
+);
+
+-- Blog Indexes
+CREATE INDEX idx_blog_slug ON blog_posts(slug);
+CREATE INDEX idx_blog_published ON blog_posts(is_published, published_at DESC);
+
+-- Blog RLS
+ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- 6. Communication Tables

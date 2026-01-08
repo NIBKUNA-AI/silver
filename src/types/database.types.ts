@@ -1,10 +1,4 @@
-export type Json =
-    | string
-    | number
-    | boolean
-    | null
-    | { [key: string]: Json | undefined }
-    | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
     public: {
@@ -75,6 +69,87 @@ export type Database = {
                     assigned_to?: string | null
                     created_at?: string
                     updated_at?: string
+                }
+            }
+            blog_posts: {
+                Row: {
+                    id: string
+                    created_at: string
+                    updated_at: string | null
+                    title: string
+                    content: string
+                    slug: string
+                    excerpt: string | null
+                    cover_image_url: string | null
+                    author_id: string | null
+                    is_published: boolean
+                    published_at: string | null
+                    seo_title: string | null
+                    seo_description: string | null
+                    keywords: string[] | null
+                    view_count: number
+                }
+                Insert: {
+                    id?: string
+                    created_at?: string
+                    updated_at?: string | null
+                    title: string
+                    content: string
+                    slug: string
+                    excerpt?: string | null
+                    cover_image_url?: string | null
+                    author_id?: string | null
+                    is_published?: boolean
+                    published_at?: string | null
+                    seo_title?: string | null
+                    seo_description?: string | null
+                    keywords?: string[] | null
+                    view_count?: number
+                }
+                Update: {
+                    id?: string
+                    created_at?: string
+                    updated_at?: string | null
+                    title?: string
+                    content?: string
+                    slug?: string
+                    excerpt?: string | null
+                    cover_image_url?: string | null
+                    author_id?: string | null
+                    is_published?: boolean
+                    published_at?: string | null
+                    seo_title?: string | null
+                    seo_description?: string | null
+                    keywords?: string[] | null
+                    view_count?: number
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "blog_posts_author_id_fkey"
+                        columns: ["author_id"]
+                        referencedRelation: "users"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            admin_settings: {
+                Row: {
+                    key: string
+                    value: string | null
+                    updated_at: string | null
+                    updated_by: string | null
+                }
+                Insert: {
+                    key: string
+                    value?: string | null
+                    updated_at?: string | null
+                    updated_by?: string | null
+                }
+                Update: {
+                    key?: string
+                    value?: string | null
+                    updated_at?: string | null
+                    updated_by?: string | null
                 }
             }
             centers: {
@@ -284,9 +359,10 @@ export type Database = {
                     medical_history?: string | null
                     notes?: string | null
                     photo_url?: string | null
+                    inflow_source?: string | null
                     is_active?: boolean | null
-                    created_at?: string
-                    updated_at?: string
+                    created_at?: string | null
+                    updated_at?: string | null
                 }
                 Update: {
                     id?: string
@@ -301,9 +377,75 @@ export type Database = {
                     medical_history?: string | null
                     notes?: string | null
                     photo_url?: string | null
+                    inflow_source?: string | null
                     is_active?: boolean | null
-                    created_at?: string
-                    updated_at?: string
+                    created_at?: string | null
+                    updated_at?: string | null
+                }
+            }
+            consultations: {
+                Row: {
+                    id: string
+                    center_id: string | null
+                    child_id: string | null
+                    child_name: string
+                    child_gender: 'male' | 'female' | 'other' | null
+                    child_birth_date: string | null
+                    concern: string | null
+                    diagnosis: string | null
+                    consultation_area: string[] | null
+                    preferred_consult_schedule: string | null
+                    preferred_class_schedule: string | null
+                    guardian_name: string | null
+                    guardian_phone: string | null
+                    guardian_relationship: string | null
+                    inflow_source: string | null
+                    marketing_source: string | null
+                    status: string | null
+                    created_at: string | null
+                    updated_at: string | null
+                }
+                Insert: {
+                    id?: string
+                    center_id?: string | null
+                    child_id?: string | null
+                    child_name: string
+                    child_gender?: 'male' | 'female' | 'other' | null
+                    child_birth_date?: string | null
+                    concern?: string | null
+                    diagnosis?: string | null
+                    consultation_area?: string[] | null
+                    preferred_consult_schedule?: string | null
+                    preferred_class_schedule?: string | null
+                    guardian_name?: string | null
+                    guardian_phone?: string | null
+                    guardian_relationship?: string | null
+                    inflow_source?: string | null
+                    marketing_source?: string | null
+                    status?: string | null
+                    created_at?: string | null
+                    updated_at?: string | null
+                }
+                Update: {
+                    id?: string
+                    center_id?: string | null
+                    child_id?: string | null
+                    child_name?: string
+                    child_gender?: 'male' | 'female' | 'other' | null
+                    child_birth_date?: string | null
+                    concern?: string | null
+                    diagnosis?: string | null
+                    consultation_area?: string[] | null
+                    preferred_consult_schedule?: string | null
+                    preferred_class_schedule?: string | null
+                    guardian_name?: string | null
+                    guardian_phone?: string | null
+                    guardian_relationship?: string | null
+                    inflow_source?: string | null
+                    marketing_source?: string | null
+                    status?: string | null
+                    created_at?: string | null
+                    updated_at?: string | null
                 }
             }
             schedules: {
@@ -435,7 +577,7 @@ export type Database = {
             [_ in never]: never
         }
         Enums: {
-            [_ in never]: never
+            gender_type: 'male' | 'female' | 'other'
         }
     }
 }

@@ -312,17 +312,39 @@ function PaymentModal({ childData, month, onClose, onSuccess }) {
         try {
             const paymentAmount = Number(inputs.card) + Number(inputs.cash) + Number(inputs.transfer);
 
-            // 수납 내역 저장
+            // 1. 수납 내역 저장 (Payment Record)
+            let newPaymentId = null;
             if (paymentAmount > 0 || inputs.creditUsed > 0) {
-                const { error: payError } = await supabase.from('payments').insert([{
+                const { data: payData, error: payError } = await supabase.from('payments').insert([{
                     child_id: childData.id,
                     amount: paymentAmount,
                     method: inputs.card > 0 ? '카드' : inputs.cash > 0 ? '현금' : '계좌이체',
                     credit_used: inputs.creditUsed,
                     memo: inputs.memo,
                     payment_month: month
-                }]);
+                }]).select().single();
+
                 if (payError) throw new Error(payError.message);
+                newPaymentId = payData.id;
+            }
+
+            // 2. 수납 상세 내역 저장 (Payment Items - Schedule Connection)
+            // 이것이 있어야 대시보드에서 해당 수업이 '결제됨'으로 인식하여 매출에 집계됩니다.
+            if (newPaymentId && selectedSessions.length > 0) {
+                const itemsToInsert = selectedSessions.map(sessionId => {
+                    const session = childData.sessions.find(s => s.id === sessionId);
+                    return {
+                        payment_id: newPaymentId,
+                        schedule_id: sessionId,
+                        amount: session?.price || 0, // 중요: 이 금액이 대시보드 매출로 잡힘
+                        service_type: session?.program || '치료',
+                        service_date: session?.date,
+                        unit_price: session?.price || 0
+                    };
+                });
+
+                const { error: itemError } = await supabase.from('payment_items').insert(itemsToInsert);
+                if (itemError) throw new Error(itemError.message);
             }
 
             // ✨ [핵심] 적립금 업데이트 로직
@@ -339,6 +361,7 @@ function PaymentModal({ childData, month, onClose, onSuccess }) {
             onSuccess();
 
         } catch (error) {
+            console.error(error);
             alert(`저장 실패: ${error.message}`);
         } finally {
             setLoading(false);

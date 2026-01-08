@@ -20,6 +20,7 @@ export default function SessionNote() {
 
     // Existing Note ID if updating
     const [noteId, setNoteId] = useState<string | null>(null);
+    const [sessionDate, setSessionDate] = useState('');
 
     useEffect(() => {
         if (scheduleId) {
@@ -47,6 +48,8 @@ export default function SessionNote() {
         }
 
         setSessionInfo(schedule);
+        // Default session date to schedule start time if not yet set
+        setSessionDate(schedule.start_time.slice(0, 10));
 
         // 2. Fetch Existing Note if any
         const { data: note } = await (supabase
@@ -59,6 +62,7 @@ export default function SessionNote() {
             setNoteId(note.id);
             // setMood(note.mood || 'good');
             // Using textarea fields
+            if (note.session_date) setSessionDate(note.session_date);
             setActivities(note.activities || '');
             setChildResponse(note.child_response || '');
             setNextPlan(note.next_plan || '');
@@ -75,7 +79,7 @@ export default function SessionNote() {
             schedule_id: sessionInfo.id,
             child_id: sessionInfo.child_id,
             therapist_id: sessionInfo.therapist_id,
-            session_date: sessionInfo.start_time.slice(0, 10), // Record the session date
+            session_date: sessionDate, // Use user-selected date
             // mood, 
             activities,
             child_response: childResponse,
@@ -136,6 +140,17 @@ export default function SessionNote() {
             </div>
 
             <div className="bg-white rounded-xl border shadow-sm p-6 space-y-6">
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">수업 일자 (Actual Session Date)</label>
+                    <input
+                        type="date"
+                        className="w-full rounded-md border border-input px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        value={sessionDate}
+                        onChange={(e) => setSessionDate(e.target.value)}
+                    />
+                    <p className="text-xs text-slate-400 mt-1">* 실제 수업을 진행한 날짜를 선택해주세요. (기본값: 일정 날짜)</p>
+                </div>
+
                 <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">진행 활동 (Activities)</label>
                     <textarea

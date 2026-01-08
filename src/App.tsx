@@ -17,6 +17,8 @@ import { ProgramsPage } from '@/pages/public/ProgramsPage';
 import { ContactPage } from '@/pages/public/ContactPage';
 import { Login } from '@/pages/auth/Login';
 import { Register } from '@/pages/auth/Register';
+import { BlogPage } from '@/pages/public/BlogPage';
+import { BlogPostPage } from '@/pages/public/BlogPostPage';
 
 // 부모님 전용 페이지
 import { ParentHomePage } from '@/pages/public/ParentHomePage';
@@ -31,10 +33,14 @@ import { TherapistList } from '@/pages/app/therapists/TherapistList';
 import SessionList from '@/pages/app/sessions/SessionList';
 import SessionNote from '@/pages/app/sessions/SessionNote';
 import { LeadList } from '@/pages/app/leads/LeadList';
+import ConsultationInquiryList from '@/pages/app/consultations/ConsultationInquiryList';
+import BlogList from '@/pages/app/blog/BlogList';
+import BlogEditor from '@/pages/app/blog/BlogEditor';
 import Programs from '@/pages/app/Programs';
 import { Billing } from '@/pages/app/Billing';
 import { Settlement } from '@/pages/app/Settlement';
 import { ConsultationList } from '@/pages/app/consultations/ConsultationList';
+import { SettingsPage } from '@/pages/app/SettingsPage';
 
 // ✨ [동적 리다이렉트]
 // 로그인 직후 '/app'으로 들어왔을 때, 역할에 따라 가장 먼저 보여줄 페이지를 결정합니다.
@@ -68,6 +74,9 @@ function App() {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/programs" element={<ProgramsPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              {/* ✨ 블로그 (공개) */}
+              <Route path="/blog" element={<BlogPage />} />
+              <Route path="/blog/:slug" element={<BlogPostPage />} />
             </Route>
 
             {/* 2. 🔐 로그인/회원가입 */}
@@ -102,7 +111,7 @@ function App() {
               {/* 상담 문의(Leads)는 보통 영업/관리직만 봄 (치료사 제외 유지) */}
               <Route path="leads" element={
                 <ProtectedRoute allowedRoles={['admin', 'staff']}>
-                  <LeadList />
+                  <ConsultationInquiryList />
                 </ProtectedRoute>
               } />
 
@@ -136,6 +145,30 @@ function App() {
               } />
 
               <Route path="consultations" element={<ConsultationList />} />
+
+              {/* ✨ 블로그 관리 - 관리자 전용 */}
+              <Route path="blog" element={
+                <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                  <BlogList />
+                </ProtectedRoute>
+              } />
+              <Route path="blog/new" element={
+                <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                  <BlogEditor />
+                </ProtectedRoute>
+              } />
+              <Route path="blog/:id" element={
+                <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                  <BlogEditor />
+                </ProtectedRoute>
+              } />
+
+              {/* ✨ 사이트 관리 (배너/공지) - 관리자 전용 */}
+              <Route path="settings" element={
+                <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                  <SettingsPage />
+                </ProtectedRoute>
+              } />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

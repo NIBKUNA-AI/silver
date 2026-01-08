@@ -7,6 +7,8 @@ import {
     Home, Sparkles, User, Calendar as CalendarIcon,
     MessageSquare, ChevronLeft, ChevronRight, Activity, Info, Quote
 } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
+import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
@@ -17,25 +19,37 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import koLocale from '@fullcalendar/core/locales/ko';
 
+import { ConsultationSurveyModal } from '@/components/public/ConsultationSurveyModal';
+
 export function ParentHomePage() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { getSetting } = useAdminSettings();
     const dateInputRef = useRef(null);
 
     // 상태 관리
     const [childInfo, setChildInfo] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isSurveyOpen, setIsSurveyOpen] = useState(false);
 
     const [calendarEvents, setCalendarEvents] = useState([]);
     const [allLogs, setAllLogs] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [filterDate, setFilterDate] = useState('');
+    const [hasUpcomingConsultation, setHasUpcomingConsultation] = useState(false);
 
     useEffect(() => {
         if (user?.id) fetchDashboardData();
     }, [user]);
 
     const fetchDashboardData = async () => {
+        // ... (existing code omitted for brevity but presumed same)
+        // Note: For replace_file_content, I must include enough context if I am replacing a big block, 
+        // but here I am just injecting imports and state. 
+        // Wait, I can't easily partially inject state inside the function without replacing the function body start.
+        // So I will replace the start of the component to include state and import.
+
+        // Actually, to make this clean, I will replace the top imports and the component start.
         setLoading(true);
         try {
             const { data: child } = await supabase.from('children').select('*').eq('parent_id', user.id).maybeSingle();
@@ -66,6 +80,14 @@ export function ParentHomePage() {
                         textColor: '#ffffff',
                     }));
                     setCalendarEvents(events);
+
+                    // ✨ 다가오는 상담/평가 일정 확인
+                    const today = new Date().toISOString();
+                    const nextConsult = schedules.find(s =>
+                        s.start_time > today &&
+                        (s.programs?.name?.includes('상담') || s.programs?.name?.includes('평가'))
+                    );
+                    if (nextConsult) setHasUpcomingConsultation(true);
                 }
 
                 // 상담 일지 가져오기
@@ -95,21 +117,59 @@ export function ParentHomePage() {
 
     if (loading) return <div className="min-h-screen flex items-center justify-center font-bold text-slate-500">데이터를 불러오는 중입니다...</div>;
 
+    const kakaoUrl = getSetting('kakao_url');
+
     return (
         <div className="min-h-screen bg-[#FDFCFB] font-sans pb-20 text-[#1e293b]">
             <Helmet><title>우리 아이 성장 대시보드</title></Helmet>
+
+            <ConsultationSurveyModal
+                isOpen={isSurveyOpen}
+                onClose={() => setIsSurveyOpen(false)}
+                initialData={{
+                    childName: childInfo?.name,
+                    childBirthDate: childInfo?.birth_date,
+                    childGender: childInfo?.gender,
+                    childId: childInfo?.id,
+                    guardianName: user?.user_metadata?.name || '',
+                    guardianPhone: user?.phone || ''
+                }}
+            />
 
             <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl px-6 py-4 flex justify-between items-center border-b border-slate-100 shadow-sm">
                 <button onClick={() => navigate('/')} className="flex items-center gap-2 text-slate-900 font-bold text-xs"><Home className="w-4 h-4" /> 홈으로</button>
                 <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase italic">Parent Mode</div>
             </nav>
 
+            {/* ✨ 상담 확정 알림 배너 */}
+            {hasUpcomingConsultation && kakaoUrl && (
+                <div className="bg-yellow-400 text-slate-900 px-6 py-3 flex items-center justify-between animate-in slide-in-from-top duration-500">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white p-1.5 rounded-full"><MessageCircle className="w-4 h-4" /></div>
+                        <p className="text-sm font-bold">
+                            상담 예약이 확정되었습니다! 궁금한 점은 카카오톡으로 문의해주세요.
+                        </p>
+                    </div>
+                    <a href={kakaoUrl} target="_blank" rel="noreferrer" className="text-xs font-black bg-slate-900 text-white px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors">
+                        채팅하기
+                    </a>
+                </div>
+            )}
+
             <header className="px-8 pt-12 pb-10 bg-white border-b border-orange-50/50">
-                <div className="max-w-4xl mx-auto space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-[11px] font-black uppercase"><Sparkles className="w-3 h-3" /> Happiness Center</div>
-                    <h1 className="text-3xl font-black leading-tight text-slate-900">
-                        <span className="text-primary">{childInfo?.name}</span> 보호자님,<br />반가워요! 👋
-                    </h1>
+                <div className="max-w-4xl mx-auto flex items-end justify-between">
+                    <div className="space-y-2">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-[11px] font-black uppercase"><Sparkles className="w-3 h-3" /> Happiness Center</div>
+                        <h1 className="text-3xl font-black leading-tight text-slate-900">
+                            <span className="text-primary">{childInfo?.name}</span> 보호자님,<br />반가워요! 👋
+                        </h1>
+                    </div>
+                    <button
+                        onClick={() => setIsSurveyOpen(true)}
+                        className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-slate-200 hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                        <MessageSquare className="w-4 h-4" /> 상담 신청
+                    </button>
                 </div>
             </header>
 

@@ -3,8 +3,9 @@
 import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-    Heart, CheckCircle2, Star, Quote, ChevronDown, ArrowRight
+    Heart, CheckCircle2, Star, Quote, ChevronDown, ArrowRight, Bell
 } from 'lucide-react';
+import { useAdminSettings } from '@/hooks/useAdminSettings';
 
 /**
  * ✨ [수정 가이드]
@@ -18,7 +19,7 @@ const HOME_CONTENT = {
         titleLast: "이\n우리의 시작입니다",
         description: "전문적인 치료사와 따뜻한 환경 속에서\n우리 아이의 잠재력이 아름답게 피어납니다.",
         ctaText: "무료 상담 신청하기",
-        bgImage: "https://images.unsplash.com/photo-1566438480900-0609be27a4be?auto=format&fit=crop&q=80&w=2000"
+        defaultBgImage: "https://images.unsplash.com/photo-1566438480900-0609be27a4be?auto=format&fit=crop&q=80&w=2000"
     },
     values: [
         {
@@ -48,6 +49,11 @@ const HOME_CONTENT = {
 
 export function HomePage() {
     const navigate = useNavigate();
+    const { getSetting, loading } = useAdminSettings();
+
+    const bannerUrl = getSetting('main_banner_url');
+    const noticeText = getSetting('notice_text');
+    const bgImage = bannerUrl || HOME_CONTENT.hero.defaultBgImage;
 
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900 overflow-x-hidden">
@@ -55,11 +61,21 @@ export function HomePage() {
                 <title>{HOME_CONTENT.brandName} - 아이의 행복한 성장을 함께합니다</title>
             </Helmet>
 
+            {/* ✨ 공지사항 바 (설정된 경우에만 표시) */}
+            {!loading && noticeText && (
+                <div className="bg-slate-900 text-white px-4 py-3">
+                    <div className="container mx-auto px-4 md:px-8 flex items-center justify-center gap-2 text-sm font-medium animate-in slide-in-from-top duration-500">
+                        <Bell className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                        <span>{noticeText}</span>
+                    </div>
+                </div>
+            )}
+
             {/* 1. 메인 비주얼 섹션 (Hero) */}
             <section className="relative h-[85vh] flex items-center overflow-hidden">
                 <div
                     className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
-                    style={{ backgroundImage: `url(${HOME_CONTENT.hero.bgImage})` }}
+                    style={{ backgroundImage: `url(${bgImage})` }}
                 >
                     <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/50 to-transparent"></div>
                 </div>

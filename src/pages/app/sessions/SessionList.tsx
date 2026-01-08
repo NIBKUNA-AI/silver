@@ -30,9 +30,9 @@ export default function SessionList() {
             .lt('end_time', now);
 
         if (pastSessions && pastSessions.length > 0) {
-            const idsToUpdate = pastSessions.map(s => s.id);
-            await supabase
-                .from('schedules')
+            const idsToUpdate = (pastSessions as any[]).map(s => s.id);
+            await (supabase
+                .from('schedules') as any)
                 .update({ status: 'completed' })
                 .in('id', idsToUpdate);
 
@@ -45,14 +45,15 @@ export default function SessionList() {
             .select(`
                 *,
                 children ( name ),
-                therapists ( name )
+                therapists ( name ),
+                counseling_logs ( created_at, session_date )
             `)
             .order('start_time', { ascending: false });
 
         if (error) {
             console.error('Error fetching sessions:', error);
         } else {
-            setSessions(data || []);
+            setSessions((data as any) || []);
         }
         setLoading(false);
     };
@@ -118,10 +119,19 @@ export default function SessionList() {
                             상담 내역이 없습니다.
                         </div>
                     ) : (
-                        sessions.map((session) => (
+                        sessions.map((session: any) => (
                             <div key={session.id} className="p-4 grid grid-cols-12 gap-4 items-center text-sm hover:bg-slate-50 transition-colors">
-                                <div className="col-span-2 font-medium text-slate-900">
-                                    {new Date(session.start_time).toLocaleDateString()}
+                                <div className="col-span-2">
+                                    <div className="font-medium text-slate-900">
+                                        {/* 수업 날짜 (Logs가 있으면 Log의 session_date, 없으면 schedule start_time) */}
+                                        {session.counseling_logs?.[0]?.session_date || session.start_time.slice(0, 10)}
+                                    </div>
+                                    {/* 작성일 표시 (완료된 경우) */}
+                                    {session.counseling_logs?.[0]?.created_at && (
+                                        <div className="text-xs text-slate-400 mt-0.5">
+                                            (작성: {session.counseling_logs[0].created_at.slice(0, 10)})
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="col-span-2">
                                     {new Date(session.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

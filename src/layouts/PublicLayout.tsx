@@ -1,11 +1,12 @@
-// @ts-nocheck
-/* eslint-disable */
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminSettings } from '@/hooks/useAdminSettings';
 
 export function PublicLayout() {
     const { user, role, signOut } = useAuth();
+    const { getSetting } = useAdminSettings();
     const navigate = useNavigate();
+    const logoUrl = getSetting('center_logo');
 
     const handleLogout = async () => {
         await signOut();
@@ -17,13 +18,20 @@ export function PublicLayout() {
             <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <Link to="/" className="flex items-center gap-2">
-                        <span className="text-2xl">🧸</span>
-                        <span className="text-xl font-bold text-slate-800 tracking-tight">행복아동발달센터</span>
+                        {logoUrl ? (
+                            <img src={logoUrl} alt="센터 로고" className="h-10 w-auto object-contain" />
+                        ) : (
+                            <>
+                                <span className="text-2xl">🧸</span>
+                                <span className="text-xl font-bold text-slate-800 tracking-tight">행복아동발달센터</span>
+                            </>
+                        )}
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-8">
                         <Link to="/about" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">센터 소개</Link>
                         <Link to="/programs" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">프로그램</Link>
+                        <Link to="/blog" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">블로그</Link>
                         <Link to="/contact" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">문의하기</Link>
                     </nav>
 
@@ -70,7 +78,14 @@ export function PublicLayout() {
             </main>
 
             <footer className="bg-slate-50 py-12 border-t border-slate-100">
-                <div className="max-w-7xl mx-auto px-6 text-center">
+                <div className="max-w-7xl mx-auto px-6 text-center space-y-4">
+                    <div className="flex justify-center items-center gap-2 mb-4">
+                        {logoUrl ? (
+                            <img src={logoUrl} alt="센터 로고" className="h-8 w-auto grayscale opacity-50" />
+                        ) : (
+                            <span className="text-xl font-bold text-slate-400">행복아동발달센터</span>
+                        )}
+                    </div>
                     <p className="text-slate-400 text-sm">© 2026 행복아동발달센터. All rights reserved.</p>
                 </div>
             </footer>

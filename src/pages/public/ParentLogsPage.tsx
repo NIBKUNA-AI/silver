@@ -33,14 +33,15 @@ export function ParentLogsPage() {
 
             let targetChildId = profile?.child_id;
 
-            // 2. 상담 일지 조회 (치료사 이름과 domain_scores 포함)
+            // 2. 상담 일지 조회 (치료사 이름 포함)
+            // ✨ consultations -> counseling_logs 로 테이블 변경
             const query = supabase
-                .from('consultations')
+                .from('counseling_logs')
                 .select(`
                     *,
                     therapists:therapist_id (name)
                 `)
-                .order('created_at', { ascending: false });
+                .order('session_date', { ascending: false }); // 수업 날짜 기준 정렬
 
             // 관리자가 아니면 본인 아이 정보만 필터링
             if (profile?.role !== 'admin') {
@@ -105,7 +106,10 @@ export function ParentLogsPage() {
                                         <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm">
                                             <Calendar className="w-5 h-5 text-primary" />
                                         </div>
-                                        <span className="font-black text-slate-900">{log.created_at?.split('T')[0]} 기록</span>
+                                        {/* ✨ 수업 일자 표시 */}
+                                        <span className="font-black text-slate-900 text-lg">
+                                            {log.session_date} 수업 기록
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-2xl shadow-sm border border-slate-100">
                                         <User className="w-4 h-4 text-slate-400" />
@@ -115,35 +119,37 @@ export function ParentLogsPage() {
 
                                 {/* 상세 글 내용 */}
                                 <div className="p-8 space-y-8">
+                                    {/* Activities */}
                                     <div className="relative">
-                                        <Quote className="absolute -left-2 -top-2 w-10 h-10 text-primary/10 -z-0" />
-                                        <p className="relative z-10 text-slate-700 font-bold leading-relaxed whitespace-pre-wrap text-[16px] pl-4">
-                                            {log.content}
+                                        <h4 className="font-bold text-slate-400 text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
+                                            <Activity className="w-4 h-4" /> 진행 활동
+                                        </h4>
+                                        <p className="text-slate-700 font-medium leading-relaxed whitespace-pre-wrap pl-1">
+                                            {log.activities || '작성된 활동 내용이 없습니다.'}
                                         </p>
                                     </div>
 
-                                    {/* ✨ 실시간 성취도 가로형 그래프 연동 */}
-                                    {log.domain_scores && (
-                                        <div className="bg-slate-50/80 rounded-[32px] p-8 space-y-6">
-                                            <div className="flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase tracking-widest px-1">
-                                                <Activity className="w-4 h-4 text-primary" /> 실시간 영역별 성취도
-                                            </div>
-                                            <div className="grid grid-cols-1 gap-5">
-                                                {Object.entries(log.domain_scores).map(([label, score]) => (
-                                                    <div key={label} className="space-y-2">
-                                                        <div className="flex justify-between items-center px-1">
-                                                            <span className="text-[11px] font-black text-slate-500">{label}</span>
-                                                            <span className="text-sm font-black text-primary bg-white px-3 py-1 rounded-xl shadow-sm border border-slate-100">{score}점</span>
-                                                        </div>
-                                                        <div className="h-3 bg-white rounded-full overflow-hidden border border-slate-100">
-                                                            <div
-                                                                className="h-full bg-primary rounded-full shadow-[0_0_10px_rgba(255,183,77,0.3)] transition-all duration-1000 ease-out"
-                                                                style={{ width: `${score}%` }}
-                                                            ></div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
+                                    {/* Child Response */}
+                                    {log.child_response && (
+                                        <div className="relative">
+                                            <h4 className="font-bold text-slate-400 text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                <Quote className="w-4 h-4" /> 아동 반응
+                                            </h4>
+                                            <p className="text-slate-700 font-medium leading-relaxed whitespace-pre-wrap pl-1">
+                                                {log.child_response}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Next Plan */}
+                                    {log.next_plan && (
+                                        <div className="relative pt-4 border-t border-slate-100">
+                                            <h4 className="font-bold text-primary text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                <ChevronRight className="w-4 h-4" /> 다음 수업 계획
+                                            </h4>
+                                            <p className="text-slate-900 font-bold leading-relaxed whitespace-pre-wrap pl-1">
+                                                {log.next_plan}
+                                            </p>
                                         </div>
                                     )}
                                 </div>
