@@ -52,7 +52,7 @@ export function Header() {
 
     // ✨ [Instant Logo/Name] 기존 캐시 로직 100% 유지
     const [logoUrl, setLogoUrl] = useState(() => localStorage.getItem(LOGO_CACHE_KEY) || '');
-    const [centerName, setCenterName] = useState(() => localStorage.getItem(NAME_CACHE_KEY) || '행복아동발달센터');
+    const [centerName, setCenterName] = useState(() => localStorage.getItem(NAME_CACHE_KEY) || import.meta.env.VITE_CENTER_NAME || '아동발달센터');
     const [imageLoaded, setImageLoaded] = useState(false);
 
     useEffect(() => {

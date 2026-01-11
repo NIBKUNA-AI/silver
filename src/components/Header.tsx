@@ -21,7 +21,7 @@ export function Header() {
             <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                 {/* 로고 영역 */}
                 <Link to="/" className="font-black text-xl flex items-center gap-2">
-                    🧸 행복아동발달센터
+                    🧸 {localStorage.getItem('cached_center_name') || import.meta.env.VITE_CENTER_NAME || '아동발달센터'}
                 </Link>
 
                 {/* 우측 메뉴 영역 */}

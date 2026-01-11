@@ -65,7 +65,7 @@ export function ProgramsPage() {
     return (
         <div className={cn("min-h-screen transition-colors", isDark ? "bg-slate-950" : "bg-[#F8FAFC]")}>
             <Helmet>
-                <title>치료 프로그램 - 행복아동발달센터</title>
+                <title>치료 프로그램 - {import.meta.env.VITE_CENTER_NAME || '아동발달센터'}</title>
                 <meta name="description" content="언어치료, 놀이치료, 감각통합치료 등 전문적인 발달 지원 프로그램을 안내합니다." />
             </Helmet>
 

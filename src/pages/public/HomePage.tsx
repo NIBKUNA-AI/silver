@@ -46,7 +46,7 @@ const SvgIcons = {
 };
 
 const DEFAULT_CONTENT = {
-    brandName: "행복아동발달센터",
+    brandName: import.meta.env.VITE_CENTER_NAME || "아동발달센터",
     hero: {
         titleFirst: "아이의",
         titlePoint: "행복",
@@ -62,7 +62,7 @@ const DEFAULT_CONTENT = {
     ],
     story: {
         quote: "아이들의 웃음이\n자라나는 두 번째 집",
-        description: "행복아동발달센터는 단순히 치료를 위한 공간을 넘어, 아이들이 정서적으로 안정을 찾고 스스로의 힘을 키워가는 따뜻한 보금자리를 지향합니다.",
+        description: `${import.meta.env.VITE_CENTER_NAME || '아동발달센터'}는 단순히 치료를 위한 공간을 넘어, 아이들이 정서적으로 안정을 찾고 스스로의 힘을 키워가는 따뜻한 보금자리를 지향합니다.`,
         image: "https://images.unsplash.com/photo-1587653263995-422546a72569?auto=format&fit=crop&q=80&w=1200"
     }
 };

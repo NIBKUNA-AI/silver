@@ -22,6 +22,9 @@ import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useTheme } from '@/contexts/ThemeProvider';
 import { cn } from '@/lib/utils';
 
+// ✨ [Dynamic] 환경 변수에서 센터 이름 가져오기
+const getCenterName = () => import.meta.env.VITE_CENTER_NAME || '아동발달센터';
+
 // Custom SVG Icons
 const Icons = {
     award: (className: string) => (
@@ -61,10 +64,11 @@ export function AboutPage() {
     const { theme } = useTheme();
     const isDark = theme === 'dark';
 
-    const introText = getSetting('about_intro_text') || "아이는 믿는 만큼 자라고, 사랑받는 만큼 행복해집니다.\n행복아동발달센터는 아이들의 건강한 성장을 위해 진심을 다합니다.";
+    const centerName = getCenterName();
+    const introText = getSetting('about_intro_text') || `아이는 믿는 만큼 자라고, 사랑받는 만큼 행복해집니다.\n${centerName}는 아이들의 건강한 성장을 위해 진심을 다합니다.`;
     const mainImage = getSetting('about_main_image');
     const descTitle = getSetting('about_desc_title') || "따뜻한 시선으로\n아이의 잠재력을 발굴합니다";
-    const descBody = getSetting('about_desc_body') || "행복아동발달센터는 각 분야별 석/박사 출신의 전문 치료진들이 협력하여 아동 개개인에게 최적화된 맞춤 치료 프로그램을 제공합니다.\n\n단순히 증상을 개선하는 것을 넘어, 아이가 스스로 긍정적인 자아를 형성하고 세상과 소통하며 행복하게 살아갈 수 있도록 돕는 것이 우리의 목표입니다.";
+    const descBody = getSetting('about_desc_body') || `${centerName}는 각 분야별 석/박사 출신의 전문 치료진들이 협력하여 아동 개개인에게 최적화된 맞춤 치료 프로그램을 제공합니다.\n\n단순히 증상을 개선하는 것을 넘어, 아이가 스스로 긍정적인 자아를 형성하고 세상과 소통하며 행복하게 살아갈 수 있도록 돕는 것이 우리의 목표입니다.`;
 
     const values = [
         { icon: Icons.award, title: "검증된 전문성", desc: "석/박사급 치료진의 체계적 접근", color: isDark ? "bg-indigo-900/50 text-indigo-400" : "bg-indigo-50 text-indigo-600" },
@@ -76,8 +80,8 @@ export function AboutPage() {
     return (
         <div className={cn("min-h-screen transition-colors", isDark ? "bg-slate-950" : "bg-[#F8FAFC]")}>
             <Helmet>
-                <title>센터 소개 - 행복아동발달센터</title>
-                <meta name="description" content="따뜻한 마음과 전문성을 갖춘 행복아동발달센터의 치료진을 소개합니다." />
+                <title>센터 소개 - {centerName}</title>
+                <meta name="description" content={`따뜻한 마음과 전문성을 갖춘 ${centerName}의 치료진을 소개합니다.`} />
             </Helmet>
 
             {/* Hero Section */}

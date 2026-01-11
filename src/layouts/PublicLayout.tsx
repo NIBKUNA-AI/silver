@@ -31,13 +31,18 @@ const ThemeIcons = {
     ),
 };
 
+// ✨ [Dynamic] 환경 변수 또는 캐시에서 센터 이름 가져오기
+const getDefaultCenterName = () => {
+    return localStorage.getItem('cached_center_name') || import.meta.env.VITE_CENTER_NAME || '아동발달센터';
+};
+
 export function PublicLayout() {
     const { user, role, signOut } = useAuth();
     const { getSetting, loading: settingsLoading } = useAdminSettings();
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const logoUrl = getSetting('center_logo');
-    const centerName = getSetting('center_name');
+    const centerName = getSetting('center_name') || getDefaultCenterName();
     const isDark = theme === 'dark';
 
     useTrafficSource();
@@ -60,7 +65,7 @@ export function PublicLayout() {
         return (
             <>
                 <span className="text-2xl">🧸</span>
-                <span className={`text-xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>행복아동발달센터</span>
+                <span className={`text-xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>{getDefaultCenterName()}</span>
             </>
         );
     };
