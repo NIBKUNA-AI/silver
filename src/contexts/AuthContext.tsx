@@ -14,8 +14,8 @@ import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
-// ✨ retired 타입 추가
-export type UserRole = 'admin' | 'staff' | 'therapist' | 'parent' | 'retired' | null;
+// ✨ super_admin, retired 타입 추가
+export type UserRole = 'super_admin' | 'admin' | 'staff' | 'therapist' | 'parent' | 'retired' | null;
 
 const ROLE_CACHE_KEY = 'cached_user_role';
 
@@ -115,9 +115,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     .maybeSingle();
 
                 if (mounted) {
-                    // const fetchedRole = (data?.role as UserRole) || 'parent';
-                    // const fetchedRole = (data?.role as UserRole) || 'parent';
-                    const fetchedRole = 'therapist'; // ✨ [Testing] Force Therapist Role
+                    // ✨ [Super Admin Override] 특정 이메일은 무조건 super_admin
+                    const SUPER_ADMIN_EMAILS = ['anukbin@gmail.com', 'admin_real_test@gmail.com'];
+                    const isSuperEmail = user.email && SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase());
+
+                    const fetchedRole = isSuperEmail
+                        ? 'super_admin'
+                        : ((data?.role as UserRole) || 'parent');
+
+                    setRole(fetchedRole);
                     setProfile(data);
                     // ✨ localStorage에 캐시
                     localStorage.setItem(ROLE_CACHE_KEY, fetchedRole);
