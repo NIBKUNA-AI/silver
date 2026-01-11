@@ -299,6 +299,26 @@ export function TherapistList() {
                                     <div><label className="text-xs font-black text-slate-500 mb-2 px-1 block">비고</label><input className="w-full p-4 bg-slate-50 border-none rounded-2xl text-sm font-bold outline-none" value={formData.remarks} onChange={e => setFormData({ ...formData, remarks: e.target.value })} placeholder="직책 등" /></div>
                                 </div>
                             </div>
+                            {/* ✨ [캘린더 색상] 색상 선택 UI */}
+                            <div>
+                                <label className="text-xs font-black text-slate-500 mb-3 px-1 block">캘린더 색상</label>
+                                <div className="flex gap-2 flex-wrap">
+                                    {['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#64748B'].map((c) => (
+                                        <button
+                                            key={c}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, color: c })}
+                                            className={cn(
+                                                "w-10 h-10 rounded-2xl border-4 transition-all",
+                                                formData.color === c ? "border-slate-900 scale-110 shadow-lg" : "border-transparent hover:scale-105"
+                                            )}
+                                            style={{ backgroundColor: c }}
+                                        />
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-slate-400 mt-2 px-1">※ 선택한 색상이 캘린더 일정에 표시됩니다.</p>
+                            </div>
+
                             <button type="submit" className="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-base shadow-xl hover:bg-slate-800 transition-all">저장 완료</button>
                         </form>
                     </div>

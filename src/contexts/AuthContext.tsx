@@ -115,8 +115,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     .maybeSingle();
 
                 if (mounted) {
-                    const fetchedRole = (data?.role as UserRole) || 'parent';
-                    setRole(fetchedRole);
+                    // const fetchedRole = (data?.role as UserRole) || 'parent';
+                    // const fetchedRole = (data?.role as UserRole) || 'parent';
+                    const fetchedRole = 'therapist'; // ✨ [Testing] Force Therapist Role
                     setProfile(data);
                     // ✨ localStorage에 캐시
                     localStorage.setItem(ROLE_CACHE_KEY, fetchedRole);

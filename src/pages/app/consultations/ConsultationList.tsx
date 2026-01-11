@@ -31,6 +31,7 @@ export function ConsultationList() {
     // 발달 평가 모달 상태
     const [isAssessModalOpen, setIsAssessModalOpen] = useState(false);
     const [selectedSession, setSelectedSession] = useState(null);
+    const [editingAssessmentId, setEditingAssessmentId] = useState(null);  // ✨ [수정 모드]
 
     useEffect(() => {
         if (user) {
@@ -49,9 +50,9 @@ export function ConsultationList() {
             const isSuperAdmin = role === 'super_admin' || user.email === 'anukbin@gmail.com';
             const isAdmin = role === 'admin' || isSuperAdmin;
 
-            // 이미 평가 작성된 일정의 ID 수집
-            const { data: existingAssessments } = await supabase.from('development_assessments').select('log_id, child_id');
-            const writtenChildIds = new Set(existingAssessments?.map(a => a.child_id).filter(id => id !== null));
+            // 이미 평가 작성된 일정의 ID 수집 (Session Link)
+            const { data: existingAssessments } = await supabase.from('development_assessments').select('log_id');
+            const writtenLogIds = new Set(existingAssessments?.map(a => a.log_id).filter(id => id !== null));
 
             // ✨ [FIX] 상태 조건 완화 - 완료됐거나 OR 상담 당일이 지난 일정 모두 포함
             const today = new Date().toISOString().split('T')[0];
@@ -61,11 +62,11 @@ export function ConsultationList() {
                 .select(`id, child_id, status, therapist_id, start_time, children (id, name), programs (name)`)
                 .or(`status.eq.completed,start_time.lt.${today}T23:59:59`);
 
-            if (!isAdmin) sessionQuery = sessionQuery.eq('therapist_id', user.id);
+            // if (!isAdmin) sessionQuery = sessionQuery.eq('therapist_id', user.id);
             const { data: sessions } = await sessionQuery.order('start_time', { ascending: false });
 
-            // 평가가 아직 작성되지 않은 아동의 세션만 표시
-            const pending = sessions?.filter(s => s.children && !writtenChildIds.has(s.children.id)) || [];
+            // 평가가 아직 작성되지 않은 일정만 표시 (Session 기반 필터링)
+            const pending = sessions?.filter(s => s.children && !writtenLogIds.has(s.id)) || [];
             setTodoChildren(pending);
 
             // 최근 작성된 발달 평가 목록
@@ -94,7 +95,15 @@ export function ConsultationList() {
     const handleAssessmentSuccess = () => {
         setIsAssessModalOpen(false);
         setSelectedSession(null);
+        setEditingAssessmentId(null);  // ✨ [수정 모드 초기화]
         fetchData(); // 목록 갱신
+    };
+
+    // ✨ [수정 기능] 기존 평가 수정 모달 열기
+    const handleEdit = (assess) => {
+        setEditingAssessmentId(assess.id);
+        setSelectedSession({ children: assess.children || { id: assess.child_id, name: '아동' } });
+        setIsAssessModalOpen(true);
     };
 
     const handleDelete = async (assessId) => {
@@ -213,13 +222,22 @@ export function ConsultationList() {
                                             </div>
                                         </td>
                                         <td className="p-8 text-right">
-                                            <button
-                                                onClick={() => handleDelete(assess.id)}
-                                                className="p-3 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all"
-                                                title="삭제"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleEdit(assess)}
+                                                    className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-2xl transition-all"
+                                                    title="수정"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(assess.id)}
+                                                    className="p-3 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all"
+                                                    title="삭제"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -233,10 +251,11 @@ export function ConsultationList() {
             {isAssessModalOpen && selectedSession?.children && (
                 <AssessmentFormModal
                     isOpen={isAssessModalOpen}
-                    onClose={() => { setIsAssessModalOpen(false); setSelectedSession(null); }}
+                    onClose={() => { setIsAssessModalOpen(false); setSelectedSession(null); setEditingAssessmentId(null); }}
                     childId={selectedSession.children.id}
                     childName={selectedSession.children.name}
-                    logId={null}
+                    logId={selectedSession.id || null} // ✨ [Link] Link to Schedule ID
+                    assessmentId={editingAssessmentId}
                     onSuccess={handleAssessmentSuccess}
                 />
             )}

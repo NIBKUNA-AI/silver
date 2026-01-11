@@ -10,7 +10,8 @@ interface AssessmentFormModalProps {
     onClose: () => void;
     childId: string | null;
     childName?: string;
-    logId?: string | null; // ✨ Optional Link to Counseling Log
+    logId?: string | null;
+    assessmentId?: string | null;  // ✨ [수정 모드용] 기존 평가 ID
     onSuccess: () => void;
 }
 
@@ -53,8 +54,9 @@ const CHECKLIST_ITEMS = {
     ]
 };
 
-export function AssessmentFormModal({ isOpen, onClose, childId, childName, logId, onSuccess }: AssessmentFormModalProps) {
+export function AssessmentFormModal({ isOpen, onClose, childId, childName, logId, assessmentId, onSuccess }: AssessmentFormModalProps) {
     const [loading, setLoading] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     // ✨ [Updated] State includes 'details' for JSONB storage
     const [sc, setSc] = useState<any>({
@@ -75,7 +77,52 @@ export function AssessmentFormModal({ isOpen, onClose, childId, childName, logId
     });
 
     const [summary, setSummary] = useState('');
+    const [therapistNotes, setTherapistNotes] = useState('');  // ✨ [치료사 전용] 부모에게 비공개 메모
+    const [currentLogId, setCurrentLogId] = useState<string | null>(null); // ✨ [Link] DB에 저장된 log_id 보존
     const [expandedDomain, setExpandedDomain] = useState<string | null>('communication');
+
+    // ✨ [수정 모드] 기존 데이터 로드
+    useEffect(() => {
+        if (isOpen && assessmentId) {
+            loadExistingData();
+        } else {
+            // Reset form for new entry
+            setSc({ communication: 0, social: 0, cognitive: 0, motor: 0, adaptive: 0 });
+            setDetails({ communication: [], social: [], cognitive: [], motor: [], adaptive: [] });
+            setSummary('');
+            setTherapistNotes('');
+            setCurrentLogId(logId || null);
+            setIsEditMode(false);
+        }
+    }, [isOpen, assessmentId, logId]);
+
+    const loadExistingData = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('development_assessments')
+                .select('*')
+                .eq('id', assessmentId)
+                .single();
+
+            if (error) throw error;
+            if (data) {
+                setSc({
+                    communication: data.score_communication || 0,
+                    social: data.score_social || 0,
+                    cognitive: data.score_cognitive || 0,
+                    motor: data.score_motor || 0,
+                    adaptive: data.score_adaptive || 0
+                });
+                setDetails(data.assessment_details || { communication: [], social: [], cognitive: [], motor: [], adaptive: [] });
+                setSummary(data.summary || '');
+                setTherapistNotes(data.therapist_notes || '');
+                setCurrentLogId(data.log_id || null);
+                setIsEditMode(true);
+            }
+        } catch (e) {
+            console.error('기존 데이터 로드 오류:', e);
+        }
+    };
 
     if (!isOpen || !childId) return null;
 
@@ -109,25 +156,35 @@ export function AssessmentFormModal({ isOpen, onClose, childId, childName, logId
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('로그인이 필요합니다.');
 
-            const { error } = await supabase.from('development_assessments').insert({
+            const payload = {
                 child_id: childId,
                 therapist_id: user.id,
-                log_id: logId || null, // ✨ Save Link if exists
+                log_id: currentLogId, // ✨ Use State (Preserved or Prop)
                 evaluation_date: new Date().toISOString().split('T')[0],
-
                 score_communication: sc.communication,
                 score_social: sc.social,
                 score_cognitive: sc.cognitive,
                 score_motor: sc.motor,
                 score_adaptive: sc.adaptive,
-
                 summary: summary,
-                assessment_details: details // ✨ Save detailed evidence
-            });
+                therapist_notes: therapistNotes,  // ✨ [치료사 전용 메모]
+                assessment_details: details
+            };
+
+            let error;
+            if (isEditMode && assessmentId) {
+                // ✨ [수정 모드]
+                const res = await supabase.from('development_assessments').update(payload).eq('id', assessmentId);
+                error = res.error;
+            } else {
+                // [신규 등록]
+                const res = await supabase.from('development_assessments').insert(payload);
+                error = res.error;
+            }
 
             if (error) throw error;
 
-            alert('발달 평가가 저장되었습니다.');
+            alert(isEditMode ? '발달 평가가 수정되었습니다.' : '발달 평가가 저장되었습니다.');
             onSuccess();
             onClose();
         } catch (e: any) {
@@ -237,12 +294,26 @@ export function AssessmentFormModal({ isOpen, onClose, childId, childName, logId
 
                     {/* Summary */}
                     <div className="space-y-2">
-                        <label className="text-sm font-black text-slate-700 ml-1">종합 소견</label>
+                        <label className="text-sm font-black text-slate-700 ml-1">종합 소견 (부모 공개)</label>
                         <textarea
                             value={summary}
                             onChange={(e) => setSummary(e.target.value)}
                             placeholder="이번 달 발달 변화나 특이사항을 자유롭게 작성해주세요... (평가 근거 요약 포함)"
                             className="w-full h-32 p-4 rounded-2xl border border-slate-200 bg-slate-50 font-medium text-sm focus:outline-none focus:ring-4 focus:ring-indigo-50/50 focus:border-indigo-200 resize-none"
+                        />
+                    </div>
+
+                    {/* ✨ [치료사 전용] 비공개 메모 - 부모에게 안보임 */}
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 ml-1">
+                            <label className="text-sm font-black text-rose-600">치료사 메모 (비공개)</label>
+                            <span className="text-[10px] bg-rose-100 text-rose-500 px-2 py-0.5 rounded-full font-bold">부모 앱 미노출</span>
+                        </div>
+                        <textarea
+                            value={therapistNotes}
+                            onChange={(e) => setTherapistNotes(e.target.value)}
+                            placeholder="부모에게 공개되지 않는 내부 기록입니다. (행동 패턴, 주의사항, 다음 치료사에게 전달 사항 등)"
+                            className="w-full h-24 p-4 rounded-2xl border-2 border-rose-100 bg-rose-50/30 font-medium text-sm focus:outline-none focus:ring-4 focus:ring-rose-50 focus:border-rose-200 resize-none text-rose-900 placeholder:text-rose-300"
                         />
                     </div>
                 </div>

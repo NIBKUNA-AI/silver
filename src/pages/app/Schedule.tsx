@@ -18,7 +18,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import koLocale from '@fullcalendar/core/locales/ko';
-import { Plus, Loader2, Calendar, Clock, User, FileText } from 'lucide-react';
+import { Plus, Loader2, Calendar, Clock, User, FileText, Filter, Users, X } from 'lucide-react';
 import { ScheduleModal } from '@/components/app/schedule/ScheduleModal';
 import { useTheme } from '@/contexts/ThemeProvider';
 import { cn } from '@/lib/utils';
@@ -34,12 +34,27 @@ export function Schedule() {
     const [tooltipInfo, setTooltipInfo] = useState(null);
     const calendarRef = useRef(null);
 
+    // ✨ [Therapist Filter] 치료사 필터 상태
+    const [therapists, setTherapists] = useState([]);
+    const [selectedTherapistId, setSelectedTherapistId] = useState('all');
+
     useEffect(() => {
         fetchSchedules();
+        fetchTherapists();
     }, []);
+
+    // ✨ [Therapist List] 치료사 목록 가져오기
+    const fetchTherapists = async () => {
+        const { data } = await supabase
+            .from('therapists')
+            .select('id, name, color')
+            .order('name');
+        setTherapists(data || []);
+    };
 
     const fetchSchedules = async () => {
         try {
+            // ✨ [수정] 발달 평가 작성 여부 확인을 위해 development_assessments 조인
             const { data, error } = await supabase
                 .from('schedules')
                 .select(`
@@ -52,6 +67,14 @@ export function Schedule() {
 
             if (error) throw error;
 
+            // ✨ [NEW] 평가 작성된 Schedule ID (log_id) 목록 조회
+            const { data: assessments } = await supabase
+                .from('development_assessments')
+                .select('log_id')
+                .not('log_id', 'is', null);
+
+            const attendedLogIds = new Set(assessments?.map(a => a.log_id) || []);
+
             if (data) {
                 const formattedEvents = data.map(schedule => {
                     const childName = schedule.children?.name || '미등록';
@@ -59,7 +82,6 @@ export function Schedule() {
                     const originalColor = schedule.therapists?.color || '#94a3b8';
 
                     // ✨ [취소 상태 체크 및 시각화 로직 강화]
-                    // Billing 페이지와 싱크를 맞추기 위해 'canceled'와 'cancelled' 모두 대응
                     const isCancelled = schedule.status === 'canceled' || schedule.status === 'cancelled';
 
                     // 1. 취소된 경우 색상을 회색(#cbd5e1)으로 변경, 아니면 선생님 고유색 사용
@@ -70,13 +92,15 @@ export function Schedule() {
                         ? ['line-through', 'opacity-50', 'grayscale', 'cancelled-event']
                         : [];
 
+                    // ✨ [수정] 평가 작성 여부: log_id가 해당 스케줄 ID와 일치하는지 확인 (정확도 향상)
+                    const hasAssessment = schedule.id && attendedLogIds.has(schedule.id);
+
                     return {
                         id: schedule.id,
-                        // 3. 제목에 [취소] 표시 추가하여 직관성 높임
                         title: isCancelled ? `[취소] ${childName}` : childName,
                         start: schedule.start_time,
                         end: schedule.end_time,
-                        backgroundColor: eventColor + (isCancelled ? '40' : '20'), // 취소 시 배경 좀 더 진하게
+                        backgroundColor: eventColor + (isCancelled ? '40' : '20'),
                         borderColor: eventColor,
                         textColor: isCancelled ? '#94a3b8' : '#1e293b',
                         classNames: eventClasses,
@@ -92,7 +116,7 @@ export function Schedule() {
                             programName: schedule.programs?.name || '프로그램 미정',
                             therapistName: therapistName,
                             color: eventColor,
-                            hasNote: !!schedule.session_note
+                            hasNote: hasAssessment || !!schedule.session_note  // ✨ 평가 OR 일지 있으면 표시
                         }
                     };
                 });
@@ -195,6 +219,56 @@ export function Schedule() {
                     </button>
                 </div>
 
+                {/* ✨ [Therapist Filter] 치료사별 필터 - 드롭다운 */}
+                <div className={cn("flex items-center gap-4", isDark ? "text-slate-300" : "text-slate-600")}>
+                    <div className="flex items-center gap-2 text-sm font-bold">
+                        <Filter className="w-4 h-4" />
+                        <span>치료사 필터:</span>
+                    </div>
+                    <div className="relative">
+                        <select
+                            value={selectedTherapistId}
+                            onChange={(e) => setSelectedTherapistId(e.target.value)}
+                            className={cn(
+                                "appearance-none pl-4 pr-10 py-2.5 rounded-xl font-bold text-sm border-2 cursor-pointer transition-all min-w-[180px]",
+                                isDark
+                                    ? "bg-slate-800 border-slate-700 text-white hover:border-slate-600 focus:border-indigo-500"
+                                    : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 focus:border-indigo-500"
+                            )}
+                            style={{
+                                borderLeftColor: selectedTherapistId !== 'all'
+                                    ? therapists.find(t => t.id === selectedTherapistId)?.color
+                                    : undefined,
+                                borderLeftWidth: selectedTherapistId !== 'all' ? '4px' : undefined
+                            }}
+                        >
+                            <option value="all">👥 전체 치료사</option>
+                            {therapists.map(t => (
+                                <option key={t.id} value={t.id}>
+                                    {t.name}
+                                </option>
+                            ))}
+                        </select>
+                        <div className={cn("absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none", isDark ? "text-slate-400" : "text-slate-500")}>
+                            <Users className="w-4 h-4" />
+                        </div>
+                    </div>
+                    {selectedTherapistId !== 'all' && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: therapists.find(t => t.id === selectedTherapistId)?.color + '20' }}>
+                            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: therapists.find(t => t.id === selectedTherapistId)?.color }} />
+                            <span className="text-sm font-bold" style={{ color: therapists.find(t => t.id === selectedTherapistId)?.color }}>
+                                {therapists.find(t => t.id === selectedTherapistId)?.name} 선생님
+                            </span>
+                            <button
+                                onClick={() => setSelectedTherapistId('all')}
+                                className="ml-1 text-slate-400 hover:text-slate-600"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+                </div>
+
                 <div className={cn("flex-1 p-6 rounded-3xl shadow-sm border relative z-0 overflow-hidden", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100")}>
                     <FullCalendar
                         ref={calendarRef}
@@ -204,7 +278,7 @@ export function Schedule() {
                         nowIndicator={true}
                         headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
                         buttonText={{ today: '오늘', month: '월간', week: '주간', day: '일간' }}
-                        events={events}
+                        events={selectedTherapistId === 'all' ? events : events.filter(e => e.extendedProps.therapist_id === selectedTherapistId)}
                         height="100%"
                         dayMaxEvents={true}
                         eventClassNames="cursor-pointer hover:brightness-95 transition-all border-l-4 font-bold text-xs py-0.5 px-1 rounded-r-md shadow-sm"

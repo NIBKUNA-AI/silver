@@ -270,32 +270,32 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
                     <form onSubmit={handleSubmit} className="p-6 space-y-5">
                         <div>
                             <label className="text-xs font-bold text-slate-500">아동 선택</label>
-                            <select required className="w-full p-3 border rounded-xl font-bold bg-white focus:ring-2 focus:ring-blue-500/20 outline-none" value={formData.child_id} onChange={e => setFormData({ ...formData, child_id: e.target.value })}>
+                            <select required className="w-full p-3 border rounded-xl font-bold bg-white text-slate-900 focus:ring-2 focus:ring-blue-500/20 outline-none" value={formData.child_id} onChange={e => setFormData({ ...formData, child_id: e.target.value })}>
                                 <option value="">아동을 선택하세요</option>
                                 {childrenList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="text-xs font-bold text-slate-500">담당 선생님</label>
-                            <select required className="w-full p-3 border rounded-xl font-bold bg-white focus:ring-2 focus:ring-blue-500/20 outline-none" value={formData.therapist_id} onChange={e => setFormData({ ...formData, therapist_id: e.target.value })}>
+                            <select required className="w-full p-3 border rounded-xl font-bold bg-white text-slate-900 focus:ring-2 focus:ring-blue-500/20 outline-none" value={formData.therapist_id} onChange={e => setFormData({ ...formData, therapist_id: e.target.value })}>
                                 <option value="">선생님을 선택하세요</option>
                                 {therapistsList.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="text-xs font-bold text-slate-500">프로그램</label>
-                            <select required className="w-full p-3 border rounded-xl font-bold bg-white focus:ring-2 focus:ring-blue-500/20 outline-none" value={formData.program_id} onChange={e => handleProgramChange(e.target.value)}>
+                            <select required className="w-full p-3 border rounded-xl font-bold bg-white text-slate-900 focus:ring-2 focus:ring-blue-500/20 outline-none" value={formData.program_id} onChange={e => handleProgramChange(e.target.value)}>
                                 <option value="">프로그램을 선택하세요</option>
                                 {programsList.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="text-xs font-bold text-slate-500">일시</label>
-                            <input type="date" required className="w-full p-3 border rounded-xl font-bold mb-2 bg-white focus:ring-2 focus:ring-blue-500/20 outline-none" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                            <input type="date" required className="w-full p-3 border rounded-xl font-bold mb-2 bg-white text-slate-900 focus:ring-2 focus:ring-blue-500/20 outline-none" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
                             <div className="flex gap-2">
-                                <input type="time" required className="flex-1 p-3 border rounded-xl font-bold bg-white focus:ring-2 focus:ring-blue-500/20 outline-none" value={formData.start_time} onChange={e => setFormData({ ...formData, start_time: e.target.value })} />
+                                <input type="time" required className="flex-1 p-3 border rounded-xl font-bold bg-white text-slate-900 focus:ring-2 focus:ring-blue-500/20 outline-none" value={formData.start_time} onChange={e => setFormData({ ...formData, start_time: e.target.value })} />
                                 <span className="self-center text-slate-400">~</span>
-                                <input type="time" required className="flex-1 p-3 border rounded-xl font-bold bg-white focus:ring-2 focus:ring-blue-500/20 outline-none" value={formData.end_time} onChange={e => setFormData({ ...formData, end_time: e.target.value })} />
+                                <input type="time" required className="flex-1 p-3 border rounded-xl font-bold bg-white text-slate-900 focus:ring-2 focus:ring-blue-500/20 outline-none" value={formData.end_time} onChange={e => setFormData({ ...formData, end_time: e.target.value })} />
                             </div>
                         </div>
                         <div className="grid grid-cols-4 gap-2">

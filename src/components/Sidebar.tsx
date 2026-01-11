@@ -179,42 +179,43 @@ const Icons = {
 };
 
 // ============================================
-// ZENITH SIDEBAR - 4대 분류 메뉴 구조
+// ZENITH SIDEBAR - 4대 분류 메뉴 구조 (Reorganized)
+// [Insight] → [Operations] → [Management] → [Platform]
 // ============================================
 const MENU_GROUPS = [
     {
-        name: '센터 현황',
+        name: '통계',  // Insight
         icon: Icons.centerStatus,
         items: [
             { name: '대시보드', path: '/app/dashboard', icon: Icons.dashboard, roles: ['super_admin', 'admin', 'staff'] },
-            { name: '치료 일정', path: '/app/schedule', icon: Icons.calendar, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
-            { name: '수납 관리', path: '/app/billing', icon: Icons.billing, roles: ['super_admin', 'admin', 'staff'] },
         ]
     },
     {
-        name: '회원 관리',
+        name: '센터 운영',  // Operations
+        icon: Icons.calendar,
+        items: [
+            { name: '치료 일정', path: '/app/schedule', icon: Icons.calendar, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
+            { name: '수납 관리', path: '/app/billing', icon: Icons.billing, roles: ['super_admin', 'admin', 'staff'] },
+            { name: '상담일지', path: '/app/consultations', icon: Icons.consultation, roles: ['super_admin', 'admin', 'therapist'] },
+            { name: '프로그램 관리', path: '/app/programs', icon: Icons.program, roles: ['super_admin', 'admin', 'staff'] },
+        ]
+    },
+    {
+        name: '리소스 관리',  // Management
         icon: Icons.members,
         items: [
             { name: '상담문의', path: '/app/leads', icon: Icons.leads, roles: ['super_admin', 'admin', 'staff'] },
-            { name: '상담일지', path: '/app/consultations', icon: Icons.consultation, roles: ['super_admin', 'admin', 'therapist'] },
             { name: '아동 관리', path: '/app/children', icon: Icons.child, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
-        ]
-    },
-    {
-        name: '인사 관리',
-        icon: Icons.hr,
-        items: [
             { name: '직원 관리', path: '/app/therapists', icon: Icons.staff, roles: ['super_admin', 'admin'] },
             { name: '급여 관리', path: '/app/settlement', icon: Icons.salary, roles: ['super_admin', 'admin'] },
         ]
     },
     {
-        name: '시스템 설정',
+        name: '시스템',  // Platform
         icon: Icons.system,
         items: [
-            { name: '프로그램', path: '/app/programs', icon: Icons.program, roles: ['super_admin', 'admin', 'staff'] },
             { name: '블로그 관리', path: '/app/blog', icon: Icons.blog, roles: ['super_admin', 'admin', 'manager'] },
-            { name: '사이트 관리', path: '/app/settings', icon: Icons.settings, roles: ['super_admin', 'admin', 'manager'] },
+            { name: '사이트 설정', path: '/app/settings', icon: Icons.settings, roles: ['super_admin', 'admin', 'manager'] },
         ]
     }
 ];
