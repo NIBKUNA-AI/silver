@@ -43,6 +43,18 @@ serve(async (req: Request) => {
     try {
         console.log("Function Invoked");
 
+        // ✨ [Parse Request Body] - Handle body parsing gracefully
+        let requestBody: any = {};
+        try {
+            const bodyText = await req.text();
+            if (bodyText) {
+                requestBody = JSON.parse(bodyText);
+                console.log("Request Body Received:", Object.keys(requestBody));
+            }
+        } catch (parseError) {
+            console.log("No body or invalid JSON - proceeding without body data");
+        }
+
         // 1. Init Supabase Client
         const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
