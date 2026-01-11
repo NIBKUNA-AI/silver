@@ -294,9 +294,9 @@ ${recentTitlesStr}
 
         console.log("Initializing Gemini API with API key starting with:", GEMINI_API_KEY.substring(0, 10) + "...");
 
-        // ✨ Using direct HTTP fetch to v1 API (more stable than SDK v1beta)
+        // ✨ Using direct HTTP fetch to v1beta API (better model compatibility)
         const GEMINI_MODEL = "gemini-1.5-flash";
-        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
         console.log("Generating Content with", GEMINI_MODEL, "via HTTP...");
 
