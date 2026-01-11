@@ -20,11 +20,11 @@ serve(async (req) => {
         const apiKey = Deno.env.get('GOOGLE_AI_KEY')
         if (!apiKey) throw new Error('API Key not set')
 
-        console.log(`Generating blog post for subject: ${subject}, Model: gemini-pro (v1)`)
+        console.log(`Generating blog post for subject: ${subject}, Model: gemini-pro (v1beta)`)
 
         // 3. 라이브러리 없이 직접 URL 호출 
-        // ✨ 변경: v1beta/gemini-1.5-flash -> v1/gemini-pro (안전성 우선)
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`
+        // ✨ v1beta + gemini-pro 조합 (가장 널리 쓰이는 표준 조합)
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`
 
         const prompt = `
       당신은 아동 심리 발달 전문가입니다. 다음 주제로 블로그 포스팅을 작성해 주세요.
@@ -55,6 +55,25 @@ serve(async (req) => {
         // 4. 에러 응답 처리
         if (!response.ok) {
             console.error('Gemini API Error:', JSON.stringify(data))
+
+            // ✨ [Self-Diagnosis] 404 에러 시 사용 가능한 모델 목록 조회 및 로그 출력
+            // 이렇게 하면 어떤 모델명을 써야 할지 로그에서 바로 확인할 수 있음
+            if (response.status === 404) {
+                try {
+                    console.log("Attempting to list available models for debugging...");
+                    const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+                    const listResp = await fetch(listUrl);
+                    const listData = await listResp.json();
+                    if (listData.models) {
+                        console.log("✅ Available Models for this API Key:", JSON.stringify(listData.models.map((m: any) => m.name)));
+                    } else {
+                        console.log("❌ Could not list models (no models found in response)", listData);
+                    }
+                } catch (listErr) {
+                    console.error("❌ Failed to list models:", listErr);
+                }
+            }
+
             throw new Error(data.error?.message || `Gemini API failed with status ${response.status}`)
         }
 
