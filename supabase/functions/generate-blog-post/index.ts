@@ -259,23 +259,33 @@ JSON 형식으로 출력하세요.`;
             throw new Error('Missing GOOGLE_AI_KEY environment variable');
         }
 
-        console.log("Initializing Gemini SDK...");
+        console.log("Initializing Gemini SDK with API key starting with:", GEMINI_API_KEY.substring(0, 10) + "...");
 
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
-        // Using gemini-2.0-flash for stable production use
+        // ✨ Using gemini-1.5-flash for maximum compatibility
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash",
+            model: "gemini-1.5-flash",
             generationConfig: {
                 responseMimeType: "application/json"
             }
         });
 
-        console.log("Generating Content with gemini-2.0-flash...");
+        console.log("Generating Content with gemini-1.5-flash...");
 
-        const result = await model.generateContent(systemPrompt + "\n\n" + userPrompt);
-        const response = result.response;
-        const generatedText = response.text();
+        let result;
+        let generatedText: string;
+        try {
+            result = await model.generateContent(systemPrompt + "\n\n" + userPrompt);
+            const response = result.response;
+            generatedText = response.text();
+        } catch (geminiError: any) {
+            console.error("Gemini API Error:", geminiError);
+            console.error("Error Name:", geminiError?.name);
+            console.error("Error Message:", geminiError?.message);
+            console.error("Error Status:", geminiError?.status);
+            throw new Error(`Gemini API failed: ${geminiError?.message || 'Unknown error'}`);
+        }
 
         if (!generatedText) {
             console.error("Gemini returned no content");
