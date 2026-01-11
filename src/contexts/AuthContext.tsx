@@ -115,13 +115,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     .maybeSingle();
 
                 if (mounted) {
-                    // ✨ [Super Admin Override] 특정 이메일은 무조건 super_admin
-                    const SUPER_ADMIN_EMAILS = ['anukbin@gmail.com', 'admin_real_test@gmail.com'];
-                    const isSuperEmail = user.email && SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase());
+                    // ✨ [Refactor] Remove Hardcoded Super Admin Override
+                    // Logic now strictly follows the DB value.
+                    // If DB says 'admin', it is 'admin'. If 'super_admin', it is 'super_admin'.
 
-                    const fetchedRole = isSuperEmail
-                        ? 'super_admin'
-                        : ((data?.role as UserRole) || 'parent');
+                    // Prioritize DB role, fallback to 'parent'
+                    const fetchedRole = (data?.role as UserRole) || 'parent';
 
                     setRole(fetchedRole);
                     setProfile(data);

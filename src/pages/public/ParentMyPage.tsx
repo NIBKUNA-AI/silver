@@ -27,7 +27,7 @@ import { InvitationCodeModal } from '@/components/InvitationCodeModal';
 import { TermsModal } from '@/components/public/TermsModal';
 
 export function ParentMyPage() {
-    const { user, signOut } = useAuth();
+    const { user, signOut, profile } = useAuth();
     const { theme } = useTheme();
     const { getSetting } = useAdminSettings();
     const isDark = theme === 'dark';
@@ -132,12 +132,12 @@ export function ParentMyPage() {
                     )}
                 </div>
                 <div>
-                    <h2 className="text-lg font-black">{user?.user_metadata?.name || '부모님'}</h2>
+                    <h2 className="text-lg font-black">{profile?.name || user?.user_metadata?.name || '부모님'}</h2>
                     <p className={cn("text-xs font-medium", isDark ? "text-slate-500" : "text-slate-400")}>{user?.email}</p>
                     <div className="flex flex-wrap gap-2 mt-2">
                         <span className="px-2 py-1 rounded-md bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-wider">Parent</span>
                         {/* ✨ Super Admin Access Button */}
-                        {(user?.email === 'anukbin@gmail.com' || user?.user_metadata?.role === 'super_admin') && (
+                        {(user?.user_metadata?.role === 'super_admin') && (
                             <a href="/app/dashboard" className="px-2 py-1 rounded-md bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-wider hover:bg-rose-100 transition-colors">
                                 관리자 시스템 접속 &rarr;
                             </a>

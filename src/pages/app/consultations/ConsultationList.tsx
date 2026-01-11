@@ -46,8 +46,9 @@ export function ConsultationList() {
             const role = profile?.role || 'therapist';
             setUserRole(role);
 
-            // ✨ [FIX] 슈퍼 어드민 예외 처리 - anukbin@gmail.com 또는 super_admin 역할
-            const isSuperAdmin = role === 'super_admin' || user.email === 'anukbin@gmail.com';
+            // ✨ [Refactor] Removed hardcoded email check (anukbin@gmail.com)
+            // Now strictly relies on DB Role
+            const isSuperAdmin = role === 'super_admin';
             const isAdmin = role === 'admin' || isSuperAdmin;
 
             // 이미 평가 작성된 일정의 ID 수집 (Session Link)
