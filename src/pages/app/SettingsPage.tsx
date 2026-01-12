@@ -151,10 +151,10 @@ export function SettingsPage() {
                 {activeTab === 'ai_blog' && (
                     <SectionCard title="AI 자동 포스팅 및 생성">
                         <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
-                            <h4 className="text-sm font-black text-blue-900 mb-2">🤖 OpenAI API Key 설정 (필수)</h4>
+                            <h4 className="text-sm font-black text-blue-900 mb-2">🤖 Google Gemini API Key 설정 (필수)</h4>
                             <SaveableInput
-                                label="OpenAI API Key (sk-...)"
-                                placeholder="sk-..."
+                                label="Google API Key (AIza...)"
+                                placeholder="AIza..."
                                 initialValue={getSetting('openai_api_key')}
                                 onSave={(v) => handleSave('openai_api_key', v)}
                                 saving={saving}
@@ -364,8 +364,8 @@ function AIBlogGenerateButton() {
                 4. [공감] - [정보3가지] - [안심] 구조로 작성할 것.
             `;
 
-            // ✨ [Gemini API] Client Side Call
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`, {
+            // ✨ [Gemini API] Client Side Call (Stable Model)
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
