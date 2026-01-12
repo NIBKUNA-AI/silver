@@ -337,6 +337,10 @@ function AIBlogGenerateButton() {
             alert('❌ OpenAI API 키가 설정되지 않았습니다. 설정 위 "API Key 설정"에 키를 입력해주세요.');
             return;
         }
+        if (!apiKey.startsWith('sk-')) {
+            alert('❌ 올바르지 않은 API 키 형식입니다.\nOpenAI 키는 "sk-"로 시작해야 합니다.\n(현재 입력된 키는 구글 Gemini 키 등 다른 키로 보입니다)');
+            return;
+        }
 
         setGenerating(true);
         localStorage.setItem(AI_GENERATING_KEY, 'true');
@@ -446,6 +450,14 @@ function SnsLinksSection() {
     const [saving, setSaving] = useState(false);
 
     const handleSave = async (key: string, value: string) => {
+        if (!key) return;
+
+        // ✨ [API Key Validation] OpenAI 키는 sk-로 시작해야 함
+        if (key === 'openai_api_key' && value && !value.startsWith('sk-')) {
+            alert('❌ API 키 형식이 올바르지 않습니다.\nOpenAI 키는 반드시 "sk-"로 시작합니다.\n입력하신 키를 다시 확인해주세요.');
+            return;
+        }
+
         setSaving(true);
         try {
             await supabase.from('admin_settings').upsert(

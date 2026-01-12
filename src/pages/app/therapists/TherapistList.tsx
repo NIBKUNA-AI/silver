@@ -73,11 +73,24 @@ export function TherapistList() {
     const handleApprove = async (staff) => {
         if (!confirm(`${staff.name}님을 치료사로 승인하시겠습니까?`)) return;
         try {
-            await supabase.from('user_profiles').update({ role: 'therapist', status: 'active' }).eq('id', staff.id);
-            await supabase.from('therapists').update({ color: '#3b82f6' }).eq('id', staff.id);
+            // ✨ [Secure Approval] RPC 함수 사용 (RLS 우회)
+            const { data, error } = await supabase.rpc('approve_therapist', { target_user_id: staff.id });
+
+            if (error) throw error;
+            if (data && !data.success) throw new Error(data.message);
+
             alert('승인이 완료되었습니다!');
             fetchStaffs();
         } catch (error) {
+            console.error(error);
+            // 만약 RPC가 없어서 에러가 난다면 기존 방식 시도 (Fallback)
+            if (error.message?.includes('function not found')) {
+                await supabase.from('user_profiles').update({ role: 'therapist', status: 'active' }).eq('id', staff.id);
+                await supabase.from('therapists').update({ color: '#3b82f6' }).eq('id', staff.id);
+                alert('승인이 완료되었습니다! (Legacy)');
+                fetchStaffs();
+                return;
+            }
             alert('승인 오류: ' + error.message);
         }
     };
