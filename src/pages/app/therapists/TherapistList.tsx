@@ -56,9 +56,15 @@ export function TherapistList() {
 
             const mergedData = therapistData?.map(t => {
                 const profile = profileData?.find(p => p.id === t.id);
+                // ✨ [Fix] 퇴사자(inactive)는 UI에서 'retired' 역할로 취급하여 표시
+                let effectiveRole = profile?.role || 'therapist';
+                if (profile?.status === 'inactive' || profile?.status === 'retired' || profile?.status === 'rejected') {
+                    effectiveRole = 'retired';
+                }
+
                 return {
                     ...t,
-                    system_role: profile?.role || 'therapist',
+                    system_role: effectiveRole,
                     // ✨ 프로필이 없으면(직접 등록) 'invited', 있으면 실제 상태 사용
                     system_status: profile ? profile.status : 'invited'
                 };
