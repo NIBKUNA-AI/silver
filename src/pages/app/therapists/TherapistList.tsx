@@ -97,14 +97,19 @@ export function TherapistList() {
     };
 
     // ✨ [거절 처리] 가입 신청 거절
+    // ✨ [거절 처리] 데이터 완전 삭제 (목록에서 제거)
     const handleReject = async (staff) => {
-        if (!confirm(`⚠️ ${staff.name}님의 가입 신청을 거절하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+        if (!confirm(`⚠️ ${staff.name}님의 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
         try {
+            // 목록에서 사라지게 하기 위해 therapists 테이블에서 삭제
+            await supabase.from('therapists').delete().eq('id', staff.id);
+            // 프로필 상태도 거절로 변경 (선택 사항)
             await supabase.from('user_profiles').update({ status: 'rejected' }).eq('id', staff.id);
-            alert('거절 처리가 완료되었습니다.');
+            alert('데이터가 삭제되었습니다.');
             fetchStaffs();
         } catch (error) {
-            alert('거절 처리 오류: ' + error.message);
+            console.error(error);
+            alert('삭제 오류: ' + (error as any).message);
         }
     };
 

@@ -364,8 +364,8 @@ function AIBlogGenerateButton() {
             `;
 
             // ✨ [Gemini API] Client Side Call (Stable Model)
-            // v1beta, gemini-1.5-flash 사용 (무료 티어 호환)
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            // v1beta, gemini-pro 사용 (가장 안정적)
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
