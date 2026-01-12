@@ -151,10 +151,10 @@ export function SettingsPage() {
                 {activeTab === 'ai_blog' && (
                     <SectionCard title="AI 자동 포스팅 및 생성">
                         <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-2xl">
-                            <h4 className="text-sm font-black text-blue-900 mb-2">🤖 Google Gemini API Key 설정 (필수)</h4>
+                            <h4 className="text-sm font-black text-blue-900 mb-2">🤖 OpenAI API Key 설정 (필수)</h4>
                             <SaveableInput
-                                label="Google API Key (AIza...)"
-                                placeholder="AIza..."
+                                label="OpenAI API Key (sk-...)"
+                                placeholder="sk-..."
                                 initialValue={getSetting('openai_api_key')}
                                 onSave={(v) => handleSave('openai_api_key', v)}
                                 saving={saving}
@@ -337,10 +337,9 @@ function AIBlogGenerateButton() {
             alert('❌ API 키가 설정되지 않았습니다. 설정 위 "API Key 설정"에 키를 입력해주세요.');
             return;
         }
-        // ✨ [Gemini 복구] OpenAI 강제 제거. Gemini 키 형식을 체크하거나 관대하게 허용.
-        // Google AI Key는 보통 AIza... 로 시작하지만, 엄격한 검사보다는 길이 체크 정도만 함.
-        if (apiKey.length < 20) {
-            alert('❌ API 키가 너무 짧습니다. Google Gemini API 키를 확인해주세요.');
+        // ✨ [OpenAI] sk- 형식 검증
+        if (!apiKey.startsWith('sk-')) {
+            alert('❌ 올바르지 않은 API 키 형식입니다. OpenAI 키는 "sk-"로 시작해야 합니다.');
             return;
         }
 
@@ -364,25 +363,31 @@ function AIBlogGenerateButton() {
                 4. [공감] - [정보3가지] - [안심] 구조로 작성할 것.
             `;
 
-            // ✨ [Gemini API] Client Side Call (Stable Model)
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+            // ✨ [OpenAI API] Chat Completion
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
                 body: JSON.stringify({
-                    contents: [{
-                        parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }]
-                    }]
+                    model: 'gpt-4o-mini',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    max_tokens: 2000
                 })
             });
 
             if (!response.ok) {
                 const errData = await response.json().catch(() => ({}));
-                if (response.status === 429) throw new Error("Google AI 사용 한도 초과(429). 잠시 후 다시 시도해주세요.");
+                if (response.status === 429) throw new Error("OpenAI 사용 한도 초과(429). 잠시 후 다시 시도해주세요.");
                 throw new Error(errData.error?.message || `API Error: ${response.status}`);
             }
 
             const data = await response.json();
-            const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            const generatedText = data.choices?.[0]?.message?.content;
 
             if (!generatedText) throw new Error("글이 생성되지 않았습니다.");
 

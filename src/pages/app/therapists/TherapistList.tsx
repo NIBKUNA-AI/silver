@@ -73,25 +73,28 @@ export function TherapistList() {
     const handleApprove = async (staff) => {
         if (!confirm(`${staff.name}님을 치료사로 승인하시겠습니까?`)) return;
         try {
-            // ✨ [Secure Approval] RPC 함수 사용 (RLS 우회)
-            const { data, error } = await supabase.rpc('approve_therapist', { target_user_id: staff.id });
+            // ✨ [Direct Update] RPC 의존 제거, 직접 update 시도
+            const { error: profileError } = await supabase
+                .from('user_profiles')
+                .update({ role: 'therapist', status: 'active' })
+                .eq('id', staff.id);
 
-            if (error) throw error;
-            if (data && !data.success) throw new Error(data.message);
-
-            alert('승인이 완료되었습니다!');
-            fetchStaffs();
-        } catch (error) {
-            console.error(error);
-            // 만약 RPC가 없어서 에러가 난다면 기존 방식 시도 (Fallback)
-            if (error.message?.includes('function not found')) {
-                await supabase.from('user_profiles').update({ role: 'therapist', status: 'active' }).eq('id', staff.id);
-                await supabase.from('therapists').update({ color: '#3b82f6' }).eq('id', staff.id);
-                alert('승인이 완료되었습니다! (Legacy)');
-                fetchStaffs();
-                return;
+            if (profileError) {
+                console.error('Profile update error:', profileError);
+                throw profileError;
             }
-            alert('승인 오류: ' + error.message);
+
+            // therapists 테이블 색상 업데이트
+            await supabase
+                .from('therapists')
+                .update({ color: '#3b82f6' })
+                .eq('id', staff.id);
+
+            alert('✅ 승인이 완료되었습니다!');
+            fetchStaffs();
+        } catch (error: any) {
+            console.error('Approval error:', error);
+            alert(`❌ 승인 오류: ${error.message || '알 수 없는 오류'}\n\n관리자에게 문의하세요.`);
         }
     };
 
