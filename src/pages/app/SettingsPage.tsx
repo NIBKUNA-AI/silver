@@ -363,9 +363,8 @@ function AIBlogGenerateButton() {
                 4. [공감] - [정보3가지] - [안심] 구조로 작성할 것.
             `;
 
-            // ✨ [Gemini API] Client Side Call (Stable Model)
-            // v1beta, gemini-pro 사용 (가장 안정적)
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+            // ✨ [Gemini API] v1 + gemini-2.0-flash-lite (무료, 최신 지원 모델)
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
