@@ -10,7 +10,7 @@
  * 이 파일의 UI/UX 설계 및 데이터 연동 로직은 독자적인 기술과
  * 예술적 영감을 바탕으로 구축되었습니다.
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase, setRememberMe, getRememberMe } from '@/lib/supabase';
 import { Helmet } from 'react-helmet-async';
@@ -58,6 +58,30 @@ export function Login() {
     const [error, setError] = useState<string | null>(null);
     const [rememberMe, setRememberMeState] = useState(getRememberMe()); // ✨ 로그인 유지 체크박스
     const navigate = useNavigate();
+
+    // ✨ [이미 로그인된 유저 처리]
+    useEffect(() => {
+        async function checkSession() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                const { data: profile } = await supabase
+                    .from('user_profiles')
+                    .select('role, center_id, status')
+                    .eq('id', session.user.id)
+                    .maybeSingle();
+
+                if (profile?.center_id) {
+                    if (profile.role === 'admin' || profile.role === 'super_admin') navigate('/app/dashboard');
+                    else if (profile.role === 'therapist') navigate('/app/schedule');
+                    else navigate('/parent/home');
+                } else {
+                    // 프로필 없으면 가입 페이지로 (새로운 구글 유저 등)
+                    navigate('/register');
+                }
+            }
+        }
+        checkSession();
+    }, [navigate]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -266,7 +290,7 @@ export function Login() {
                                 onClick={async () => {
                                     await supabase.auth.signInWithOAuth({
                                         provider: 'google',
-                                        options: { redirectTo: `${window.location.origin}/register` }
+                                        options: { redirectTo: `${window.location.origin}/login` }
                                     });
                                 }}
                                 className={cn(
@@ -285,7 +309,7 @@ export function Login() {
                                 onClick={async () => {
                                     await supabase.auth.signInWithOAuth({
                                         provider: 'kakao',
-                                        options: { redirectTo: `${window.location.origin}/register` }
+                                        options: { redirectTo: `${window.location.origin}/login` }
                                     });
                                 }}
                                 className="flex w-full items-center justify-center gap-3 py-3.5 px-4 rounded-2xl font-bold text-sm transition-all hover:scale-[1.02] bg-[#FEE500] text-[#3C1E1E] hover:bg-[#FDD800]"
