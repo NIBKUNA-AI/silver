@@ -193,44 +193,83 @@ export function TherapistList() {
             };
 
             if (editingId) {
-                // 1. therapists 테이블 업데이트
-                const { error: therapistError } = await supabase
-                    .from('therapists')
-                    .update(therapistPayload)
-                    .eq('id', editingId);
+                // ✨ [Fix] 수정 시에도 ID 매핑 확인 (Foreign Key 오류 해결 핵심)
+                // 1. 실제 가입된 프로필이 있는지 확인
+                const { data: realProfile } = await supabase
+                    .from('user_profiles')
+                    .select('id')
+                    .eq('email', formData.email)
+                    .maybeSingle();
 
-                if (therapistError) {
-                    console.error('Therapist update error:', therapistError);
-                    throw therapistError;
+                let targetId = editingId;
+                let isMergeNeeded = false;
+
+                if (realProfile) {
+                    // 실제 가입된 계정이 있는데, 우리가 수정하려는 ID(수동등록 ID)와 다르다면? -> 통합 필요
+                    if (realProfile.id !== editingId) {
+                        console.log('Detected Manual vs Real ID mismatch in Edit. Merging...', editingId, '->', realProfile.id);
+                        isMergeNeeded = true;
+                        targetId = realProfile.id; // 타겟 ID 교체
+                    }
                 }
 
-                // 2. user_profiles 테이블 업데이트 (권한 변경)
+                // 2. Therapists 테이블 업데이트 (일단 기존 ID로 시도하거나, 병합 로직에 맡김)
+                // 병합이 필요한 경우 RPC 내부에서 처리하므로 여기서는 병합이 불필요한 경우만 업데이트
+                if (!isMergeNeeded) {
+                    const { error: therapistError } = await supabase
+                        .from('therapists')
+                        .update(therapistPayload)
+                        .eq('id', editingId);
+
+                    if (therapistError) throw therapistError;
+                }
+
+                // 3. 권한 변경 (RPC 사용)
                 let dbRole = formData.system_role;
                 let dbStatus = 'active';
-
                 if (formData.system_role === 'retired') {
                     dbStatus = 'inactive';
                     dbRole = 'therapist';
                 }
 
-                // ✨ RPC 호출 (Upsert 지원) - 빈 문자열 fallback 추가 + 오버로딩 지원
-                const { data: rpcData, error: rpcError } = await supabase
-                    .rpc('update_user_role_safe', {
-                        target_user_id: editingId,
-                        new_role: dbRole,
-                        new_status: dbStatus,
-                        user_email: formData.email || '',
-                        user_name: formData.name || ''
-                    });
+                if (isMergeNeeded) {
+                    // ✨ [Merge] 병합 + 승인/권한변경 RPC 호출
+                    const { data: mergeRes, error: mergeError } = await supabase
+                        .rpc('merge_and_approve_therapist', {
+                            old_therapist_id: editingId,
+                            real_user_id: targetId,
+                            user_email: formData.email,
+                            user_name: formData.name
+                        });
 
-                if (rpcError) {
-                    console.error('Role update RPC error:', rpcError);
-                    alert('권한 변경 실패 (RPC): ' + rpcError.message);
-                } else if (rpcData && !rpcData.success) {
-                    console.error('Role update failed:', rpcData.message);
-                    alert('권한 변경 실패: ' + rpcData.message);
+                    if (mergeError) throw mergeError;
+                    if (mergeRes && !mergeRes.success) throw new Error(mergeRes.message);
+
+                    alert('✅ 계정이 통합되어 권한이 변경되었습니다.');
                 } else {
-                    alert('✅ 권한이 정상적으로 변경되었습니다.');
+                    // ✨ [Standard Update] 일반적인 권한 변경
+                    const { data: rpcData, error: rpcError } = await supabase
+                        .rpc('update_user_role_safe', {
+                            target_user_id: editingId,
+                            new_role: dbRole,
+                            new_status: dbStatus,
+                            user_email: formData.email || '',
+                            user_name: formData.name || ''
+                        });
+
+                    if (rpcError) {
+                        console.error('Role update RPC error:', rpcError);
+                        // FK Error Check
+                        if (rpcError.message?.includes('foreign key constraint')) {
+                            alert('❌ 권한 변경 실패: 해당 이메일로 가입된 유저가 없습니다.\n(회원가입 후 권한을 변경해주세요)');
+                        } else {
+                            alert('권한 변경 실패 (RPC): ' + rpcError.message);
+                        }
+                    } else if (rpcData && !rpcData.success) {
+                        alert('권한 변경 실패: ' + rpcData.message);
+                    } else {
+                        alert('✅ 권한이 정상적으로 변경되었습니다.');
+                    }
                 }
             } else {
                 // ✨ [직접 등록] 새 직원 등록 시 therapists에만 추가
@@ -241,7 +280,7 @@ export function TherapistList() {
             setIsModalOpen(false);
             setEditingId(null);
             fetchStaffs();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Save error:', error);
             alert('❌ 저장 실패: ' + error.message);
         }
