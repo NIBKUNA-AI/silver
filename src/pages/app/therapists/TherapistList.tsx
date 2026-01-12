@@ -72,27 +72,52 @@ export function TherapistList() {
 
     const handleApprove = async (staff) => {
         if (!confirm(`${staff.name}님을 치료사로 승인하시겠습니까?`)) return;
-        try {
-            // ✨ [Secure Approval] RPC 함수 사용 (RLS 우회)
-            const { data, error } = await supabase.rpc('approve_therapist', { target_user_id: staff.id });
 
-            if (error) throw error;
-            if (data && !data.success) throw new Error(data.message);
+        console.log('Starting approval process for:', staff.id);
+
+        try {
+            // ✨ [Direct Update] 과거 정상 작동 코드 복원 (RPC 미사용)
+            // 1. user_profiles 업데이트
+            const { error: profileError } = await supabase
+                .from('user_profiles')
+                .update({ role: 'therapist', status: 'active' })
+                .eq('id', staff.id);
+
+            if (profileError) {
+                console.error("Profile update error:", profileError);
+                throw profileError;
+            }
+
+            // 2. therapists 업데이트
+            const { error: therapistError } = await supabase
+                .from('therapists')
+                .update({ color: '#3b82f6' })
+                .eq('id', staff.id);
+
+            if (therapistError) {
+                console.error("Therapist update error:", therapistError);
+                throw therapistError;
+            }
+
+            // 3. ✨ [Fix] 알림 센터에서 해당 유저의 가입 요청 알림 삭제
+            // (에러가 나도 진행되도록 try-catch 감쌈)
+            try {
+                await supabase
+                    .from('admin_notifications')
+                    .delete()
+                    .eq('user_id', staff.id)
+                    .eq('type', 'new_user');
+            } catch (notifyError) {
+                console.warn('알림 삭제 실패 (무시됨):', notifyError);
+            }
 
             alert('✅ 승인이 완료되었습니다!');
-            // DB 반영 시간 벌기
-            setTimeout(() => {
-                fetchStaffs();
-            }, 1000);
+            fetchStaffs(); // 즉시 갱신
 
         } catch (error: any) {
             console.error('Approval error:', error);
-            // 만약 RPC가 없어서 에러가 난다면 (SQL 미실행 등)
-            if (error.message?.includes('function not found')) {
-                alert('❌ 서버 함수(RPC)가 없습니다. Supabase SQL Editor에서 스크립트를 실행해주세요.');
-                return;
-            }
-            alert(`❌ 승인 오류: ${error.message || '알 수 없는 오류'}`);
+            // 권한(RLS) 에러일 경우 구체적 안내
+            alert(`❌ 승인 오류 발생!\n\nDB 권한 문제일 가능성이 높습니다.\n\n[해결 방법]\nSupabase SQL Editor에서 'database/auto_approve_and_fix_rls.sql' 파일을 실행해주세요.\n\n에러 상세: ${error.message}`);
         }
     };
 
@@ -105,6 +130,14 @@ export function TherapistList() {
             await supabase.from('therapists').delete().eq('id', staff.id);
             // 프로필 상태도 거절로 변경 (선택 사항)
             await supabase.from('user_profiles').update({ status: 'rejected' }).eq('id', staff.id);
+
+            // 3. ✨ [Fix] 거절 시에도 알림 삭제
+            await supabase
+                .from('admin_notifications')
+                .delete()
+                .eq('user_id', staff.id)
+                .eq('type', 'new_user');
+
             alert('데이터가 삭제되었습니다.');
             fetchStaffs();
         } catch (error) {
@@ -129,12 +162,23 @@ export function TherapistList() {
                 await supabase.from('therapists').update(therapistPayload).eq('id', editingId);
 
                 // ✨ [권한 부여 시 자동 승인] 관리자, 치료사, 직원 부여 시 status=active로 변경
+                // ✨ [퇴사자 처리] retired 역할이면 status를 'inactive'로 변경
                 const profileUpdates: any = { role: formData.system_role };
                 if (['admin', 'therapist', 'staff'].includes(formData.system_role)) {
                     profileUpdates.status = 'active';
+                } else if (formData.system_role === 'retired') {
+                    profileUpdates.status = 'inactive';
                 }
-                await supabase.from('user_profiles').update(profileUpdates).eq('id', editingId);
+
+                // user_profiles가 없을 수도 있으므로 upsert 사용
+                await supabase.from('user_profiles').upsert({
+                    id: editingId,
+                    email: formData.email,
+                    name: formData.name,
+                    ...profileUpdates
+                }, { onConflict: 'id' });
             } else {
+                // ✨ [직접 등록] 새 직원 등록 시 therapists에만 추가 (user_profiles는 회원가입 시 생성됨)
                 await supabase.from('therapists').insert([therapistPayload]);
             }
 

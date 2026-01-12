@@ -19,23 +19,14 @@ serve(async (req: Request) => {
         const requestData = await req.json().catch(() => ({}));
         const { topic, keyword, center_name, region, openai_api_key } = requestData;
 
-        // ✨ [Critical Fix] 사용자가 입력한 OpenAI API KEY 사용
-        const apiKey = openai_api_key;
-
-        if (!apiKey) {
-            console.error("Missing API Key");
-            return new Response(
-                JSON.stringify({ error: "OpenAI API 키가 설정되지 않았습니다. 관리자 페이지에서 키를 입력해주세요." }),
-                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
-        }
+        // OpenAI Key & Google Key (Env or Request)
+        const openAIKey = openai_api_key;
+        const googleApiKey = Deno.env.get('GOOGLE_API_KEY') || requestData.google_api_key;
 
         const subject = topic || keyword || '아동 발달';
-        console.log(`[Start] Generating blog post for subject: ${subject} using OpenAI`);
+        console.log(`[Start] Generating blog post for subject: ${subject}`);
 
-        // 프롬프트 준비
         const systemPrompt = `당신은 ${region || '지역'}에서 20년 이상 아동 발달 센터를 운영해온 베테랑 원장님입니다. 걱정하는 부모님을 안심시키고, 신뢰감 있는 조언을 주는 따뜻한 톤앤매너로 블로그 글을 작성해주세요.`;
-
         const userPrompt = `
             [글 작성 정보]
             - 주제: ${subject}
@@ -55,50 +46,101 @@ serve(async (req: Request) => {
                - [하단바]: 센터 정보 및 문의처 포함
         `;
 
-        // OpenAI API 호출 (GPT-4o-mini 사용, 가성비 최적)
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: 'gpt-4o-mini', // or 'gpt-3.5-turbo'
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userPrompt }
-                ],
-                temperature: 0.7,
-            }),
-        });
+        let generatedText = '';
+        let usedModel = '';
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error("[OpenAI Error]", errorData);
+        // 1️⃣ Try OpenAI First (if key exists)
+        let openAIError = null;
+        if (openAIKey) {
+            try {
+                console.log("Attempting OpenAI...");
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${openAIKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: userPrompt }
+                        ],
+                        temperature: 0.7,
+                    }),
+                });
 
-            // 429 에러 처리
-            if (response.status === 429) {
+                if (response.ok) {
+                    const data = await response.json();
+                    generatedText = data.choices?.[0]?.message?.content;
+                    usedModel = 'gpt-4o-mini';
+                } else {
+                    const errData = await response.json().catch(() => ({}));
+                    console.error("OpenAI Error:", response.status, errData);
+                    // If 429, we will try Gemini
+                    if (response.status === 429) {
+                        openAIError = "OpenAI Limit Exceeded";
+                    } else {
+                        throw new Error(`OpenAI Error: ${errData.error?.message || response.status}`);
+                    }
+                }
+            } catch (e) {
+                console.error("OpenAI Exception:", e);
+                openAIError = e.message;
+            }
+        } else {
+            openAIError = "No OpenAI Key provided";
+        }
+
+        // 2️⃣ Fallback to Gemini (if OpenAI failed or missing, and Gemini Key exists)
+        if ((!generatedText || openAIError) && googleApiKey) {
+            console.log("Attempting Gemini fallback...");
+            try {
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${googleApiKey}`;
+                const geminiResponse = await fetch(geminiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }]
+                        }]
+                    })
+                });
+
+                if (geminiResponse.ok) {
+                    const data = await geminiResponse.json();
+                    generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    usedModel = 'gemini-pro';
+                    console.log("Gemini Success!");
+                } else {
+                    const errData = await geminiResponse.json();
+                    console.error("Gemini Error:", errData);
+                    throw new Error(`Gemini Error: ${JSON.stringify(errData)}`);
+                }
+            } catch (e) {
+                console.error("Gemini Exception:", e);
+                // If both failed, throw error
+                throw new Error(`AI Generation Failed. OpenAI: ${openAIError}, Gemini: ${e.message}`);
+            }
+        }
+
+        // If still no text
+        if (!generatedText) {
+            // Provide specific advice based on error
+            if (openAIError === "OpenAI Limit Exceeded") {
                 return new Response(
                     JSON.stringify({
-                        error: "OpenAI 이용 한도 초과(429). 결제 수단을 등록했는지 확인해주세요.",
-                        details: errorData
+                        error: "OpenAI 한도 초과(429). 무료로 이용하려면 Supabase Secrets에 'GOOGLE_API_KEY'를 설정하여 Gemini를 사용하세요.",
+                        details: openAIError
                     }),
                     { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
                 );
             }
-
-            throw new Error(errorData.error?.message || `OpenAI API Error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const generatedText = data.choices?.[0]?.message?.content;
-
-        if (!generatedText) {
-            throw new Error("생성된 텍스트가 없습니다.");
+            throw new Error(`Generation failed. OpenAI Status: ${openAIError}`);
         }
 
         return new Response(
-            JSON.stringify({ post: generatedText, usedModel: 'gpt-4o-mini' }),
+            JSON.stringify({ post: generatedText, usedModel }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
 

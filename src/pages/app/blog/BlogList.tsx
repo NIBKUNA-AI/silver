@@ -21,10 +21,28 @@ export default function BlogList() {
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
-    // ✨ 데이터 로딩 로직을 별도 함수로 분리하여 재사용성 강화
+    // ✨ [Fix] 함수명 변경 (loadBlogPosts) - 캐시 충돌 방지
+    const loadBlogPosts = useCallback(async () => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('blog_posts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setPosts(data || []);
+        } catch (error) {
+            console.error('글 목록 로딩 실패:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    // ✨ 데이터 로딩 로직
     useEffect(() => {
-        fetchPosts();
-    }, [fetchPosts]);
+        loadBlogPosts();
+    }, [loadBlogPosts]);
 
     const handleDelete = async (id, title) => {
         if (!confirm(`"${title}" 글을 정말 삭제하시겠습니까?`)) return;
@@ -53,7 +71,7 @@ export default function BlogList() {
                     <p className="text-slate-500 font-medium">홈페이지에 노출되는 모든 포스팅을 관리합니다.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button onClick={fetchPosts} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-slate-900 transition-all shadow-sm">
+                    <button onClick={loadBlogPosts} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-slate-900 transition-all shadow-sm">
                         <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
                     </button>
                     <Link to="/app/blog/new" className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95">
