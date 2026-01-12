@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isSuperAdmin, SUPER_ADMIN_EMAIL } from '@/config/superAdmin';
+import { Helmet } from 'react-helmet-async';
 
 const COLORS = [
     '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981',
@@ -223,6 +224,9 @@ export function TherapistList() {
 
     return (
         <div className="space-y-6 pb-20 p-8 bg-slate-50/50 min-h-screen">
+            <Helmet>
+                <title>직원 및 권한 관리 - 자라다 Admin</title>
+            </Helmet>
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-slate-900 tracking-tight">직원 및 권한 관리</h1>
