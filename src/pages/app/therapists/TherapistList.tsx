@@ -58,8 +58,9 @@ export function TherapistList() {
                 const profile = profileData?.find(p => p.id === t.id);
                 return {
                     ...t,
-                    system_role: profile?.role || 'parent',
-                    system_status: profile?.status || 'pending' // 기본값: pending
+                    system_role: profile?.role || 'therapist',
+                    // ✨ [Fix] 프로필이 없으면(직접 등록) 'invited', 있으면 실제 상태 사용
+                    system_status: profile ? profile.status : 'invited'
                 };
             });
 
@@ -218,9 +219,12 @@ export function TherapistList() {
         fetchStaffs();
     };
 
-    // ✨ [Fix] status 기준으로 승인 대기/완료 구분 (role이 아니라 status로!)
-    const pendingStaffs = staffs.filter(s => s.system_status === 'pending' || !s.system_status);
-    const approvedStaffs = staffs.filter(s => s.system_status === 'active').filter(s => s.name.includes(searchTerm));
+    // ✨ [Fix] status 기준으로 승인 대기/완료 구분
+    // invited: 직접 등록됨 (승인 불필요, 가입 대기중)
+    // pending: 가입함 (승인 필요)
+    // active: 승인됨
+    const pendingStaffs = staffs.filter(s => s.system_status === 'pending');
+    const approvedStaffs = staffs.filter(s => s.system_status !== 'pending' && s.system_status !== 'rejected').filter(s => s.name.includes(searchTerm));
 
     return (
         <div className="space-y-6 pb-20 p-8 bg-slate-50/50 min-h-screen">
