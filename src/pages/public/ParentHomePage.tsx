@@ -136,12 +136,34 @@ export function ParentHomePage() {
                 }
 
                 // 상담 일지 가져오기
+                // ✨ [FIX] 상담 일지(실제 성장 리포트) 가져오기
+                // consultations(문의)가 아닌 development_assessments(평가) + counseling_logs(내용) 조회
                 const { data: logs } = await supabase
-                    .from('consultations')
-                    .select(`*, therapists:therapist_id (name)`)
+                    .from('development_assessments')
+                    .select(`
+                        id,
+                        created_at,
+                        score_communication, score_social, score_cognitive, score_motor, score_adaptive,
+                        evaluation_content,
+                        therapists:therapist_id (name),
+                        counseling_logs (content)
+                    `)
                     .eq('child_id', child.id)
                     .order('created_at', { ascending: false });
-                setAllLogs(logs || []);
+
+                // UI에 맞게 데이터 매핑
+                const formattedLogs = logs?.map(log => ({
+                    ...log,
+                    content: log.evaluation_content || log.counseling_logs?.content || '작성된 내용이 없습니다.',
+                    domain_scores: {
+                        '의사소통': log.score_communication,
+                        '사회성': log.score_social,
+                        '인지': log.score_cognitive,
+                        '운동': log.score_motor,
+                        '적응': log.score_adaptive
+                    }
+                }));
+                setAllLogs(formattedLogs || []);
             } else {
                 // ✨ [초대 코드 모달] 연결된 자녀가 없으면 모달 표시
                 setShowInvitationModal(true);

@@ -51,9 +51,14 @@ export function ConsultationList() {
             const isSuperAdmin = role === 'super_admin';
             const isAdmin = role === 'admin' || isSuperAdmin;
 
-            // 이미 평가 작성된 일정의 ID 수집 (Session Link)
-            const { data: existingAssessments } = await supabase.from('development_assessments').select('log_id');
-            const writtenLogIds = new Set(existingAssessments?.map(a => a.log_id).filter(id => id !== null));
+            // 1. 이미 일지가 작성된 '스케줄 ID' 수집 (교차 검증)
+            // counseling_logs 테이블에서 schedule_id를 가져와야 정확히 매칭됨
+            const { data: writtenLogs } = await supabase
+                .from('counseling_logs')
+                .select('schedule_id')
+                .not('schedule_id', 'is', null);
+
+            const writtenScheduleIds = new Set(writtenLogs?.map(l => l.schedule_id));
 
             // ✨ [FIX] 상태 조건 완화 - 완료됐거나 OR 상담 당일이 지난 일정 모두 포함
             const today = new Date().toISOString().split('T')[0];
@@ -66,8 +71,8 @@ export function ConsultationList() {
             // if (!isAdmin) sessionQuery = sessionQuery.eq('therapist_id', user.id);
             const { data: sessions } = await sessionQuery.order('start_time', { ascending: false });
 
-            // 평가가 아직 작성되지 않은 일정만 표시 (Session 기반 필터링)
-            const pending = sessions?.filter(s => s.children && !writtenLogIds.has(s.id)) || [];
+            // 2. 일지가 없는(ID가 Set에 없는) 스케줄만 필터링
+            const pending = sessions?.filter(s => s.children && !writtenScheduleIds.has(s.id)) || [];
             setTodoChildren(pending);
 
             // 최근 작성된 발달 평가 목록
@@ -109,7 +114,8 @@ export function ConsultationList() {
                     .insert({
                         schedule_id: session.id,
                         therapist_id: session.therapist_id,
-                        child_id: session.child_id, // session.children.id 가 아니라 session.child_id
+                        child_id: session.child_id,
+                        session_date: session.start_time.split('T')[0], // ✨ [Fix] NOT NULL check violation
                         content: '발달 평가 작성을 위해 자동 생성된 기본 일지입니다.',
                         activities: '평가 진행',
                         child_response: '평가 진행',
