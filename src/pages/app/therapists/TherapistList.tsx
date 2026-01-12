@@ -161,35 +161,68 @@ export function TherapistList() {
             };
 
             if (editingId) {
-                await supabase.from('therapists').update(therapistPayload).eq('id', editingId);
+                // 1. therapists 테이블 업데이트
+                const { error: therapistError } = await supabase
+                    .from('therapists')
+                    .update(therapistPayload)
+                    .eq('id', editingId);
 
-                // ✨ [권한 부여 시 자동 승인] 관리자, 치료사, 직원 부여 시 status=active로 변경
-                // ✨ [퇴사자 처리] retired 역할이면 status를 'inactive'로 변경
-                const profileUpdates: any = { role: formData.system_role };
-                if (['admin', 'therapist', 'staff'].includes(formData.system_role)) {
-                    profileUpdates.status = 'active';
-                } else if (formData.system_role === 'retired') {
-                    profileUpdates.status = 'inactive';
+                if (therapistError) {
+                    console.error('Therapist update error:', therapistError);
+                    throw therapistError;
                 }
 
-                // user_profiles가 없을 수도 있으므로 upsert 사용
-                await supabase.from('user_profiles').upsert({
-                    id: editingId,
-                    email: formData.email,
-                    name: formData.name,
-                    ...profileUpdates
-                }, { onConflict: 'id' });
+                // 2. user_profiles 테이블 업데이트 (권한 변경)
+                // ✨ [중요] role 매핑: admin, therapist, staff, retired -> parent (비활성화)
+                let dbRole = formData.system_role;
+                let dbStatus = 'active';
+
+                if (formData.system_role === 'retired') {
+                    dbStatus = 'inactive';
+                    dbRole = 'therapist'; // DB에서는 therapist로 유지하되 status로 구분
+                }
+
+                const { error: profileError } = await supabase
+                    .from('user_profiles')
+                    .update({
+                        role: dbRole,
+                        status: dbStatus,
+                        name: formData.name
+                    })
+                    .eq('id', editingId);
+
+                if (profileError) {
+                    console.error('Profile update error:', profileError);
+                    // upsert 시도 (프로필이 없는 경우)
+                    const { error: upsertError } = await supabase
+                        .from('user_profiles')
+                        .upsert({
+                            id: editingId,
+                            email: formData.email,
+                            name: formData.name,
+                            role: dbRole,
+                            status: dbStatus
+                        }, { onConflict: 'id' });
+
+                    if (upsertError) {
+                        console.error('Profile upsert error:', upsertError);
+                        throw upsertError;
+                    }
+                }
+
+                alert('✅ 권한이 성공적으로 변경되었습니다.');
             } else {
                 // ✨ [직접 등록] 새 직원 등록 시 therapists에만 추가 (user_profiles는 회원가입 시 생성됨)
                 await supabase.from('therapists').insert([therapistPayload]);
+                alert('✅ 직원이 등록되었습니다.');
             }
 
             setIsModalOpen(false);
             setEditingId(null);
             fetchStaffs();
-            alert('저장되었습니다.');
         } catch (error) {
-            alert('저장 실패: ' + error.message);
+            console.error('Save error:', error);
+            alert('❌ 저장 실패: ' + error.message);
         }
     };
 
