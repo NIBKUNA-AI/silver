@@ -123,6 +123,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     const dbRole = (data.role as UserRole) || 'parent';
                     console.log(`[Auth] Role Synced: ${dbRole} (${data.email})`);
 
+                    // ✨ [Security] 퇴사자나 비활성 사용자는 강제로 접근 차단
+                    if (data.status === 'inactive' || data.status === 'banned' || dbRole === 'retired') {
+                        console.warn('[Auth] Blocked inactive user');
+                        setRole(null);
+                        setProfile(null);
+                        if (window.location.pathname.startsWith('/app')) {
+                            alert('접근 권한이 없습니다. (퇴사 또는 계정 비활성화)');
+                            await signOut(); // 강제 로그아웃
+                            window.location.href = '/'; // 홈으로 이동
+                        }
+                        return;
+                    }
+
                     setRole(dbRole);
                     setProfile(data);
 
@@ -136,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         } catch (error) {
             console.error('[Auth] Role fetch error:', error);
-            if (isMounted.current) setRole('parent');
+            if (isMounted.current) setRole('parent'); // 기본값
         } finally {
             if (isMounted.current) {
                 setLoading(false);

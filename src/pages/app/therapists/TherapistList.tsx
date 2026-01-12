@@ -224,12 +224,15 @@ export function TherapistList() {
                     if (therapistError) throw therapistError;
                 }
 
-                // 3. 권한 변경 (RPC 사용)
+                // 3. 권한 변경 (RPC 사용 - MASTER_SYSTEM_FIX.sql에 정의됨)
                 let dbRole = formData.system_role;
                 let dbStatus = 'active';
+
+                // ✨ [Security] 퇴사 처리 시 즉시 비활성화 (권한 박탈 시나리오)
+                // update_user_role_safe RPC 내부에서 user_profiles.role과 therapists.status를 원자적으로 업데이트함
                 if (formData.system_role === 'retired') {
-                    dbStatus = 'inactive';
-                    dbRole = 'therapist';
+                    dbStatus = 'inactive'; // or 'retired' depending on DB constraint, usually 'inactive' for login block
+                    dbRole = 'therapist'; // 퇴사자는 기본 롤로 강등하되 status로 로그인 차단
                 }
 
                 if (isMergeNeeded) {
@@ -247,7 +250,7 @@ export function TherapistList() {
 
                     alert('✅ 계정이 통합되어 권한이 변경되었습니다.');
                 } else {
-                    // ✨ [Standard Update] 일반적인 권한 변경
+                    // ✨ [Standard Update] 일반적인 권한 변경 (Upsert Pattern)
                     const { data: rpcData, error: rpcError } = await supabase
                         .rpc('update_user_role_safe', {
                             target_user_id: editingId,
@@ -268,7 +271,11 @@ export function TherapistList() {
                     } else if (rpcData && !rpcData.success) {
                         alert('권한 변경 실패: ' + rpcData.message);
                     } else {
-                        alert('✅ 권한이 정상적으로 변경되었습니다.');
+                        if (dbStatus === 'inactive') {
+                            alert('✅ 해당 직원의 권한이 즉시 해제되었습니다. (로그인 불가)');
+                        } else {
+                            alert('✅ 권한이 정상적으로 변경되었습니다.');
+                        }
                     }
                 }
             } else {
