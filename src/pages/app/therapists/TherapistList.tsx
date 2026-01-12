@@ -182,35 +182,34 @@ export function TherapistList() {
                     dbRole = 'therapist'; // DB에서는 therapist로 유지하되 status로 구분
                 }
 
-                const { error: profileError } = await supabase
-                    .from('user_profiles')
-                    .update({
+                const { data: rpcData, error: rpcError } = await supabase
+                    .rpc('update_user_role_safe', {
+                        target_user_id: editingId,
+                        new_role: dbRole,
+                        new_status: dbStatus
+                    });
+
+                if (rpcError) {
+                    console.error('Role update RPC error:', rpcError);
+                    alert('권한 변경 실패 (RPC): ' + rpcError.message);
+                } else if (rpcData && !rpcData.success) {
+                    // 실패했다면 프로필이 아예 없는 경우일 수 있음 -> 수동 Insert 시도
+                    const { error: manualInsertError } = await supabase.from('user_profiles').upsert({
+                        id: editingId,
+                        email: formData.email,
+                        name: formData.name,
                         role: dbRole,
-                        status: dbStatus,
-                        name: formData.name
-                    })
-                    .eq('id', editingId);
+                        status: dbStatus
+                    });
 
-                if (profileError) {
-                    console.error('Profile update error:', profileError);
-                    // upsert 시도 (프로필이 없는 경우)
-                    const { error: upsertError } = await supabase
-                        .from('user_profiles')
-                        .upsert({
-                            id: editingId,
-                            email: formData.email,
-                            name: formData.name,
-                            role: dbRole,
-                            status: dbStatus
-                        }, { onConflict: 'id' });
-
-                    if (upsertError) {
-                        console.error('Profile upsert error:', upsertError);
-                        throw upsertError;
+                    if (manualInsertError) {
+                        alert('권한 변경 실패: ' + rpcData.message);
+                    } else {
+                        alert('✅ 권한 변경 및 프로필 생성 완료');
                     }
+                } else {
+                    alert('✅ 권한이 성공적으로 변경되었습니다.');
                 }
-
-                alert('✅ 권한이 성공적으로 변경되었습니다.');
             } else {
                 // ✨ [직접 등록] 새 직원 등록 시 therapists에만 추가 (user_profiles는 회원가입 시 생성됨)
                 await supabase.from('therapists').insert([therapistPayload]);
