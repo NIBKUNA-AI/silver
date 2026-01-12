@@ -296,10 +296,19 @@ export function Login() {
                             <button
                                 type="button"
                                 onClick={async () => {
-                                    await supabase.auth.signInWithOAuth({
-                                        provider: 'google',
-                                        options: { redirectTo: `${window.location.origin}/login` }
-                                    });
+                                    try {
+                                        const { error } = await supabase.auth.signInWithOAuth({
+                                            provider: 'google',
+                                            options: { redirectTo: `${window.location.origin}/login` }
+                                        });
+                                        if (error) {
+                                            console.error('Google OAuth error:', error);
+                                            alert('Google 로그인 오류: ' + error.message);
+                                        }
+                                    } catch (err: any) {
+                                        console.error('Google OAuth exception:', err);
+                                        alert('Google 로그인 오류: ' + err.message);
+                                    }
                                 }}
                                 className={cn(
                                     "flex w-full items-center justify-center gap-3 py-3.5 px-4 rounded-2xl border-2 font-bold text-sm transition-all hover:scale-[1.02]",
@@ -315,10 +324,19 @@ export function Login() {
                             <button
                                 type="button"
                                 onClick={async () => {
-                                    await supabase.auth.signInWithOAuth({
-                                        provider: 'kakao',
-                                        options: { redirectTo: `${window.location.origin}/login` }
-                                    });
+                                    try {
+                                        const { error } = await supabase.auth.signInWithOAuth({
+                                            provider: 'kakao',
+                                            options: { redirectTo: `${window.location.origin}/login` }
+                                        });
+                                        if (error) {
+                                            console.error('Kakao OAuth error:', error);
+                                            alert('카카오 로그인 오류: ' + error.message);
+                                        }
+                                    } catch (err: any) {
+                                        console.error('Kakao OAuth exception:', err);
+                                        alert('카카오 로그인 오류: ' + err.message);
+                                    }
                                 }}
                                 className="flex w-full items-center justify-center gap-3 py-3.5 px-4 rounded-2xl font-bold text-sm transition-all hover:scale-[1.02] bg-[#FEE500] text-[#3C1E1E] hover:bg-[#FDD800]"
                             >
