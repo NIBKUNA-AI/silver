@@ -97,6 +97,7 @@ export function Header() {
         { name: '홈', href: '/' },
         { name: '센터 소개', href: '/about' },
         { name: '프로그램', href: '/programs' },
+        { name: '블로그', href: '/blog' },
         { name: '문의하기', href: '/contact' },
     ];
 
@@ -185,8 +186,12 @@ export function Header() {
                             {isDark ? Icons.sun("w-5 h-5") : Icons.moon("w-5 h-5")}
                         </button>
                         <button
-                            className={cn("p-2", isDark ? "text-slate-400" : "text-muted-foreground")}
+                            className={cn(
+                                "p-2 rounded-md transition-colors",
+                                isDark ? "text-slate-200 hover:bg-slate-800" : "text-slate-800 hover:bg-slate-100"
+                            )}
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            aria-label="메뉴"
                         >
                             {isMenuOpen ? Icons.close("w-6 h-6") : Icons.menu("w-6 h-6")}
                         </button>
