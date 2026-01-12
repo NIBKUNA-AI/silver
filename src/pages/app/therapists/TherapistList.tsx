@@ -214,15 +214,36 @@ export function TherapistList() {
             alert('⚠️ 최상위 관리자 계정은 삭제할 수 없습니다.');
             return;
         }
-        if (!confirm('직원 목록에서 완전히 삭제하시겠습니까?')) return;
-        await supabase.from('therapists').delete().eq('id', id);
-        fetchStaffs();
+
+        if (!confirm('직원 목록에서 완전히 삭제하시겠습니까?\n(계정도 함께 삭제되어 재가입이 가능해집니다)')) return;
+
+        try {
+            // ✨ [Fix] RPC를 사용하여 auth.users까지 완전 삭제
+            const { error } = await supabase.rpc('delete_user_completely', { target_user_id: id });
+
+            if (error) {
+                console.error('Delete RPC Error:', error);
+                // RPC가 없거나 실패하면 기존 방식(테이블 삭제) 시도 (Fallback)
+                await supabase.from('therapists').delete().eq('id', id);
+                await supabase.from('user_profiles').delete().eq('id', id);
+                throw error;
+            }
+
+            alert('✅ 직원이 완전히 삭제되었습니다.');
+            fetchStaffs();
+        } catch (error) {
+            console.error("Deletion error:", error);
+            // alert('삭제 중 오류가 발생했습니다 (새로고침 후 확인해주세요).');
+            // 에러가 나도 화면 갱신 시도
+            fetchStaffs();
+        }
     };
 
-    // ✨ [Fix] status 기준으로 승인 대기/완료 구분
+    // ✨ [Fix] status 기준으로 승인 대기/완료 구분 (role이 아니라 status로!)
     // invited: 직접 등록됨 (승인 불필요, 가입 대기중)
     // pending: 가입함 (승인 필요)
     // active: 승인됨
+    // rejected: 거절됨 (숨김)
     const pendingStaffs = staffs.filter(s => s.system_status === 'pending');
     const approvedStaffs = staffs.filter(s => s.system_status !== 'pending' && s.system_status !== 'rejected').filter(s => s.name.includes(searchTerm));
 
