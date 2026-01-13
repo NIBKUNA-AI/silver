@@ -170,16 +170,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                     localStorage.setItem(ROLE_CACHE_KEY, dbRole);
                 } else {
-                    // ✨ [Retry Logic] 프로필이 없으면 즉시 'parent'로 확정하지 않고 재시도 (트리거 지연 대응)
-                    if (retryCount < 3) {
-                        console.log(`[Auth] Profile not found, retrying... (${retryCount + 1}/3)`);
-                        setTimeout(() => fetchRole(forceUpdate, retryCount + 1), 1000); // 1초 대기 후 재시도
-                        return; // 리턴하여 finally 블록의 loading(false)가 실행되지 않도록 주의 (비동기라 finally는 실행되지만, 재귀 호출이 상태를 유지해야 함)
-                        // 하지만 finally는 무조건 실행되므로 구조 변경 필요.
+                    // ✨ [Sync Logic] 프로필이 없으면 'Ghost User'일 수 있으므로 동기화 시도
+                    console.log('[Auth] Profile missing, attempting sync_profile_by_email...');
+                    const { data: syncSuccess, error: syncError } = await supabase.rpc('sync_profile_by_email');
+
+                    if (syncSuccess) {
+                        console.log('[Auth] Sync successful! Retrying fetch...');
+                        fetchRole(true, retryCount + 1); // 재시도
+                        return;
                     }
 
-                    console.warn('[Auth] No user_profile found after retries, defaulting to parent');
-                    setRole('parent');
+                    // ✨ [Retry Logic] 동기화도 실패했다면, 네트워크 지연일 수 있으므로 몇 번 더 재시도
+                    if (retryCount < 3) {
+                        console.log(`[Auth] Still missing, retrying... (${retryCount + 1}/3)`);
+                        setTimeout(() => fetchRole(forceUpdate, retryCount + 1), 1000);
+                        return;
+                    }
+
+                    // 🚨 [CRITICAL] 절대 parent로 기본 설정하지 않음 (사용자 요청)
+                    // 대신 명시적인 에러 상태로 처리하거나 로그아웃 유도
+                    console.error('[Auth] Critical: No profile found for authenticated user.');
+                    alert('사용자 정보를 찾을 수 없습니다. (관리자에게 문의하세요)\nYour Profile is missing.');
+                    // setRole('parent'); // ❌ REMOVED
+                    setRole(null); // 권한 없음 상태 유지
+                    setLoading(false); // 로딩은 끄고 에러 화면 등으로 처리해야 함 (ProtectedRoute가 막음)
                 }
             }
         } catch (error) {
