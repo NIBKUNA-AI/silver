@@ -17,13 +17,13 @@ export interface CenterBranding {
 
 const DEFAULT_BRANDING: CenterBranding = {
     id: '',
-    name: '자라다 아동발달센터',
+    name: 'Zarada', // Default Platform Name
     logo_url: null,
-    phone: '00-0000-0000',
-    address: '',
-    email: '',
-    weekday_hours: '09:00 - 19:00',
-    saturday_hours: '09:00 - 16:00',
+    phone: '02-1234-5678', // Jamsil Fallback
+    address: '서울 송파구 올림픽로 300 롯데월드타워 10층', // Jamsil Fallback
+    email: 'help@zarada.co.kr',
+    weekday_hours: '09:00 - 20:00',
+    saturday_hours: '09:00 - 17:00',
     holiday_text: '일요일/공휴일 휴무',
     settings: {}
 };

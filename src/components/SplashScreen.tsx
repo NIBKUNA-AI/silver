@@ -79,28 +79,10 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, ease: 'easeOut' }}
                     >
-                        {/* Logo Text */}
+                        {/* Logo Text Only - Clean */}
                         <h1 className="text-5xl md:text-6xl font-black tracking-tight text-slate-900">
                             <span className="text-indigo-600">Z</span>arada
                         </h1>
-
-                        {/* Simple Divider */}
-                        <motion.div
-                            className="w-12 h-0.5 bg-slate-200 mt-4 rounded-full"
-                            initial={{ scaleX: 0 }}
-                            animate={{ scaleX: 1 }}
-                            transition={{ duration: 0.5, delay: 0.3 }}
-                        />
-
-                        {/* Center Name - Clean Style */}
-                        <motion.p
-                            className="mt-4 text-lg font-medium text-slate-500 tracking-wide"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.5, delay: 0.5 }}
-                        >
-                            {centerName || '아동발달센터'}
-                        </motion.p>
                     </motion.div>
                 </motion.div>
             )}
