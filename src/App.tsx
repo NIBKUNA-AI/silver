@@ -56,6 +56,7 @@ import { Settlement } from '@/pages/app/Settlement';
 import { ConsultationList } from '@/pages/app/consultations/ConsultationList';
 import { SettingsPage } from '@/pages/app/SettingsPage';
 import { CenterList } from '@/pages/app/admin/CenterList';
+import { CenterDetailPage } from '@/pages/app/admin/CenterDetailPage';
 import { SplashScreen } from '@/components/SplashScreen';
 import { useState, useEffect } from 'react';
 
@@ -218,6 +219,11 @@ function App() {
                 <Route path="admin/centers" element={
                   <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
                     <CenterList />
+                  </ProtectedRoute>
+                } />
+                <Route path="admin/centers/:centerId" element={
+                  <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                    <CenterDetailPage />
                   </ProtectedRoute>
                 } />
               </Route>

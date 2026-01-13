@@ -296,15 +296,24 @@ Remember, every child is unique. Support them with patience and love.
                         <ImageUploader
                             currentImage={formData.cover_image_url}
                             onUploadComplete={(url) => setFormData({ ...formData, cover_image_url: url })}
-                            bucketName="images" // Assuming 'images' bucket exists
+                            bucketName="images"
                         />
                     </div>
 
                     {/* SEO Meta */}
                     <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm space-y-4">
-                        <h3 className="text-lg font-black text-slate-800 mb-2 flex items-center gap-2">
-                            SEO 설정
-                        </h3>
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                                SEO 설정
+                            </h3>
+                            <button
+                                onClick={() => alert("SEO 자동 생성 기능이 곧 연결됩니다. (AI Quota 확인 후)")}
+                                type="button"
+                                className="text-xs font-bold px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
+                            >
+                                ✨ AI 자동 완성
+                            </button>
+                        </div>
                         <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1">Meta Title (검색 결과 제목)</label>
                             <input

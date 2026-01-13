@@ -189,6 +189,7 @@ export function BlogPostPage() {
             <ConsultationSurveyModal
                 isOpen={isConsultModalOpen}
                 onClose={() => setIsConsultModalOpen(false)}
+                centerId={(post as any)?.center_id || centerInfo?.id} // ✨ Pass centerId from post or fallback
             />
 
             {post && (

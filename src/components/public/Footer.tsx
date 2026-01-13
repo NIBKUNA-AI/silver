@@ -20,11 +20,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { useCenterBranding } from '@/hooks/useCenterBranding';
-
-// ... (Icons codes remain same, omitted for brevity if possible, or I must include them if inside file)
-// Since replace_file_content replaces a block, I should just replace the component body or the imports + component start.
-
-// Let's replace imports and the component start.
+import { useAuth } from '@/contexts/AuthContext';
 
 // Premium SNS Icons with hover effects
 function SnsIcon({ href, children, label }: { href: string; children: React.ReactNode; label: string }) {
@@ -46,10 +42,9 @@ function SnsIcon({ href, children, label }: { href: string; children: React.Reac
     );
 }
 
-// ... Icon components assumed to be stable ... 
-
 export function Footer() {
     const { branding } = useCenterBranding();
+    const { user } = useAuth();
     const { settings } = branding;
 
     const displayCenterName = branding.name;
@@ -94,47 +89,52 @@ export function Footer() {
                         )}
                     </div>
 
-                    {/* Center Info */}
-                    <div className="md:col-span-4 space-y-5">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                            센터 정보
-                        </h3>
-                        <ul className="space-y-4 text-sm">
-                            <li className="flex items-start gap-3 text-slate-600">
-                                <MapPin size={16} className="mt-0.5 shrink-0 text-slate-400" />
-                                <span className="leading-relaxed">{branding.address || '주소를 등록해주세요.'}</span>
-                            </li>
-                            <li className="flex items-center gap-3 text-slate-600">
-                                <Phone size={16} className="shrink-0 text-slate-400" />
-                                <span className="font-semibold">{branding.phone || '00-0000-0000'}</span>
-                            </li>
-                            <li className="flex items-center gap-3 text-slate-600">
-                                <Mail size={16} className="shrink-0 text-slate-400" />
-                                <span>{branding.email || 'contact@center.com'}</span>
-                            </li>
-                        </ul>
-                    </div>
+                    {/* Center Info & Hours - Only visible when Logged In */}
+                    {user && (
+                        <>
+                            {/* Center Info */}
+                            <div className="md:col-span-4 space-y-5">
+                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                                    센터 정보
+                                </h3>
+                                <ul className="space-y-4 text-sm">
+                                    <li className="flex items-start gap-3 text-slate-600">
+                                        <MapPin size={16} className="mt-0.5 shrink-0 text-slate-400" />
+                                        <span className="leading-relaxed">{branding.address || '주소를 등록해주세요.'}</span>
+                                    </li>
+                                    <li className="flex items-center gap-3 text-slate-600">
+                                        <Phone size={16} className="shrink-0 text-slate-400" />
+                                        <span className="font-semibold">{branding.phone || '00-0000-0000'}</span>
+                                    </li>
+                                    <li className="flex items-center gap-3 text-slate-600">
+                                        <Mail size={16} className="shrink-0 text-slate-400" />
+                                        <span>{branding.email || 'contact@center.com'}</span>
+                                    </li>
+                                </ul>
+                            </div>
 
-                    {/* Operating Hours */}
-                    <div className="md:col-span-4 space-y-5">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                            운영 시간
-                        </h3>
-                        <ul className="space-y-3 text-sm">
-                            <li className="flex justify-between text-slate-600 py-2 border-b border-slate-100">
-                                <span className="font-medium">평일</span>
-                                <span className="font-semibold text-slate-800">{branding.weekday_hours || '09:00 - 19:00'}</span>
-                            </li>
-                            <li className="flex justify-between text-slate-600 py-2 border-b border-slate-100">
-                                <span className="font-medium">토요일</span>
-                                <span className="font-semibold text-slate-800">{branding.saturday_hours || '09:00 - 16:00'}</span>
-                            </li>
-                            <li className="flex justify-between text-rose-500 py-2 font-semibold">
-                                <span>휴무</span>
-                                <span>{branding.holiday_text || '일요일/공휴일'}</span>
-                            </li>
-                        </ul>
-                    </div>
+                            {/* Operating Hours */}
+                            <div className="md:col-span-4 space-y-5">
+                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                                    운영 시간
+                                </h3>
+                                <ul className="space-y-3 text-sm">
+                                    <li className="flex justify-between text-slate-600 py-2 border-b border-slate-100">
+                                        <span className="font-medium">평일</span>
+                                        <span className="font-semibold text-slate-800">{branding.weekday_hours || '09:00 - 19:00'}</span>
+                                    </li>
+                                    <li className="flex justify-between text-slate-600 py-2 border-b border-slate-100">
+                                        <span className="font-medium">토요일</span>
+                                        <span className="font-semibold text-slate-800">{branding.saturday_hours || '09:00 - 16:00'}</span>
+                                    </li>
+                                    <li className="flex justify-between text-rose-500 py-2 font-semibold">
+                                        <span>휴무</span>
+                                        <span>{branding.holiday_text || '일요일/공휴일'}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Bottom Bar */}

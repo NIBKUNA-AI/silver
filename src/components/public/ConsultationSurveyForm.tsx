@@ -62,6 +62,7 @@ const Icons = {
 };
 
 interface ConsultationSurveyFormProps {
+    centerId?: string; // ✨ Add centerId prop
     initialData?: {
         childName?: string;
         childBirthDate?: string;
@@ -73,7 +74,7 @@ interface ConsultationSurveyFormProps {
     onSuccess?: () => void;
 }
 
-export function ConsultationSurveyForm({ initialData, onSuccess }: ConsultationSurveyFormProps) {
+export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: ConsultationSurveyFormProps) {
     const { getSource } = useTrafficSource();
     const { theme } = useTheme();
     const isDark = theme === 'dark';
@@ -116,21 +117,21 @@ export function ConsultationSurveyForm({ initialData, onSuccess }: ConsultationS
         setLoading(true);
 
         try {
-            const fullBirthDate = `${birth.year}-${String(birth.month).padStart(2, '0')}-${String(birth.day).padStart(2, '0')}`;
             const mappedGender = formData.child_gender === '남아' ? 'male' :
                 formData.child_gender === '여아' ? 'female' : 'other';
 
-            const { error } = await supabase.from('leads').insert([{
-                parent_name: formData.parent_name,
-                phone: formData.phone,
+            // ✨ [FIX] Submit to 'consultations' table
+            const { error } = await supabase.from('consultations').insert([{
+                center_id: centerId, // From Props
+                guardian_name: formData.parent_name, // Mapped
+                guardian_phone: formData.phone, // Mapped
                 child_name: formData.child_name,
                 child_gender: mappedGender,
-                child_birth_year: parseInt(birth.year),
-                concern: formData.concern,
-                preferred_service: formData.preferred_service,
-                admin_notes: `상세생일: ${fullBirthDate} / 관계: ${formData.relation} / 장애진단: ${formData.diagnosis}`,
-                source: getSource() || 'Direct',
-                status: 'new',
+                // child_birth_year: parseInt(birth.year), // If needed in schema, otherwise omitted or added if schema allows
+                primary_concerns: `${formData.concern}\n\n[관리자 참고] 관계: ${formData.relation} / 장애진단: ${formData.diagnosis}`,
+                preferred_consult_schedule: formData.preferred_service.join(', '), // Joined Array
+                notes: `생년월일: ${birth.year}-${String(birth.month).padStart(2, '0')}-${String(birth.day).padStart(2, '0')} / 유입: ${getSource() || 'Direct'}`,
+                status: 'pending',
                 created_at: new Date().toISOString()
             }]);
 

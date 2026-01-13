@@ -35,6 +35,17 @@ export function SettingsPage() {
     const { user } = useAuth();
     const [saving, setSaving] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [centerId, setCenterId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchCenterId = async () => {
+            if (user) {
+                const { data } = await supabase.from('profiles').select('center_id').eq('id', user.id).single();
+                if (data?.center_id) setCenterId(data.center_id);
+            }
+        };
+        fetchCenterId();
+    }, [user]);
 
     const [searchParams, setSearchParams] = useSearchParams();
     const tabParam = searchParams.get('tab') as TabType | null;
@@ -45,16 +56,22 @@ export function SettingsPage() {
     };
 
     const handleSave = async (key: AdminSettingKey, value: string | null) => {
+        if (!centerId) {
+            alert('센터 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+            return;
+        }
         setSaving(true);
         try {
             const finalValue = (value === "" || value === null) ? null : value;
+            // ✨ [Persistence Fix] Enforce center_id to prevent orphan data
             const { error } = await supabase
                 .from('admin_settings')
                 .upsert({
+                    center_id: centerId,
                     key: key,
                     value: finalValue,
                     updated_at: new Date().toISOString()
-                }, { onConflict: 'key' });
+                }, { onConflict: 'center_id, key' }); // Composite Key Constraint
 
             if (error) throw error;
             if (fetchSettings) await fetchSettings();
@@ -67,10 +84,17 @@ export function SettingsPage() {
     };
 
     const handleSavePrograms = async (newList: ProgramItem[]) => {
+        if (!centerId) return;
         setSaving(true);
         try {
             const jsonValue = JSON.stringify(newList);
-            await supabase.from('admin_settings').upsert({ key: 'programs_list', value: jsonValue, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+            await supabase.from('admin_settings').upsert({
+                center_id: centerId,
+                key: 'programs_list',
+                value: jsonValue,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'center_id, key' });
+
             if (fetchSettings) await fetchSettings();
             alert('프로그램 목록이 즉시 반영되었습니다.');
         } catch (error) {

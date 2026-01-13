@@ -84,29 +84,18 @@ export function Header() {
             <div className="container mx-auto px-4 md:px-6">
                 <div className="flex h-16 items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Link to="/" className={cn("flex items-center gap-2 font-bold text-xl", isDark ? "text-white" : "text-primary")}>
-                            {branding.logo_url ? (
-                                <div className="h-8 min-w-[100px] flex items-center">
-                                    <img
-                                        src={branding.logo_url}
-                                        alt={branding.name}
-                                        className="h-8 w-auto object-contain"
-                                        style={isDark ? { filter: 'brightness(0) invert(1)' } : undefined}
-                                    />
-                                </div>
+                        <Link to="/" className={cn("flex items-center gap-2 font-bold text-xl", isDark ? "text-white" : "text-primary", "group")}>
+                            {user && branding.logo_url ? (
+                                <img
+                                    src={branding.logo_url}
+                                    alt={branding.name}
+                                    className="h-9 w-auto object-contain transition-transform group-hover:scale-105"
+                                    style={isDark ? { filter: 'brightness(0) invert(1)' } : undefined}
+                                />
                             ) : (
-                                <div className="flex items-center gap-1 font-black">
-                                    {branding.name ? (
-                                        <>
-                                            {/* ✨ 'Z' Point Design: First char colored */}
-                                            <span className="text-2xl text-primary">{branding.name.charAt(0)}</span>
-                                            <span className="text-xl">{branding.name.slice(1)}</span>
-                                        </>
-                                    ) : (
-                                        /* Skeleton / Loading State */
-                                        <div className="h-6 w-32 bg-slate-200 animate-pulse rounded"></div>
-                                    )}
-                                </div>
+                                <span className={cn("text-2xl font-black tracking-tighter", isDark ? "text-white group-hover:text-indigo-400" : "text-slate-900 group-hover:text-indigo-600", "transition-colors")} style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                                    <span className={isDark ? "text-indigo-400" : "text-indigo-600"}>Z</span>arada
+                                </span>
                             )}
                         </Link>
                     </div>

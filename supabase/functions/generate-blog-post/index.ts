@@ -113,8 +113,13 @@ serve(async (req: Request) => {
                     usedModel = 'gemini-pro';
                     console.log("Gemini Success!");
                 } else {
-                    const errData = await geminiResponse.json();
+                    const errData = await geminiResponse.json().catch(() => ({}));
                     console.error("Gemini Error:", errData);
+
+                    if (geminiResponse.status === 429) {
+                        throw new Error(`Google Gemini 429: Resource Exhausted (Free Tier Limit)`);
+                    }
+
                     throw new Error(`Gemini Error: ${JSON.stringify(errData)}`);
                 }
             } catch (e) {
@@ -126,11 +131,14 @@ serve(async (req: Request) => {
 
         // If still no text
         if (!generatedText) {
+            const errorType = openAIError?.includes("insufficient_quota") ? "BILLING_LIMIT" : "RATE_LIMIT";
+
             // Provide specific advice based on error
-            if (openAIError === "OpenAI Limit Exceeded") {
+            if (openAIError && (openAIError.includes("Limit Exceeded") || openAIError.includes("429") || openAIError.includes("insufficient_quota"))) {
                 return new Response(
                     JSON.stringify({
-                        error: "OpenAI 한도 초과(429). 무료로 이용하려면 Supabase Secrets에 'GOOGLE_API_KEY'를 설정하여 Gemini를 사용하세요.",
+                        error: "AI 서비스 이용량이 많아 일시적으로 제한되었습니다. (Server Quota)",
+                        code: errorType,
                         details: openAIError
                     }),
                     { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -146,6 +154,19 @@ serve(async (req: Request) => {
 
     } catch (error: any) {
         console.error('Function Error:', error);
+
+        // Handle Gemini 429 explicitly
+        if (error.message.includes('Google Gemini 429') || error.message.includes('Resource Exhausted')) {
+            return new Response(
+                JSON.stringify({
+                    error: "Google AI 사용 한도 초과(429). (무료 티어 제한)",
+                    code: "LIMIT_EXCEEDED",
+                    details: error.message
+                }),
+                { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+        }
+
         return new Response(
             JSON.stringify({ error: error.message }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

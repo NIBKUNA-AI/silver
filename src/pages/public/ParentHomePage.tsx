@@ -263,6 +263,7 @@ export function ParentHomePage() {
             <ConsultationSurveyModal
                 isOpen={isSurveyOpen}
                 onClose={() => setIsSurveyOpen(false)}
+                centerId={childInfo?.center_id} // ✨ Pass centerId from childInfo
                 initialData={{
                     childName: childInfo?.name,
                     childBirthDate: childInfo?.birth_date,

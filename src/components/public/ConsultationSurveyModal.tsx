@@ -15,6 +15,7 @@ import { ConsultationSurveyForm } from './ConsultationSurveyForm';
 interface ConsultationSurveyModalProps {
     isOpen: boolean;
     onClose: () => void;
+    centerId?: string; // ✨ Add centerId prop
     initialData?: {
         childName?: string;
         childBirthDate?: string;
@@ -25,7 +26,7 @@ interface ConsultationSurveyModalProps {
     };
 }
 
-export function ConsultationSurveyModal({ isOpen, onClose, initialData }: ConsultationSurveyModalProps) {
+export function ConsultationSurveyModal({ isOpen, onClose, centerId, initialData }: ConsultationSurveyModalProps) {
     if (!isOpen) return null;
 
     return (
@@ -54,6 +55,7 @@ export function ConsultationSurveyModal({ isOpen, onClose, initialData }: Consul
                 {/* Body (Scrollable) */}
                 <div className="p-8 overflow-y-auto">
                     <ConsultationSurveyForm
+                        centerId={centerId} // ✨ Pass centerId
                         initialData={initialData}
                         onSuccess={() => setTimeout(onClose, 2000)}
                     />

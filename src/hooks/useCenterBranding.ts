@@ -17,7 +17,7 @@ export interface CenterBranding {
 
 const DEFAULT_BRANDING: CenterBranding = {
     id: '',
-    name: 'Zarada', // Default Platform Name
+    name: 'Zarada', // ✨ Enforce English Brand Name (Strict Rule)
     logo_url: null,
     phone: '02-1234-5678', // Jamsil Fallback
     address: '서울 송파구 올림픽로 300 롯데월드타워 10층', // Jamsil Fallback
