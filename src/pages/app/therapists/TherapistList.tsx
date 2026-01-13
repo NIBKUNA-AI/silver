@@ -4,7 +4,7 @@
  * 🎨 Project: Zarada ERP - The Sovereign Canvas
  * 🛠️ Modified by: Gemini AI (for An Uk-bin)
  * 📅 Date: 2026-01-13
- * 🖋️ Description: "삭제 대신 퇴사 처리, 자유로운 권한 변경 기능 추가"
+ * 🖋️ Description: "DB Role 우선 정책 적용 및 권한 변경 로직 최적화"
  */
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -51,12 +51,19 @@ export function TherapistList() {
 
             const mergedData = therapistData?.map(t => {
                 const profile = profileData?.find(p => p.id === t.id || p.email === t.email);
+
+                // ✨ [핵심 수정] DB(user_profiles)의 role을 최우선으로 신뢰합니다.
                 let effectiveRole = profile?.role || 'therapist';
                 let effectiveStatus = profile?.status || 'invited';
 
+                // 퇴사자 상태일 때만 UI 역할을 'retired'로 표시합니다.
+                if (effectiveStatus === 'retired' || effectiveStatus === 'inactive') {
+                    effectiveRole = 'retired';
+                }
+
                 return {
                     ...t,
-                    system_role: effectiveRole,
+                    system_role: effectiveRole, // 이제 DB가 'admin'이면 'admin'으로 정확히 뜹니다.
                     system_status: effectiveStatus
                 };
             });
@@ -69,7 +76,6 @@ export function TherapistList() {
         }
     };
 
-    // ✨ 퇴사 처리 및 복구 로직 (삭제 대체)
     const handleToggleStatus = async (staff) => {
         const isRetired = staff.system_status === 'retired' || staff.system_status === 'inactive';
         const confirmMsg = isRetired
@@ -80,15 +86,12 @@ export function TherapistList() {
 
         try {
             const newStatus = isRetired ? 'active' : 'retired';
-
-            // user_profiles 테이블 상태 업데이트
             const { error } = await supabase
                 .from('user_profiles')
                 .update({ status: newStatus })
                 .eq('email', staff.email);
 
             if (error) throw error;
-
             alert(isRetired ? '✅ 복구되었습니다.' : '✅ 퇴사 처리가 완료되었습니다.');
             fetchStaffs();
         } catch (error) {
@@ -127,15 +130,16 @@ export function TherapistList() {
             };
 
             if (editingId) {
-                // 1. 치료사 정보 수정
+                // 1. therapists 테이블 정보 수정
                 await supabase.from('therapists').update(therapistPayload).eq('id', editingId);
 
-                // 2. [핵심] 권한(role) 직접 변경 반영
-                await supabase.from('user_profiles').update({
+                // 2. [핵심] user_profiles의 권한(role)을 관리자가 선택한 대로 강제 동기화합니다.
+                const { error: profileError } = await supabase.from('user_profiles').update({
                     role: formData.system_role,
                     status: formData.system_role === 'retired' ? 'retired' : 'active'
                 }).eq('email', formData.email);
 
+                if (profileError) throw profileError;
                 alert('✅ 정보 및 권한이 수정되었습니다.');
             } else {
                 await supabase.from('therapists').insert([therapistPayload]);
@@ -174,7 +178,7 @@ export function TherapistList() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-black text-slate-900">직원 및 권한 관리</h1>
-                    <p className="text-slate-500 font-bold">삭제 대신 퇴사 처리로 데이터를 안전하게 관리하세요.</p>
+                    <p className="text-slate-500 font-bold">권한 변경 사항은 DB와 즉시 동기화됩니다.</p>
                 </div>
                 <button onClick={() => { setEditingId(null); setFormData({ name: '', contact: '', email: '', hire_type: 'freelancer', system_role: 'therapist', remarks: '', color: '#3b82f6' }); setIsModalOpen(true); }} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all hover:scale-105 shadow-lg shadow-slate-200">
                     <Plus className="w-5 h-5" /> 직원 직접 등록
@@ -206,7 +210,7 @@ export function TherapistList() {
 
             <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input type="text" placeholder="직원 이름으로 검색..." className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl font-bold shadow-sm focus:ring-2 focus:ring-slate-900 transition-all outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <input type="text" placeholder="직원 이름으로 검색..." className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl font-bold shadow-sm outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -223,6 +227,7 @@ export function TherapistList() {
                                 <div>
                                     <h3 className="font-black text-slate-900 flex items-center gap-2 text-lg">
                                         {staff.name}
+                                        {/* ✨ DB role을 기반으로 배지 색상을 결정합니다. */}
                                         <span className={cn(
                                             "text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider",
                                             staff.system_role === 'admin' ? "bg-rose-100 text-rose-600" : "bg-emerald-100 text-emerald-600",
@@ -266,7 +271,7 @@ export function TherapistList() {
                         <form onSubmit={handleSubmit} className="space-y-5">
                             <div className="space-y-2">
                                 <label className="text-sm font-black text-slate-700 ml-1">이름</label>
-                                <input required className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-none font-bold focus:ring-2 focus:ring-slate-900 transition-all" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                <input required className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-none font-bold outline-none focus:ring-2 focus:ring-slate-900" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -275,7 +280,6 @@ export function TherapistList() {
                                     <select className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-none font-bold focus:ring-2 focus:ring-slate-900" value={formData.system_role} onChange={e => setFormData({ ...formData, system_role: e.target.value })}>
                                         <option value="therapist">치료사 (일반)</option>
                                         <option value="admin">관리자 (Admin)</option>
-                                        <option value="retired">퇴사/중지</option>
                                     </select>
                                 </div>
                                 <div className="space-y-2">
@@ -302,7 +306,7 @@ export function TherapistList() {
                                 </div>
                             </div>
 
-                            <button type="submit" className="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-lg shadow-xl shadow-slate-200 transition-all hover:scale-[1.02] active:scale-95 mt-4">
+                            <button type="submit" className="w-full py-5 bg-slate-900 text-white rounded-[24px] font-black text-lg shadow-xl hover:scale-[1.02] transition-all mt-4">
                                 {editingId ? '변경사항 저장하기' : '직원 등록 완료'}
                             </button>
                         </form>
