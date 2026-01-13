@@ -68,11 +68,15 @@ export function Footer() {
                             {branding.logo_url ? (
                                 <img src={branding.logo_url} alt={branding.name} className="h-10 w-auto" />
                             ) : (
-                                <span
-                                    className="text-3xl font-black tracking-tighter text-slate-800 group-hover:text-indigo-600 transition-colors"
-                                    style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-                                >
-                                    <span className="text-indigo-600">{branding.name.charAt(0)}</span>{branding.name.slice(1)}
+                                <span className="text-3xl font-black tracking-tighter text-slate-900 group-hover:text-indigo-600 transition-colors">
+                                    {branding.name ? (
+                                        <>
+                                            <span className="text-indigo-600 mr-0.5">{branding.name.charAt(0)}</span>
+                                            {branding.name.slice(1)}
+                                        </>
+                                    ) : (
+                                        <div className="h-8 w-32 bg-slate-200 animate-pulse rounded"></div>
+                                    )}
                                 </span>
                             )}
                         </Link>

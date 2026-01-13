@@ -55,6 +55,7 @@ import { Billing } from '@/pages/app/Billing';
 import { Settlement } from '@/pages/app/Settlement';
 import { ConsultationList } from '@/pages/app/consultations/ConsultationList';
 import { SettingsPage } from '@/pages/app/SettingsPage';
+import { CenterList } from '@/pages/app/admin/CenterList';
 import { SplashScreen } from '@/components/SplashScreen';
 import { useState, useEffect } from 'react';
 
@@ -210,6 +211,13 @@ function App() {
                 <Route path="settings" element={
                   <ProtectedRoute allowedRoles={['admin', 'manager']}>
                     <SettingsPage />
+                  </ProtectedRoute>
+                } />
+
+                {/* ✅ 전체 센터 관리 (슈퍼 어드민 전용) */}
+                <Route path="admin/centers" element={
+                  <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                    <CenterList />
                   </ProtectedRoute>
                 } />
               </Route>
