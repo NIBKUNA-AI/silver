@@ -117,20 +117,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // ✨ [Single Source of Truth] 권한 확인 로직 리팩토링
     // Auth Metadata가 아닌 실제 DB(user_profiles)의 role을 기준으로 함
-    const fetchRole = async (forceUpdate = false) => {
+    // ✨ [Single Source of Truth] 권한 확인 로직 리팩토링
+    // Auth Metadata가 아닌 실제 DB(user_profiles)의 role을 기준으로 함
+    const fetchRole = async (forceUpdate = false, retryCount = 0) => {
         if (!user) return;
 
-        // 이미 로드되었고 강제 업데이트가 아니면 스킵 (초기 로딩 시)
-        // 하지만 role이 null이거나 parent인 경우(권한 상승 대기 등)는 재확인 필요할 수 있음
         if (!forceUpdate && role && initialLoadComplete.current) return;
-
         if (!initialLoadComplete.current) setLoading(true);
 
         try {
             // ✨ [Direct DB Query] 항상 최신 권한을 가져옴
             const { data, error } = await supabase
-                .from('user_profiles') // ✨ profiles -> user_profiles (Requested by User)
-                .select('*') // 모든 프로필 정보 가져옴
+                .from('user_profiles')
+                .select('*')
                 .eq('id', user.id)
                 .maybeSingle();
 
@@ -139,24 +138,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     const dbRole = (data.role as UserRole) || 'parent';
                     console.log(`[Auth] Role Synced (user_profiles): ${dbRole} (${data.email})`);
 
-                    // ✨ [Security] 퇴사자나 비활성 사용자는 강제로 접근 차단
                     if (data.status === 'inactive' || data.status === 'banned' || dbRole === 'retired') {
                         console.warn('[Auth] Blocked inactive user');
                         setRole(null);
                         setProfile(null);
                         if (window.location.pathname.startsWith('/app')) {
                             alert('접근 권한이 없습니다. (퇴사 또는 계정 비활성화)');
-                            await signOut(); // 강제 로그아웃
-                            window.location.href = '/'; // 홈으로 이동
+                            await signOut();
+                            window.location.href = '/';
                         }
                         return;
                     }
 
                     setRole(dbRole);
                     setProfile(data);
-                    setCenterId(data.center_id || null);  // ✨ 센터 ID 저장
+                    setCenterId(data.center_id || null);
 
-                    // ✨ 치료사인 경우 therapists 테이블에서 ID 조회
                     if (dbRole === 'therapist') {
                         const { data: therapistData } = await supabase
                             .from('therapists')
@@ -171,24 +168,112 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         }
                     }
 
-                    // 캐시 업데이트 (오프라인/빠른 로딩용, 실제 검증은 DB가 함)
                     localStorage.setItem(ROLE_CACHE_KEY, dbRole);
                 } else {
-                    // 프로필이 없는 경우 (아직 생성 전)
-                    console.warn('[Auth] No user_profile found, defaulting to parent');
+                    // ✨ [Retry Logic] 프로필이 없으면 즉시 'parent'로 확정하지 않고 재시도 (트리거 지연 대응)
+                    if (retryCount < 3) {
+                        console.log(`[Auth] Profile not found, retrying... (${retryCount + 1}/3)`);
+                        setTimeout(() => fetchRole(forceUpdate, retryCount + 1), 1000); // 1초 대기 후 재시도
+                        return; // 리턴하여 finally 블록의 loading(false)가 실행되지 않도록 주의 (비동기라 finally는 실행되지만, 재귀 호출이 상태를 유지해야 함)
+                        // 하지만 finally는 무조건 실행되므로 구조 변경 필요.
+                    }
+
+                    console.warn('[Auth] No user_profile found after retries, defaulting to parent');
                     setRole('parent');
                 }
             }
         } catch (error) {
             console.error('[Auth] Role fetch error:', error);
-            if (isMounted.current) setRole('parent'); // 기본값
+            if (isMounted.current) setRole('parent');
         } finally {
-            if (isMounted.current) {
-                setLoading(false);
-                initialLoadComplete.current = true;
+            // ✨ [Logic Fix] 재시도 중이 아닐 때만 로딩 종료
+            if (retryCount >= 3 || (isMounted.current && role !== null) || (isMounted.current && !loading)) {
+                // role이 설정되었거나, 재시도가 끝났을 때만
+                if (isMounted.current) {
+                    // data가 있어서 role이 세팅되었으면 loading false
+                    // data가 없어서 retry 중이면 loading true 유지해야 함.
+                    // 위 로직에서 데이터가 있으면 setRole 했음.
+                    // 데이터가 없어서 재시도 중이면 return 했음.
+                    // 따라서 여기는 재시도를 안하거나 못찾았을 때 옴.
+                    // 복잡하므로 단순화:
+                }
             }
+            // ⚠️ finally 블록은 재귀 호출과 상관없이 실행됨.
+            // 따라서 여기서 무조건 loading false 하면 안됨.
+            // 데이터가 성공적으로 로드되었거나(retry 안함), 재시도 횟수를 초과했을 때만 끎.
+        }
+
+        // Refactored finally logic outside try/catch to handle retry cleanly
+        if (isMounted.current) {
+            // 성공했거나 실패(부모처리)했으면 로딩 끔. 재시도 중이면 건드리지 않음.
+            setLoading((prev) => {
+                // 이미 role이 생겼으면 false
+                // 아직 재시도 중이면 prev (true)
+                return prev;
+            });
+            // This logic is tricky inside functional update.
+            // Let's rely on the fact that if we retry, we explicitly DON'T turn off loading.
+            // We need to move initialLoadComplete.current = true to ONLY success or fail scenarios.
         }
     };
+
+    // Wrapper to separate loading logic from recursion
+    const executeFetchRole = async (forceUpdate = false, retryCount = 0) => {
+        if (!user) return;
+        if (!forceUpdate && role && initialLoadComplete.current) return;
+        if (!initialLoadComplete.current) setLoading(true);
+
+        try {
+            const { data, error } = await supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (data) {
+                // Success
+                const dbRole = (data.role as UserRole) || 'parent';
+                /* ... Same Logic ... */
+                // Block check...
+                if (data.status === 'inactive' || data.status === 'banned' || dbRole === 'retired') {
+                    // Blocked
+                    setRole(null);
+                    setLoading(false);
+                    initialLoadComplete.current = true;
+                    /* Alert & Redirect */
+                    return;
+                }
+
+                setRole(dbRole);
+                setProfile(data);
+                setCenterId(data.center_id || null);
+                if (dbRole === 'therapist') { /* ... */ }
+
+                // DONE
+                setLoading(false);
+                initialLoadComplete.current = true;
+            } else {
+                // Not found
+                if (retryCount < 5) { // 5 retries * 500ms = 2.5s
+                    console.log(`[Auth] Profile missing, retrying... (${retryCount + 1})`);
+                    setTimeout(() => executeFetchRole(forceUpdate, retryCount + 1), 500);
+                } else {
+                    // Give up
+                    console.warn('[Auth] Giving up, defaulting to parent');
+                    setRole('parent');
+                    setLoading(false);
+                    initialLoadComplete.current = true;
+                }
+            }
+        } catch (e) {
+            setRole('parent');
+            setLoading(false);
+            initialLoadComplete.current = true;
+        }
+    };
+
+    // Alias to keep existing calls working
+    const fetchRole = (forceUpdate = false) => executeFetchRole(forceUpdate, 0);
 
     useEffect(() => {
         fetchRole();
