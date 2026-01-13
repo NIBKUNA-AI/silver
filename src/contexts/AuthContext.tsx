@@ -47,11 +47,9 @@ import { JAMSIL_CENTER_ID } from '@/config/center';
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
-    // ✨ [Instant Role] localStorage에서 캐시된 역할을 바로 사용
-    const [role, setRole] = useState<UserRole>(() => {
-        const cached = localStorage.getItem(ROLE_CACHE_KEY);
-        return cached ? (cached as UserRole) : null;
-    });
+    // ✨ [Profile-First Guard] 캐시 사용 안 함. DB 조회 전까지는 null 상태로 대기 (로딩 스피너 유지)
+    const [role, setRole] = useState<UserRole>(null);
+
     const [profile, setProfile] = useState<any>(null);
     const [therapistId, setTherapistId] = useState<string | null>(null);  // ✨ therapists.id
     // ✨ [Force Single Center] Initialize with Jamsil ID
@@ -79,6 +77,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     if (!session) {
                         setLoading(false);
                         initialLoadComplete.current = true;
+                    } else {
+                        // ✨ [Fix] 세션이 있으면 fetchRole이 로딩 해제할 때까지 대기
+                        setLoading(true);
                     }
                 }
             } catch (error) {
@@ -100,6 +101,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     localStorage.removeItem(ROLE_CACHE_KEY);
                     setLoading(false);
                     initialLoadComplete.current = true;
+                } else {
+                    // ✨ [Fix] 세션이 있으면 로딩을 유지하고 fetchRole이 완료될 때까지 기다림
+                    // 단, 이미 로드된 상태에서 재진입(refresh 등)이면 스피너 안보여도 됨
+                    if (!initialLoadComplete.current) setLoading(true);
                 }
             }
         });
@@ -194,9 +199,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .on('postgres_changes',
                 { event: 'UPDATE', schema: 'public', table: 'user_profiles', filter: `id=eq.${user?.id}` },
                 (payload) => {
-                    console.log('[Auth] Role updated via Realtime (user_profiles):', payload.new.role);
-                    setRole(payload.new.role as UserRole); // 화면 즉시 반영
-                    fetchRole(true); // 전체 프로필 데이터 재동기화
+                    const newRole = payload.new.role as UserRole;
+                    console.log('[Auth] Role updated via Realtime (user_profiles):', newRole);
+
+                    // ✨ [Instant Redirect] 권한이 실시간으로 바뀌면, 앱을 새로고침하여 즉시 올바른 경로로 이동시킴
+                    // (SPA 라우팅보다 새로고침이 확실한 "깜빡임 없는" 전환 보장)
+                    if (role && role !== newRole) {
+                        alert(`관리자에 의해 권한이 '${newRole}'(으)로 변경되었습니다.\n새 권한을 적용하기 위해 페이지를 새로고침합니다.`);
+                        window.location.reload();
+                    } else {
+                        setRole(newRole);
+                        fetchRole(true);
+                    }
                 })
             .subscribe();
 

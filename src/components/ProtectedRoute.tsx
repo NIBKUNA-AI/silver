@@ -23,12 +23,13 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     const location = useLocation();
 
     // 1. 로딩 중 UI
+    // 1. 로딩 중 UI (AuthContext가 fetchRole 완료할 때까지 True 유지됨)
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-white">
                 <div className="flex flex-col items-center gap-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
-                    <p className="text-slate-400 font-bold text-sm">보안 접속 중...</p>
+                    <p className="text-slate-400 font-bold text-sm">권한 정보를 확인하고 있습니다...</p>
                 </div>
             </div>
         );
