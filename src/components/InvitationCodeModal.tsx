@@ -31,6 +31,17 @@ export function InvitationCodeModal({ isOpen, onClose, onSuccess, parentId }: In
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // ✨ Profile Check Helper
+    const checkProfileExists = async (userId: string, retries = 5, delay = 1000): Promise<boolean> => {
+        for (let i = 0; i < retries; i++) {
+            const { data } = await supabase.from('user_profiles').select('id').eq('id', userId).maybeSingle();
+            if (data) return true;
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        return false;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!code.trim()) return setError('초대 코드를 입력해 주세요.');
@@ -40,7 +51,16 @@ export function InvitationCodeModal({ isOpen, onClose, onSuccess, parentId }: In
         setError(null);
 
         try {
-            // ✨ [Secure Code Connection] RPC 함수 사용 (RLS 우회 및 트랜잭션 보장)
+            // 1. ✨ Ensure Profile Exists (Fixing FK Error)
+            const profileExists = await checkProfileExists(parentId);
+            if (!profileExists) {
+                // Trigger manual profile creation if missing after wait (Safety Net)
+                // Optionally call a function to create profile, but usually just waiting is enough or user needs to re-login.
+                // For now, we show a friendly error.
+                throw new Error("회원가입 정보가 아직 동기화되지 않았습니다. 10초 뒤에 다시 시도해주세요.");
+            }
+
+            // 2. ✨ [Secure Code Connection] RPC 함수 사용 (RLS 우회 및 트랜잭션 보장)
             const { data: result, error: rpcError } = await supabase.rpc('connect_child_with_code', {
                 p_parent_id: parentId,
                 p_code: code.toUpperCase().trim()
@@ -50,13 +70,23 @@ export function InvitationCodeModal({ isOpen, onClose, onSuccess, parentId }: In
 
             // RPC가 커스텀 에러 메시지를 반환했는지 확인
             if (!result.success) {
+                // Friendly mapping for common errors
+                if (result.message?.includes('violates foreign key constraint')) {
+                    throw new Error("회원 정보가 완전히 생성되지 않았습니다. 잠시 후 다시 시도해주세요.");
+                }
                 throw new Error(result.message || '연결에 실패했습니다.');
             }
 
             // 성공 시 아동 이름 반환
             onSuccess(result.child_name);
         } catch (err: any) {
-            setError(err.message || '연결에 실패했습니다.');
+            console.error("Invitation code error:", err);
+            // Translate DB FK errors to user friendly message
+            if (err.message?.includes('foreign key constraint') || err.message?.includes('fkey')) {
+                setError("회원 정보 동기화 중입니다. 잠시 후 다시 시도해주세요. (FK_Error)");
+            } else {
+                setError(err.message || '연결에 실패했습니다.');
+            }
         } finally {
             setLoading(false);
         }

@@ -123,6 +123,7 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
             // ✨ [FIX] Submit to 'consultations' table
             const { error } = await supabase.from('consultations').insert([{
                 center_id: centerId, // From Props
+                child_id: initialData?.childId, // ✨ Link to Child ID if available
                 guardian_name: formData.parent_name, // Mapped
                 guardian_phone: formData.phone, // Mapped
                 child_name: formData.child_name,

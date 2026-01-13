@@ -49,6 +49,43 @@ export function BlogPostPage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [centerInfo, setCenterInfo] = useState<any>(null);
 
+    const fetchPost = async () => {
+        setLoading(true);
+        const { data: postData, error: postError } = await (supabase as any)
+            .from('blog_posts')
+            .select('*')
+            .eq('slug', slug)
+            .eq('is_published', true)
+            .maybeSingle();
+
+        if (postError) {
+            console.error('Error fetching post:', postError);
+            if (postError.code === 'PGRST116') {
+                navigate('/blog', { replace: true });
+            }
+        } else if (postData) {
+            setPost(postData);
+            // ✨ [SEO Engine] Fetch specific center context for this post
+            if (postData.center_id) {
+                const { data: centerData } = await (supabase as any)
+                    .from('centers')
+                    .select('name, address, phone, naver_map_url')
+                    .eq('id', postData.center_id) // Strict Isolation
+                    .maybeSingle();
+                setCenterInfo(centerData);
+            } else {
+                // Fallback to default if no center assigned
+                fetchCenterInfo();
+            }
+
+            // Increment view count in background
+            await (supabase as any).from('blog_posts').update({ view_count: (postData.view_count || 0) + 1 }).eq('id', postData.id);
+        } else {
+            navigate('/blog', { replace: true });
+        }
+        setLoading(false);
+    };
+
     const fetchCenterInfo = async () => {
         const { data } = await (supabase as any)
             .from('centers')
@@ -58,36 +95,11 @@ export function BlogPostPage() {
         if (data) setCenterInfo(data);
     };
 
-    const fetchPost = async () => {
-        setLoading(true);
-        const { data, error } = await (supabase as any)
-            .from('blog_posts')
-            .select('*')
-            .eq('slug', slug)
-            .eq('is_published', true)
-            .maybeSingle();
-
-        if (error) {
-            console.error('Error fetching post:', error);
-            if (error.code === 'PGRST116') {
-                navigate('/blog', { replace: true });
-            }
-        } else if (data) {
-            setPost(data);
-            // Increment view count in background
-            await (supabase as any).from('blog_posts').update({ view_count: (data.view_count || 0) + 1 }).eq('id', data.id);
-        } else {
-            // No data found, redirect to blog list
-            navigate('/blog', { replace: true });
-        }
-        setLoading(false);
-    };
-
     useEffect(() => {
         if (slug) {
             fetchPost();
         }
-        fetchCenterInfo();
+        // fetchCenterInfo is now called inside fetchPost depending on context
     }, [slug]);
 
     if (loading) return <div className={cn("min-h-screen", isDark ? "bg-slate-950" : "bg-white")} />;
@@ -97,26 +109,33 @@ export function BlogPostPage() {
         ? post.keywords
         : (typeof post.keywords === 'string' ? (post.keywords as string).split(',') : []);
 
-    const metaTitle = post.seo_title || post.title;
-    const metaDesc = post.seo_description || post.excerpt;
-    const currentUrl = window.location.href;
+    // ✨ [SEO Engine] Dynamic Meta Generation
     const centerName = centerInfo?.name || getSetting('center_name') || '아동발달센터';
     const centerAddress = centerInfo?.address || getSetting('center_address') || '';
     const centerPhone = centerInfo?.phone || getSetting('center_phone') || '';
 
-    // ✨ Schema.org JSON-LD for Local Business + BlogPosting (SEO Geo-Tagging)
+    // Extract Region (e.g., "송파구", "강남구")
+    const regionMatch = centerAddress.match(/(\S+[시군구])/);
+    const region = regionMatch ? regionMatch[1] : '';
+    const fullTitle = `${post.title} | ${centerName} ${region && `(${region})`}`;
+
+    const metaDesc = post.seo_description || post.excerpt || `${region} ${centerName}에서 전하는 ${post.title}에 대한 이야기입니다.`;
+    const currentUrl = window.location.href;
+
+    // ✨ [SEO Engine] Advanced Local Business Schema
     const schemaJsonLd = {
         "@context": "https://schema.org",
         "@graph": [
             {
                 "@type": "BlogPosting",
-                "headline": post.title,
+                "headline": fullTitle,
                 "description": metaDesc,
                 "image": post.cover_image_url || undefined,
                 "datePublished": post.published_at,
                 "author": {
                     "@type": "Organization",
-                    "name": centerName
+                    "name": centerName,
+                    "url": window.location.origin
                 },
                 "publisher": {
                     "@type": "Organization",
@@ -135,11 +154,13 @@ export function BlogPostPage() {
                 "address": {
                     "@type": "PostalAddress",
                     "streetAddress": centerAddress,
-                    "addressCountry": "KR"
+                    "addressCountry": "KR",
+                    "addressRegion": region // Explicit Region
                 },
                 "telephone": centerPhone,
                 "url": window.location.origin,
-                "priceRange": "$$"
+                "priceRange": "$$",
+                "image": getSetting('center_logo') || undefined
             }
         ]
     };
@@ -153,13 +174,13 @@ export function BlogPostPage() {
         )}>
             <Helmet>
                 {/* Basic Meta Tags */}
-                <title>{metaTitle} | {centerName}</title>
+                <title>{fullTitle}</title>
                 <meta name="description" content={metaDesc} />
                 <meta name="keywords" content={keywordsArray.join(', ')} />
 
                 {/* Open Graph (Facebook, KakaoTalk) */}
                 <meta property="og:type" content="article" />
-                <meta property="og:title" content={metaTitle} />
+                <meta property="og:title" content={fullTitle} />
                 <meta property="og:description" content={metaDesc} />
                 <meta property="og:url" content={currentUrl} />
                 <meta property="og:site_name" content={centerName} />
@@ -170,7 +191,7 @@ export function BlogPostPage() {
 
                 {/* Twitter Card */}
                 <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={metaTitle} />
+                <meta name="twitter:title" content={fullTitle} />
                 <meta name="twitter:description" content={metaDesc} />
                 {post.cover_image_url && <meta name="twitter:image" content={post.cover_image_url} />}
 

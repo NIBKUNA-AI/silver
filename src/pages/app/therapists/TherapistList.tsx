@@ -319,22 +319,47 @@ export function TherapistList() {
             return;
         }
 
-        if (!confirm('직원 목록에서 완전히 삭제하시겠습니까?\n(계정도 함께 삭제되어 재가입이 가능해집니다)')) return;
+        if (!confirm('직원 목록에서 삭제하시겠습니까?\n(삭제 시 로그인 및 서비스 이용이 불가능해집니다)')) return;
 
         try {
+            // 1. Try Hard Delete (Cleanest)
             const { error } = await supabase.rpc('delete_user_completely', { target_user_id: id });
 
             if (error) {
                 console.error('Delete RPC Error:', error);
-                await supabase.from('therapists').delete().eq('id', id);
-                await supabase.from('profiles').delete().eq('id', id);
+
+                // 2. ✨ [Safe Delete] Handle Dependencies (FK Error)
+                if (error.message?.includes('foreign key constraint') || error.message?.includes('violates foreign key')) {
+                    if (confirm('⚠️ 해당 직원과 연결된 상담 기록이나 아동 정보가 있어 완전히 삭제할 수 없습니다.\n\n대신 "퇴사자(접속 차단)" 상태로 변경하여 목록에 남겨두시겠습니까?')) {
+                        // Soft Delete (Update to inactive/retired)
+                        await supabase.rpc('update_user_role_safe', {
+                            target_user_id: id,
+                            new_role: 'therapist', // Keep role but deactivate status
+                            new_status: 'retired',  // Special status for retired
+                            user_email: email,
+                            user_name: '' // Not changing name
+                        });
+                        alert('✅ "퇴사자(retired)" 상태로 변경되었습니다.\n더 이상 로그인이 불가능합니다.');
+                        fetchStaffs();
+                        return;
+                    } else {
+                        return; // Cancelled
+                    }
+                }
+
+                // Other errors
                 throw error;
             }
 
+            // Clean up left-overs if RPC succeeded partially or was not needed (though RPC should handle it)
+            // Just in case
+            await supabase.from('therapists').delete().eq('id', id);
+
             alert('✅ 직원이 완전히 삭제되었습니다.');
             fetchStaffs();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Deletion error:", error);
+            alert('삭제 처리 중 오류가 발생했습니다: ' + error.message);
             fetchStaffs();
         }
     };

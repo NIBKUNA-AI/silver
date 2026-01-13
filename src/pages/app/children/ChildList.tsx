@@ -56,8 +56,8 @@ export function ChildList() {
                 .from('children')
                 .select(`
                     *,
-                    parent:parents(*)
-                `) // ✨ parent_id를 통해 연결된 보호자 계정 정보도 함께 가져옴
+                    parent:user_profiles(*)
+                `) // ✨ parent_id는 이제 user_profiles를 참조함
                 .order('name');
 
             if (error) throw error;
