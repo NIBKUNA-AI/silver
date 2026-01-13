@@ -40,7 +40,7 @@ export function ParentMyPage() {
 
     // Center Info (could be dynamic or from settings)
     const centerPhone = getSetting('center_phone') || '02-1234-5678';
-    const centerName = getSetting('center_name') || '자라다 아동발달센터';
+    const centerName = getSetting('center_name') || 'Zarada';
 
     useEffect(() => {
         if (user) fetchChildren();

@@ -354,7 +354,7 @@ function AIBlogGenerateButton() {
             const systemPrompt = "당신은 20년 경력의 아동 발달 센터 원장입니다. 걱정하는 부모님을 안심시키고 전문가로서 신뢰감 있는 조언을 주는 따뜻한 말투로 글을 작성해주세요.";
             const userPrompt = `
                 주제: ${topic}
-                센터 이름: 자라다 아동발달센터
+                센터 이름: {centerName || 'Zarada'}
                 
                 조건:
                 1. 제목은 매력적으로.

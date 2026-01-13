@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Building2, Plus, MapPin, Phone } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+
 
 export function CenterList() {
     const [centers, setCenters] = useState([]);
@@ -35,9 +35,9 @@ export function CenterList() {
                     <h1 className="text-3xl font-black text-slate-900 tracking-tight">전체 센터 관리</h1>
                     <p className="text-slate-500 font-medium">등록된 모든 지점을 관리합니다.</p>
                 </div>
-                <Button>
+                <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-indigo-600 text-white hover:bg-indogo-700 h-10 px-4 py-2">
                     <Plus className="w-4 h-4 mr-2" /> 새 센터 등록
-                </Button>
+                </button>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

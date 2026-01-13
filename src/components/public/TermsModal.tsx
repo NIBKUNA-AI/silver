@@ -4,7 +4,7 @@ import { useAdminSettings } from '@/hooks/useAdminSettings';
 export function TermsModal({ isOpen, onClose, type = 'terms' }: { isOpen: boolean; onClose: () => void; type: 'terms' | 'privacy' }) {
     if (!isOpen) return null;
     const { getSetting } = useAdminSettings();
-    const centerName = getSetting('center_name') || '자라다 아동발달센터';
+    const centerName = getSetting('center_name') || 'Zarada';
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
