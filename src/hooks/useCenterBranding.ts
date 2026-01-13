@@ -59,7 +59,7 @@ export function useCenterBranding() {
                         .select('center_id')
                         .eq('key', 'domain_url')
                         .ilike('value', `%${hostname}%`) // Flexible match
-                        .maybeSingle(); // Use maybeSingle to avoid 406/errors if not found
+                        .maybeSingle() as { data: { center_id: string } | null, error: any };
 
                     if (domainSetting) {
                         centerId = domainSetting.center_id;
@@ -72,7 +72,7 @@ export function useCenterBranding() {
                             .select('id')
                             .order('created_at', { ascending: true })
                             .limit(1)
-                            .maybeSingle();
+                            .maybeSingle() as { data: { id: string } | null, error: any };
                         if (firstCenter) centerId = firstCenter.id;
                     }
                 }
