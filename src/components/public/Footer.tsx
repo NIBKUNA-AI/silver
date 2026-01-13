@@ -139,7 +139,7 @@ export function Footer() {
                 {/* Bottom Bar */}
                 <div className="mt-16 pt-8 border-t border-slate-200/50 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-xs text-slate-400">
-                        &copy; {new Date().getFullYear()} {displayCenterName}. All rights reserved.
+                        &copy; 2026 {displayCenterName}. All rights reserved.
                     </p>
                     <p className="text-xs text-slate-300 font-medium">
                         Powered by <span className="font-bold text-slate-400">Zarada</span>
