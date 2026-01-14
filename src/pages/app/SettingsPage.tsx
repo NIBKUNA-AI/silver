@@ -271,6 +271,9 @@ function CenterInfoSection() {
                 }, { onConflict: 'center_id, key' });
             }
 
+            // ✨ [Global Sync] Notify all listeners (e.g., useCenterBranding) to refetch
+            window.dispatchEvent(new Event('settings-updated'));
+
             alert('변경사항이 저장되었습니다.');
         } catch (e) {
             console.error(e);
