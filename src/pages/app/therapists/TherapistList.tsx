@@ -84,7 +84,7 @@ export function TherapistList() {
         try {
             if (!editingId) {
                 // ✨ [New Registration] Use Edge Function for Secure Invitation
-                const { data, error } = await supabase.functions.invoke('invite-user', {
+                const { data, error } = await supabase.functions.invoke('super-service', {
                     body: {
                         email: formData.email,
                         name: formData.name,
@@ -123,7 +123,7 @@ export function TherapistList() {
 
                 // Also sync Profile if exists
                 if (formData.userId) {
-                    await supabase.from('profiles').update({ name: formData.name }).eq('id', formData.userId);
+                    await supabase.from('user_profiles').update({ name: formData.name }).eq('id', formData.userId);
                 }
 
                 alert(`✅ [수정 완료] 정보가 업데이트되었습니다.`);

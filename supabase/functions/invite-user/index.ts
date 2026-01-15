@@ -19,7 +19,7 @@ serve(async (req: any) => {
     try {
         const supabaseAdmin = createClient(
             Deno.env.get("SUPABASE_URL") ?? "",
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SERVICE_ROLE_KEY") ?? "",
             {
                 auth: {
                     autoRefreshToken: false,
@@ -101,6 +101,7 @@ serve(async (req: any) => {
         );
 
     } catch (error: any) {
+        console.error("❌ Function Error:", error); // Added explicit logging
         return new Response(JSON.stringify({ error: error.message }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400,
