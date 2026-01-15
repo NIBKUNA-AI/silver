@@ -80,6 +80,11 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
                     if (profile?.role === 'super_admin') return false;
                 }
 
+                // 4. ✨ [Ghost Record Fix] 연결 끊긴 레코드 이름 기반 차단
+                // DB 분석 결과: '안욱빈 원장님' 레코드의 email/profile_id가 모두 null임
+                const blockList = ['안욱빈 원장님', 'Admin', 'admin', '관리자'];
+                if (blockList.includes(t.name)) return false;
+
                 return true;
             });
 
