@@ -53,19 +53,34 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
             const [childRes, progRes, therRes, profileRes] = await Promise.all([
                 supabase.from('children').select('id, name, credit, guardian_name, contact').order('name'),
                 supabase.from('programs').select('id, name, duration, price').order('name'),
-                supabase.from('therapists').select('id, name, email').order('name'),
-                supabase.from('user_profiles').select('email, role')
+                supabase.from('therapists').select('id, name, email, profile_id').order('name'),
+                supabase.from('user_profiles').select('id, email, role')
             ]);
 
             setChildrenList(childRes.data || []);
             setProgramsList(progRes.data || []);
 
-            // ✨ [Filter] 슈퍼 어드민 제외 로직 적용
+            // ✨ [Filter] 슈퍼 어드민 제외 로직 강화 (profile_id 연동 + 이메일 차단)
             const profiles = profileRes.data || [];
             const rawTherapists = therRes.data || [];
+
             const filteredTherapists = rawTherapists.filter(t => {
-                const profile = profiles.find(p => p.email === t.email);
-                return profile?.role !== 'super_admin';
+                // 1. 하드코딩된 슈퍼 어드민 이메일 즉시 차단 (안전장치)
+                if (t.email === 'anukbin@gmail.com') return false;
+
+                // 2. Profile ID로 정확한 역할 확인
+                if (t.profile_id) {
+                    const profile = profiles.find(p => p.id === t.profile_id);
+                    if (profile?.role === 'super_admin') return false;
+                }
+
+                // 3. Email로 역할 확인 (Fallback)
+                if (t.email) {
+                    const profile = profiles.find(p => p.email === t.email);
+                    if (profile?.role === 'super_admin') return false;
+                }
+
+                return true;
             });
 
             setTherapistsList(filteredTherapists);
