@@ -272,7 +272,7 @@ export function Schedule() {
 
                 <div className={cn("flex-1 p-2 md:p-6 rounded-3xl shadow-sm border relative z-0 flex flex-col overflow-hidden", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100")}>
                     <div className="flex-1 overflow-x-auto overflow-y-hidden">
-                        <div className="min-w-[700px] h-full">
+                        <div className="min-w-[700px] h-full" style={{ maxWidth: 'none' }}>
                             <FullCalendar
                                 ref={calendarRef}
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -293,8 +293,8 @@ export function Schedule() {
                                 dateClick={handleDateClick}
                                 eventMouseEnter={handleEventMouseEnter}
                                 eventMouseLeave={handleEventMouseLeave}
-                                selectable={true}
-                                selectMirror={true}
+                                selectable={window.innerWidth >= 768}
+                                selectMirror={window.innerWidth >= 768}
                                 select={(info) => { handleDateClick({ date: info.start }); info.view.calendar.unselect(); }}
                                 eventContent={(arg) => (
                                     <div className="flex items-center gap-1 overflow-hidden w-full">
