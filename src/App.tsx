@@ -135,7 +135,10 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
               <Route path="/auth/update-password" element={<UpdatePassword />} />
+              {/* ✨ [Hotfix] Catch old email links pointing to wrong path */}
+              <Route path="/update-password" element={<Navigate to="/auth/update-password" replace />} />
 
               {/* 3. 학부모 전용 구역 */}
               <Route element={<ProtectedRoute allowedRoles={['parent', 'admin']} />}>

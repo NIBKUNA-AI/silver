@@ -37,7 +37,7 @@ serve(async (req: any) => {
         // 1. Send Invitation Email (Magic Link / Password Setup)
         const { data: authData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
             data: { name, role, full_name: name },
-            redirectTo: 'https://child-app-nibkuna.vercel.app/update-password', // Update this if needed
+            redirectTo: 'https://child-app-nibkuna.vercel.app/auth/update-password', // ✨ Fixed Path
         });
 
         if (inviteError) {
