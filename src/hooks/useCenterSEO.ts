@@ -36,8 +36,8 @@ export function useCenterSEO() {
                 if (!profile?.center_id) {
                     console.log('No center assigned for this user, using default SEO.');
                     setSeoData({
-                        name: '자라다 발달센터',
-                        seo_description: '우리 아이 성장 발달 관리 플랫폼'
+                        name: '자라다 아동심리발달센터 잠실점',
+                        seo_description: '잠실 아동발달센터 - 언어치료, 감각통합, 미술치료, 놀이치료, 인지치료 전문'
                     });
                     return;
                 }
@@ -54,15 +54,15 @@ export function useCenterSEO() {
 
                 setSeoData({
                     name: center.name,
-                    seo_description: `자라다 발달센터 [${center.name}] - 우리 아이 맞춤형 성장 플랫폼`,
+                    seo_description: `자라다 발달센터 [${center.name}] - 언어치료, 감각통합, 미술치료, 놀이치료, 사회성그룹치료`,
                 });
 
             } catch (error) {
                 console.warn('SEO Info Fetch Error:', error);
                 // Fallback
                 setSeoData({
-                    name: '자라다 발달센터',
-                    seo_description: '우리 아이 성장 발달 관리 플랫폼'
+                    name: '자라다 아동심리발달센터 잠실점',
+                    seo_description: '잠실 아동발달센터 - 언어치료, 감각통합, 미술치료, 놀이치료, 인지치료 전문'
                 });
             } finally {
                 setLoading(false);

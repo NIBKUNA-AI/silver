@@ -50,11 +50,11 @@ const SvgIcons = {
 const DEFAULT_CONTENT = {
     brandName: import.meta.env.VITE_CENTER_NAME || "아동발달센터",
     hero: {
-        titleFirst: "아이의",
-        titlePoint: "행복",
-        titleLast: "이\n우리의 시작입니다",
-        description: "전문적인 치료사와 따뜻한 환경 속에서\n우리 아이의 잠재력이 아름답게 피어납니다.",
-        ctaText: "무료 상담 신청하기",
+        titleFirst: "잠실 아동발달의 중심,",
+        titlePoint: "아이의 언어·감각",
+        titleLast: "이\n자라나는 특별한 공간",
+        description: "언어치료, 감각통합, 미술/놀이치료 전문 기관.\n잠실 최고의 치료사진과 함께 우리 아이의 잠재력을 키워주세요.",
+        ctaText: "잠실 센터 무료 상담",
         defaultBgImage: "https://images.unsplash.com/photo-1566438480900-0609be27a4be?auto=format&fit=crop&q=80&w=2000"
     },
     values: [
