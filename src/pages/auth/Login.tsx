@@ -138,9 +138,9 @@ export function Login() {
                     .eq('id', user.id)
                     .maybeSingle();
 
-                if (profileError) {
+                if (profileError || !profile) {
                     console.error('프로필 정보를 가져올 수 없습니다:', profileError);
-                    navigate('/');
+                    setError('회원 프로필 정보를 찾을 수 없습니다. (계정 오류)');
                     return;
                 }
 
@@ -161,7 +161,9 @@ export function Login() {
                 }
             }
         } catch (err: any) {
-            setError(err.message || '로그인 중 오류가 발생했습니다.');
+            let msg = err.message || '로그인 중 오류가 발생했습니다.';
+            if (msg.includes('Invalid login credentials')) msg = '이메일 또는 비밀번호가 올바르지 않습니다.';
+            setError(msg);
         } finally {
             setLoading(false);
         }
