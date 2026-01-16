@@ -72,16 +72,18 @@ export function Login() {
 
             if (!isOAuthCallback) return;
 
-            // 🚨 [Invite/Recovery Check] 초대 또는 비밀번호 재설정 링크인 경우
-            // 즉시 비밀번호 변경 페이지로 이동시켜야 함 (대시보드 납치 방지)
-            if (hash.includes('type=invite') || hash.includes('type=recovery') || params.get('type') === 'invite' || params.get('type') === 'recovery') {
-                console.log('🔗 Invite/Recovery Link Detected in Login.tsx - Redirecting to UpdatePassword');
-                navigate('/auth/update-password');
-                return;
-            }
+            // ✨ Wait for Supabase to process the hash/tokens
+            const { data: { session }, error } = await supabase.auth.getSession();
 
-            const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
+                // 🚨 [Invite/Recovery Check] 초대 또는 비밀번호 재설정 링크인 경우
+                // 세션 확보 후 이동해야 함 (URL 토큰 처리 보장)
+                if (hash.includes('type=invite') || hash.includes('type=recovery') || params.get('type') === 'invite' || params.get('type') === 'recovery') {
+                    console.log('🔗 Invite/Recovery Link Detected in Login.tsx - Redirecting to UpdatePassword');
+                    navigate('/auth/update-password');
+                    return;
+                }
+
                 // 🛡️ Super Admin Whitelist (Bypass Consent)
                 if (session.user.email === 'anukbin@gmail.com') {
                     navigate('/app/dashboard');
@@ -96,7 +98,7 @@ export function Login() {
 
                 if (profile?.center_id && profile?.status === 'active') {
                     // 이미 가입 완료 -> 홈으로
-                    if (profile.role === 'admin' || profile.role === 'super_admin') navigate('/app/schedule'); // ✨ Default to schedule for admins
+                    if (profile.role === 'admin' || profile.role === 'super_admin') navigate('/app/schedule');
                     else if (profile.role === 'therapist') navigate('/app/schedule');
                     else navigate('/parent/home');
                 } else {
