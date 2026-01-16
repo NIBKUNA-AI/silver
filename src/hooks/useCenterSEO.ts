@@ -24,7 +24,7 @@ export function useCenterSEO() {
             try {
                 // 1. users profiles에서 center_id 찾기
                 const { data: profile, error: profileError } = await supabase
-                    .from('profiles')
+                    .from('user_profiles')
                     .select('center_id')
                     .eq('id', user.id)
                     .maybeSingle() as { data: { center_id: string } | null, error: any };

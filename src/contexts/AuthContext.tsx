@@ -58,8 +58,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         let mounted = true;
         const initSession = async () => {
+            // ✨ [Safety] 3초 후에도 로딩이 안 끝나면 강제로 종료 (Infinite Loading 방지)
+            const safetyTimeout = setTimeout(() => {
+                if (mounted && !initialLoadComplete.current) {
+                    console.warn("⚠️ Auth Check Timed Out - Forcing Load Complete");
+                    setLoading(false);
+                    initialLoadComplete.current = true;
+                }
+            }, 3000);
+
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session }, error } = await supabase.auth.getSession();
+                clearTimeout(safetyTimeout); // 정상 응답 시 타이머 해제
+
+                if (error) {
+                    console.error("❌ Session Init Error:", error.message);
+                    // ✨ [Auto-Fix] 토큰이 만료되었거나 유효하지 않으면 강제 로그아웃 처리
+                    if (error.message.includes("Refresh Token") || error.message.includes("Not Found")) {
+                        console.log("🧹 Cleaning up invalid session data...");
+                        await supabase.auth.signOut(); // Clean Supabase state
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        // 상태가 꼬였으므로 깔끔하게 리로드
+                        window.location.reload();
+                    }
+                    if (mounted) setLoading(false);
+                    return;
+                }
+
                 if (mounted) {
                     setSession(session);
                     setUser(session?.user ?? null);
@@ -69,6 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     }
                 }
             } catch (error) {
+                clearTimeout(safetyTimeout);
+                console.error("🚨 Unexpected Auth Error:", error);
                 if (mounted) setLoading(false);
             }
         };
@@ -79,6 +107,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (mounted) {
                 setSession(session);
                 setUser(session?.user ?? null);
+
+                // ✨ [Password Recovery / Invite Redirect]
+                // 사용자가 비밀번호 재설정 메일이나 초대 메일을 타고 들어왔을 때,
+                // 즉시 비밀번호 변경 페이지로 납치합니다.
+                if (_event === 'PASSWORD_RECOVERY' || window.location.hash.includes('type=recovery') || window.location.hash.includes('type=invite')) {
+                    console.log('🔐 Redirecting to Password Update...');
+                    window.location.href = '/auth/update-password';
+                    return;
+                }
 
                 // 👑 [Sovereign Fortress] Immediate Super Admin Recognition
                 if (session?.user?.email?.toLowerCase() === 'anukbin@gmail.com') {

@@ -189,7 +189,7 @@ export function Settlement() {
                 const hireType = staff.hire_type || 'freelancer';
                 const evalPrice = staff.evaluation_price || 50000;
 
-                if (hireType === 'fulltime') {
+                if (hireType === 'fulltime' || hireType === 'regular') {
                     // Case A: Regular (Base + Incentive + Eval)
                     const baseSalary = staff.base_salary || 0;
                     const required = staff.required_sessions || 0;
@@ -335,9 +335,9 @@ export function Settlement() {
                                                 <label className="block text-xs font-bold text-slate-500">고용 형태</label>
                                                 <select className="w-full p-2 border rounded-lg font-bold" value={editForm.hire_type} onChange={e => setEditForm({ ...editForm, hire_type: e.target.value })}>
                                                     <option value="freelancer">프리랜서</option>
-                                                    <option value="regular">정규직</option>
+                                                    <option value="fulltime">정규직</option>
                                                 </select>
-                                                {editForm.hire_type === 'regular' && (
+                                                {(editForm.hire_type === 'regular' || editForm.hire_type === 'fulltime') && (
                                                     <>
                                                         <div><span className="text-xs text-slate-400">기본급 (예: 1900000)</span><input type="number" className="w-full p-2 border rounded-lg font-bold" value={editForm.base_salary} onChange={e => setEditForm({ ...editForm, base_salary: Number(e.target.value) })} /></div>
                                                         <div><span className="text-xs text-slate-400">기본 회기 (예: 90)</span><input type="number" className="w-full p-2 border rounded-lg font-bold" value={editForm.base_session_count} onChange={e => setEditForm({ ...editForm, base_session_count: Number(e.target.value) })} /></div>
@@ -376,8 +376,8 @@ export function Settlement() {
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <h3 className="text-lg font-bold text-slate-900">{t.name}</h3>
-                                                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${t.hire_type === 'regular' ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
-                                                        {t.hire_type === 'regular' ? '정규직' : '프리랜서'}
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${(t.hire_type === 'regular' || t.hire_type === 'fulltime') ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                        {(t.hire_type === 'regular' || t.hire_type === 'fulltime') ? '정규직' : '프리랜서'}
                                                     </span>
                                                 </div>
                                                 <div className="flex gap-3 text-sm font-medium text-slate-500 bg-slate-50 px-3 py-2 rounded-lg inline-flex flex-wrap">

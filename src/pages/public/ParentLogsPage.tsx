@@ -38,7 +38,7 @@ export function ParentLogsPage() {
 
             // 1. 유저 프로필 및 권한 확인
             const { data: profile } = await supabase
-                .from('profiles')  // ✨ user_profiles -> profiles
+                .from('user_profiles')
                 .select('role')
                 .eq('id', user.id)
                 .maybeSingle();

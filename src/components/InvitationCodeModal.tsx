@@ -31,17 +31,6 @@ export function InvitationCodeModal({ isOpen, onClose, onSuccess, parentId }: In
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // ✨ Profile Check Helper
-    const checkProfileExists = async (userId: string, retries = 5, delay = 1000): Promise<boolean> => {
-        for (let i = 0; i < retries; i++) {
-            const { data } = await supabase.from('user_profiles').select('id').eq('id', userId).maybeSingle();
-            if (data) return true;
-            // Wait before retry
-            await new Promise(resolve => setTimeout(resolve, delay));
-        }
-        return false;
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!code.trim()) return setError('초대 코드를 입력해 주세요.');
@@ -51,16 +40,10 @@ export function InvitationCodeModal({ isOpen, onClose, onSuccess, parentId }: In
         setError(null);
 
         try {
-            // 1. ✨ Ensure Profile Exists (Fixing FK Error)
-            const profileExists = await checkProfileExists(parentId);
-            if (!profileExists) {
-                // Trigger manual profile creation if missing after wait (Safety Net)
-                // Optionally call a function to create profile, but usually just waiting is enough or user needs to re-login.
-                // For now, we show a friendly error.
-                throw new Error("회원가입 정보가 아직 동기화되지 않았습니다. 10초 뒤에 다시 시도해주세요.");
-            }
+            // ✨ [Optimized] Skip manual profile check (Let DB handle constraints)
+            // The previous checkProfileExists was causing false positives due to RLS/Network latency.
 
-            // 2. ✨ [Secure Code Connection] RPC 함수 사용 (RLS 우회 및 트랜잭션 보장)
+            // ✨ [Secure Code Connection] RPC 함수 사용 (RLS 우회 및 트랜잭션 보장)
             const { data: result, error: rpcError } = await supabase.rpc('connect_child_with_code', {
                 p_parent_id: parentId,
                 p_code: code.toUpperCase().trim()

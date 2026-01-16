@@ -186,7 +186,7 @@ export function ContactPage() {
                                 </div>
                                 상담 예약 신청
                             </h2>
-                            <ConsultationSurveyForm />
+                            <ConsultationSurveyForm centerId={branding?.id} />
                         </div>
                     </div>
                 </div>

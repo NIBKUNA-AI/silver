@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { isSuperAdmin } from '@/config/superAdmin';
 import { Helmet } from 'react-helmet-async';
+import { JAMSIL_CENTER_ID } from '@/config/center';
 
 const COLORS = [
     '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981',
@@ -84,7 +85,7 @@ export function TherapistList() {
         try {
             if (!editingId) {
                 // ✨ [New Registration] Use Edge Function for Secure Invitation
-                const { data, error } = await supabase.functions.invoke('super-service', {
+                const { data, error } = await supabase.functions.invoke('invite-user', {
                     body: {
                         email: formData.email,
                         name: formData.name,
@@ -94,7 +95,8 @@ export function TherapistList() {
                         bank_name: formData.bank_name,
                         account_number: formData.account_number,
                         account_holder: formData.account_holder,
-                        center_id: import.meta.env.VITE_CENTER_ID,
+                        account_holder: formData.account_holder,
+                        center_id: import.meta.env.VITE_CENTER_ID || JAMSIL_CENTER_ID,
                     }
                 });
 
@@ -163,7 +165,7 @@ export function TherapistList() {
                 .update({ system_status: newStatus })
                 .eq('email', staff.email);
 
-            if (profileError && !start.userId) {
+            if (profileError && !staff.userId) {
                 // Ignore profile error if user doesn't exist yet
             } else if (profileError) {
                 throw profileError;
@@ -188,12 +190,16 @@ export function TherapistList() {
         }
 
         try {
-            // 1. Delete Therapist Record
-            await supabase.from('therapists').delete().eq('id', staff.id);
-            // 2. Delete Profile (If linked)
+            // ✨ [Super Admin] Secure Hard Delete via RPC
+            // This deletes Auth User + Profile + Therapist Record + Storage + etc.
             if (staff.userId) {
-                await supabase.from('user_profiles').delete().eq('id', staff.userId);
+                const { error } = await supabase.rpc('admin_delete_user', { target_user_id: staff.userId });
+                if (error) throw error;
+            } else {
+                // If no linked user (zombie record), just delete the table row
+                await supabase.from('therapists').delete().eq('id', staff.id);
             }
+
             alert('영구 삭제되었습니다.');
             fetchStaffs();
         } catch (error) {

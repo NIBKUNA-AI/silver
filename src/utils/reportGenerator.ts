@@ -61,10 +61,10 @@ export const generateIntegratedReport = async (selectedMonth: string) => {
             // 1. Children (Master List)
             supabase.from('children').select(`
                 id, name, gender, birth_date, is_active, created_at, parent_id,
-                profiles:parent_id ( name, email )
+                profiles:user_profiles ( name, email )
             `),
             // 2. Profiles (Phone Numbers)
-            supabase.from('profiles').select('id, phone'),
+            supabase.from('user_profiles').select('id, phone'),
             // 3. Assessments (Latest)
             supabase.from('development_assessments').select('*').order('evaluation_date', { ascending: false }),
             // 4. Payments (Selected Month)
@@ -72,7 +72,7 @@ export const generateIntegratedReport = async (selectedMonth: string) => {
             // 5. Leads (Marketing)
             supabase.from('leads').select('*').order('created_at', { ascending: false }),
             // 6. Staff (User Profiles with roles)
-            supabase.from('profiles').select('*').in('role', ['admin', 'therapist', 'super_admin']),
+            supabase.from('user_profiles').select('*').in('role', ['admin', 'therapist', 'super_admin']),
             // 7. Schedules (Selected Month for KPI)
             supabase.from('schedules').select('status, date').like('date', `${selectedMonth}%`)
         ]);

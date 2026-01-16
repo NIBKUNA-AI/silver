@@ -582,12 +582,6 @@ export function ParentHomePage() {
                             </div>
                         </div>
                     )}
-                    import {DynamicHomeCareTips} from '@/components/public/DynamicHomeCareTips';
-
-                    // ... (rest of imports are fine, handled by context)
-
-                    // Inside ParentHomePage, inside return:
-
                     {/* 4. 지능형 홈 케어 팁 (Dynamic) */}
                     <div className="flex items-center gap-2 mb-4 px-2">
                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-[10px]">✨</div>

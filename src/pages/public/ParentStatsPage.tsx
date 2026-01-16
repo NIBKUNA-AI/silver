@@ -41,7 +41,7 @@ export function ParentStatsPage() {
             if (!user) return setError("로그인이 필요합니다.");
 
             const { data: profile } = await supabase
-                .from('profiles')  // ✨ user_profiles -> profiles
+                .from('user_profiles')
                 .select('role')
                 .eq('id', user.id)
                 .maybeSingle();

@@ -32,7 +32,7 @@ export function CenterDetailPage() {
             // Note: DB schema might verify if 'therapist' role exists in profiles or separate table.
             // Using profiles table for simplicity based on SaaS structure.
             const { count: teacherCount } = await supabase
-                .from('profiles')
+                .from('user_profiles')
                 .select('*', { count: 'exact', head: true })
                 .eq('center_id', centerId)
                 .in('role', ['therapist', 'staff']);

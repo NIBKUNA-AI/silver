@@ -40,7 +40,7 @@ export function SettingsPage() {
     useEffect(() => {
         const fetchCenterId = async () => {
             if (user) {
-                const { data } = await supabase.from('profiles').select('center_id').eq('id', user.id).single();
+                const { data } = await supabase.from('user_profiles').select('center_id').eq('id', user.id).single();
                 if (data?.center_id) setCenterId(data.center_id);
             }
         };

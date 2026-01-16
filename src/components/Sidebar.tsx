@@ -200,6 +200,7 @@ const MENU_GROUPS = [
         items: [
             { name: '상담문의', path: '/app/leads', icon: Icons.leads, roles: ['super_admin', 'admin', 'staff'] },
             { name: '아동 관리', path: '/app/children', icon: Icons.child, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
+            { name: '부모 관리', path: '/app/parents', icon: Icons.members, roles: ['super_admin', 'admin', 'staff'] },
             { name: '직원 관리', path: '/app/therapists', icon: Icons.staff, roles: ['super_admin', 'admin'] },
             { name: '급여 관리', path: '/app/settlement', icon: Icons.salary, roles: ['super_admin', 'admin'] },
         ]
@@ -209,7 +210,7 @@ const MENU_GROUPS = [
         icon: Icons.system,
         items: [
             { name: '대시보드', path: '/app/dashboard', icon: Icons.dashboard, roles: ['super_admin', 'admin', 'staff'] },
-            { name: '전체 센터 관리', path: '/app/admin/centers', icon: Icons.centerStatus, roles: ['super_admin'] },
+            // ✨ [Removed] 전체 센터 관리 (User Request)
             { name: '블로그 관리', path: '/app/blog', icon: Icons.blog, roles: ['super_admin'] },
             { name: '사이트 설정', path: '/app/settings', icon: Icons.settings, roles: ['super_admin'] },
         ]
@@ -388,7 +389,12 @@ export function Sidebar() {
                                 >
                                     <button
                                         onClick={() => toggleGroup(group.name)}
-                                        className="flex items-center justify-between w-full px-4 py-2 text-[11px] font-black uppercase tracking-widest transition-colors rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900"
+                                        className={cn(
+                                            "flex items-center justify-between w-full px-4 py-3 text-xs font-black uppercase tracking-widest transition-colors rounded-lg group",
+                                            isGroupOpen
+                                                ? "bg-slate-50 text-slate-900 dark:bg-slate-800 dark:text-slate-200"
+                                                : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900"
+                                        )}
                                     >
                                         <span className="flex items-center gap-2">
                                             {group.icon("w-4 h-4")}
@@ -398,7 +404,7 @@ export function Sidebar() {
                                     </button>
 
                                     {isGroupOpen && (
-                                        <div className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                                        <div className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-200 border-l-2 border-slate-100 dark:border-slate-800 ml-6 pl-2 my-1">
                                             {visibleItems.map((item) => {
                                                 const isActive = location.pathname === item.path;
                                                 return (
@@ -406,10 +412,10 @@ export function Sidebar() {
                                                         key={item.path}
                                                         to={item.path}
                                                         className={cn(
-                                                            "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 font-bold text-sm gpu-accelerate",
+                                                            "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 font-bold text-sm gpu-accelerate relative",
                                                             isActive
                                                                 ? "bg-indigo-600 dark:bg-yellow-400 text-white dark:text-slate-900 shadow-lg"
-                                                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white"
+                                                                : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white"
                                                         )}
                                                         onClick={() => setIsOpen(false)}
                                                     >

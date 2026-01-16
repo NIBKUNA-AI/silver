@@ -58,7 +58,7 @@ export function Register() {
             if (session?.user) {
                 // ✨ [기존 가입자 확인] 이미 프로필이 있는지 체크
                 const { data: existingProfile } = await supabase
-                    .from('profiles')
+                    .from('user_profiles')
                     .select('role, center_id, status')
                     .eq('id', session.user.id)
                     .maybeSingle();
@@ -155,7 +155,7 @@ export function Register() {
 
             if (authData.user) {
                 // ✨ user_profiles에 직접 저장
-                await supabase.from('profiles').upsert({
+                await supabase.from('user_profiles').upsert({
                     id: authData.user.id,
                     email: email,
                     name: name,

@@ -45,6 +45,7 @@ import { ParentLogsPage } from '@/pages/public/ParentLogsPage';
 import { Dashboard } from '@/pages/app/Dashboard';
 import { Schedule } from '@/pages/app/Schedule';
 import { ChildList } from '@/pages/app/children/ChildList';
+import { ParentList } from '@/pages/app/parents/ParentList';
 import { TherapistList } from '@/pages/app/therapists/TherapistList';
 import SessionList from '@/pages/app/sessions/SessionList';
 import SessionNote from '@/pages/app/sessions/SessionNote';
@@ -170,7 +171,9 @@ function App() {
                 } />
 
                 <Route path="schedule" element={<Schedule />} />
+
                 <Route path="children" element={<ChildList />} />
+                <Route path="parents" element={<ParentList />} />
                 <Route path="programs" element={<Programs />} />
 
                 <Route path="therapists" element={

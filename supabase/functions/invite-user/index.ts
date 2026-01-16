@@ -79,8 +79,10 @@ serve(async (req: any) => {
 
         // 3. Sync to 'profiles' table (The "User Profile")
         // This ensures they have the role IMMEDIATELY upon first login
+        // 3. Sync to 'user_profiles' table (The "User Profile") - FIXED: Changed from profiles
+        // This ensures they have the role IMMEDIATELY upon first login
         const { error: profileError } = await supabaseAdmin
-            .from("profiles")
+            .from("user_profiles")
             .upsert({
                 id: finalUserId,
                 email,

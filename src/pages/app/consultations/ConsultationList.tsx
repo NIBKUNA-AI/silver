@@ -42,7 +42,7 @@ export function ConsultationList() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+            const { data: profile } = await supabase.from('user_profiles').select('role').eq('id', user.id).maybeSingle();
             const role = profile?.role || 'therapist';
             setUserRole(role);
 
