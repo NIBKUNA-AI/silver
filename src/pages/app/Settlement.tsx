@@ -296,20 +296,24 @@ export function Settlement() {
 
                 {/* ... existing stats ... */}
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {/* ... stats content ... */}
-                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <p className="text-xs font-bold text-slate-400 mb-1">총 매출</p>
-                        <h3 className="text-2xl font-black text-blue-600">{totalStats.revenue.toLocaleString()}원</h3>
-                    </div>
-                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <p className="text-xs font-bold text-slate-400 mb-1">총 급여 지급액</p>
-                        <h3 className="text-2xl font-black text-rose-600">{totalStats.payout.toLocaleString()}원</h3>
-                    </div>
-                    <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 hidden md:block">
-                        <p className="text-xs font-bold text-emerald-600 mb-1">예상 순수익</p>
-                        <h3 className="text-2xl font-black text-emerald-700">{(totalStats.revenue - totalStats.payout).toLocaleString()}원</h3>
-                    </div>
+                {/* ✨ Staff Name Search Bar */}
+                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                        type="text"
+                        placeholder="직원 이름으로 검색..."
+                        className="flex-1 font-bold text-slate-700 bg-transparent outline-none placeholder:text-slate-300"
+                        onChange={(e) => {
+                            const searchTerm = e.target.value.toLowerCase();
+                            if (!searchTerm) {
+                                fetchSettlements(); // Reset to full list
+                            } else {
+                                setSettlementList(prev => prev.filter(s => s.name.toLowerCase().includes(searchTerm)));
+                            }
+                        }}
+                    />
                 </div>
 
                 <div className="flex gap-2 border-b border-slate-200">
