@@ -50,6 +50,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initialLoadComplete = useRef(false);
     const isMounted = useRef(true);
 
+    // ✨ [Immutable Flag] 페이지 로드 시점의 Hash 정보를 영구 보존
+    const initialHash = useRef(window.location.hash);
+    const initialParams = useRef(new URLSearchParams(window.location.search));
+
+    useEffect(() => {
+        // ✨ [DEBUG] 초기 로드 시 Invite Flag 확인
+        if (initialHash.current.includes('type=invite') || initialParams.current.get('type') === 'invite') {
+            console.log("🚩 Invite Link Detected on Mount (Persisted)");
+        }
+    }, []);
+
     useEffect(() => {
         return () => { isMounted.current = false; };
     }, []);
@@ -108,19 +119,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setSession(session);
                 setUser(session?.user ?? null);
 
-                // ✨ [Password Recovery / Invite Redirect]
-                // 사용자가 비밀번호 재설정 메일이나 초대 메일을 타고 들어왔을 때,
-                // 즉시 비밀번호 변경 페이지로 납치합니다.
+                // 1. 이벤트가 PASSWORD_RECOVERY 이거나
+                // 2. 현재 URL에 type=invite/recovery가 있거나
+                // 3. ✨ [핵심] **처음 로드됐을 때**의 URL에 꼬리표가 있었다면 (Supabase가 지웠어도 기억함)
                 const isInviteOrRecovery =
                     _event === 'PASSWORD_RECOVERY' ||
                     window.location.hash.includes('type=recovery') ||
                     window.location.hash.includes('type=invite') ||
+                    initialHash.current.includes('type=recovery') ||
+                    initialHash.current.includes('type=invite') ||
                     new URLSearchParams(window.location.search).get('type') === 'invite' ||
-                    new URLSearchParams(window.location.search).get('type') === 'recovery';
+                    initialParams.current.get('type') === 'invite';
 
                 if (isInviteOrRecovery) {
+                    // 세션이 없어도 토큰이 있다면 기다려야 하므로, 여기서는 '납치'만 준비
+                    // 실제로는 session이 생긴 직후에 이동해야 함.
                     console.log('🔐 Redirecting to Password Update (AuthContext)...');
-                    // ✨ [Force Redirect] React Router가 아닌 하드 리다이렉트로 확실하게 이동
                     window.location.href = '/auth/update-password';
                     return;
                 }
