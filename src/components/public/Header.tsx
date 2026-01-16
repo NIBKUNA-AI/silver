@@ -47,6 +47,8 @@ const Icons = {
     ),
 };
 
+import { createPortal } from 'react-dom';
+
 export function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const location = useLocation();
@@ -205,99 +207,102 @@ export function Header() {
                 </div>
             </div>
 
-            <AnimatePresence>
-                {isMenuOpen && (
-                    <motion.div
-                        key="mobile-menu"
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.2 }}
-                        className={cn(
-                            "fixed inset-0 top-[64px] z-50 md:hidden overflow-y-auto",
-                            isDark ? "bg-slate-950" : "bg-white"
-                        )}
-                    >
-                        <div className="container mx-auto px-6 py-8 flex flex-col gap-6">
-                            {navigation.map((item) => (
-                                <Link
-                                    key={item.name}
-                                    to={item.href}
-                                    className={cn("text-2xl font-bold transition-colors py-2 border-b border-transparent hover:border-current w-full",
-                                        isActive(item.href)
-                                            ? (isDark ? "text-indigo-400" : "text-primary")
-                                            : (isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900")
-                                    )}
-                                    onClick={() => setIsMenuOpen(false)}
-                                >{item.name}</Link>
-                            ))}
-
-                            <hr className={cn("border-t my-2", isDark ? "border-slate-800" : "border-slate-100")} />
-
-                            {user ? (
-                                <div className="flex flex-col gap-4">
-                                    {(() => {
-                                        const rawEmail = user.email || '';
-                                        const isSuperAdminEmail = rawEmail.toLowerCase().trim() === 'anukbin@gmail.com';
-                                        const isParent = !isSuperAdminEmail && (role === 'parent');
-
-                                        return isParent ? (
-                                            <Link
-                                                to="/parent/home"
-                                                className="flex items-center justify-center w-full py-3 text-lg font-bold text-yellow-700 bg-yellow-100 rounded-xl hover:bg-yellow-200 transition-all"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                👶 마이 페이지
-                                            </Link>
-                                        ) : (
-                                            <Link
-                                                to="/app"
-                                                className="flex items-center justify-center w-full py-3 text-lg font-bold text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                ⚙️ 업무 시스템 접속
-                                            </Link>
-                                        );
-                                    })()}
-                                    <button
-                                        onClick={handleLogout}
-                                        className={cn("w-full py-3 text-lg font-medium transition-colors rounded-xl border",
-                                            isDark ? "border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-red-400" : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-red-500"
-                                        )}
-                                    >
-                                        로그아웃
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-4">
-                                    <Link
-                                        to="/login"
-                                        className={cn("flex items-center justify-center w-full py-3 text-lg font-medium transition-colors rounded-xl border",
-                                            isDark ? "border-slate-800 text-white hover:bg-slate-800" : "border-slate-200 text-slate-900 hover:bg-slate-50"
-                                        )}
-                                        onClick={() => setIsMenuOpen(false)}
-                                    >
-                                        로그인
-                                    </Link>
-                                    <Link
-                                        to="/contact"
-                                        className="flex items-center justify-center w-full py-3 text-lg font-bold text-white bg-primary rounded-xl hover:bg-primary/90 shadow-lg transition-all"
-                                        onClick={() => setIsMenuOpen(false)}
-                                    >
-                                        상담 예약 하기
-                                    </Link>
-                                </div>
+            {createPortal(
+                <AnimatePresence>
+                    {isMenuOpen && (
+                        <motion.div
+                            key="mobile-menu"
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.2 }}
+                            className={cn(
+                                "fixed inset-0 top-[64px] z-[9999] md:hidden overflow-y-auto",
+                                isDark ? "bg-slate-950" : "bg-white"
                             )}
+                        >
+                            <div className="container mx-auto px-6 py-8 flex flex-col gap-6">
+                                {navigation.map((item) => (
+                                    <Link
+                                        key={item.name}
+                                        to={item.href}
+                                        className={cn("text-2xl font-bold transition-colors py-2 border-b border-transparent hover:border-current w-full",
+                                            isActive(item.href)
+                                                ? (isDark ? "text-indigo-400" : "text-primary")
+                                                : (isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900")
+                                        )}
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >{item.name}</Link>
+                                ))}
 
-                            <div className="pt-4 mt-auto mb-20">
-                                <p className={cn("text-sm", isDark ? "text-slate-500" : "text-slate-400")}>
-                                    © 2026 Zarada Child Development Center.<br />All rights reserved.
-                                </p>
+                                <hr className={cn("border-t my-2", isDark ? "border-slate-800" : "border-slate-100")} />
+
+                                {user ? (
+                                    <div className="flex flex-col gap-4">
+                                        {(() => {
+                                            const rawEmail = user.email || '';
+                                            const isSuperAdminEmail = rawEmail.toLowerCase().trim() === 'anukbin@gmail.com';
+                                            const isParent = !isSuperAdminEmail && (role === 'parent');
+
+                                            return isParent ? (
+                                                <Link
+                                                    to="/parent/home"
+                                                    className="flex items-center justify-center w-full py-3 text-lg font-bold text-yellow-700 bg-yellow-100 rounded-xl hover:bg-yellow-200 transition-all"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                >
+                                                    👶 마이 페이지
+                                                </Link>
+                                            ) : (
+                                                <Link
+                                                    to="/app"
+                                                    className="flex items-center justify-center w-full py-3 text-lg font-bold text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all"
+                                                    onClick={() => setIsMenuOpen(false)}
+                                                >
+                                                    ⚙️ 업무 시스템 접속
+                                                </Link>
+                                            );
+                                        })()}
+                                        <button
+                                            onClick={handleLogout}
+                                            className={cn("w-full py-3 text-lg font-medium transition-colors rounded-xl border",
+                                                isDark ? "border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-red-400" : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-red-500"
+                                            )}
+                                        >
+                                            로그아웃
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-4">
+                                        <Link
+                                            to="/login"
+                                            className={cn("flex items-center justify-center w-full py-3 text-lg font-medium transition-colors rounded-xl border",
+                                                isDark ? "border-slate-800 text-white hover:bg-slate-800" : "border-slate-200 text-slate-900 hover:bg-slate-50"
+                                            )}
+                                            onClick={() => setIsMenuOpen(false)}
+                                        >
+                                            로그인
+                                        </Link>
+                                        <Link
+                                            to="/contact"
+                                            className="flex items-center justify-center w-full py-3 text-lg font-bold text-white bg-primary rounded-xl hover:bg-primary/90 shadow-lg transition-all"
+                                            onClick={() => setIsMenuOpen(false)}
+                                        >
+                                            상담 예약 하기
+                                        </Link>
+                                    </div>
+                                )}
+
+                                <div className="pt-4 mt-auto mb-20">
+                                    <p className={cn("text-sm", isDark ? "text-slate-500" : "text-slate-400")}>
+                                        © 2026 Zarada Child Development Center.<br />All rights reserved.
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </header>
     );
 }
