@@ -428,11 +428,11 @@ export function ParentHomePage() {
                         <h2 className={cn("text-xl font-black", isDark ? "text-white" : "text-slate-900")}>수업 일정표</h2>
                     </div>
                     <div className={cn(
-                        "rounded-[32px] p-4 md:p-8 shadow-lg border bg-white",
+                        "rounded-[32px] p-4 md:p-8 shadow-lg border bg-white overflow-hidden",
                         isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100 shadow-slate-200/50"
                     )}>
                         <style>{`
-                            .fc { font-family: 'Pretendard', sans-serif; }
+                            .fc { font-family: 'Pretendard', sans-serif; min-width: 600px; /* Force min-width to prevent squashing */ } 
                             .fc-header-toolbar { flex-wrap: wrap; gap: 8px; margin-bottom: 24px !important; }
                             .fc-toolbar-title { font-size: 1.25rem !important; font-weight: 800 !important; }
                             .fc-button { border-radius: 12px !important; font-weight: 700 !important; padding: 8px 16px !important; text-transform: capitalize; }
@@ -477,31 +477,33 @@ export function ParentHomePage() {
                             .fc-daygrid-day-number { color: #334155; font-weight: 600; }
                             `}
                         `}</style>
-                        <FullCalendar
-                            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                            initialView="dayGridMonth"
-                            locale={koLocale}
-                            headerToolbar={{
-                                left: 'prev,next today',
-                                center: 'title',
-                                right: ''
-                            }}
-                            buttonText={{ today: '오늘' }}
-                            events={calendarEvents}
-                            height="auto"
-                            contentHeight="auto"
-                            dayMaxEvents={2}
-                            moreLinkClick="popover"
-                            editable={false}
-                            selectable={false}
-                            eventContent={(eventInfo) => (
-                                <div className="flex flex-col h-auto">
-                                    <span className="break-words leading-tight">{eventInfo.event.title}</span>
-                                </div>
-                            )}
-                            eventClick={(info) => alert(`${info.event.title}\n시간: ${info.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`)}
-                            noEventsContent="예정된 수업이 없습니다."
-                        />
+                        <div className="overflow-x-auto -mx-4 px-4 md:overflow-visible md:mx-0 md:px-0">
+                            <FullCalendar
+                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                initialView="dayGridMonth"
+                                locale={koLocale}
+                                headerToolbar={{
+                                    left: 'prev,next today',
+                                    center: 'title',
+                                    right: ''
+                                }}
+                                buttonText={{ today: '오늘' }}
+                                events={calendarEvents}
+                                height="auto"
+                                contentHeight="auto"
+                                dayMaxEvents={2}
+                                moreLinkClick="popover"
+                                editable={false}
+                                selectable={false}
+                                eventContent={(eventInfo) => (
+                                    <div className="flex flex-col h-auto">
+                                        <span className="break-words leading-tight">{eventInfo.event.title}</span>
+                                    </div>
+                                )}
+                                eventClick={(info) => alert(`${info.event.title}\n시간: ${info.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`)}
+                                noEventsContent="예정된 수업이 없습니다."
+                            />
+                        </div>
                     </div>
                 </section>
 
