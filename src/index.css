@@ -233,3 +233,136 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.5);
 }
+
+/* ============================================
+ * 📱 MOBILE UI OPTIMIZATION
+ * Fixes for text wrapping, button layouts, tables
+ * ============================================ */
+
+/* 🔧 Prevent page titles from breaking into vertical text */
+@layer utilities {
+  .page-title,
+  h1, h2, h3 {
+    word-break: keep-all;
+    overflow-wrap: normal;
+  }
+}
+
+/* 🔧 Mobile-specific fixes */
+@media (max-width: 768px) {
+  /* Force horizontal text flow - prevent single char per line */
+  h1, h2, h3, h4, h5, h6,
+  .font-black, .font-bold, .font-extrabold {
+    word-break: keep-all !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Fix header flex layouts - allow wrapping but not text breaking */
+  .flex {
+    gap: 0.5rem;
+  }
+  
+  /* Buttons should not break text */
+  button, a[class*="btn"], [class*="button"] {
+    white-space: nowrap;
+    min-width: fit-content;
+    flex-shrink: 0;
+  }
+  
+  /* Fix page headers that have title + buttons */
+  .flex.justify-between,
+  .flex.items-center {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  
+  /* Table responsiveness - prevent column headers from stacking vertically */
+  table th,
+  table td {
+    white-space: nowrap;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  /* Allow horizontal scroll for tables */
+  .overflow-x-auto {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Ensure tables have minimum width to prevent crushing */
+  table {
+    min-width: 500px;
+  }
+  
+  /* Cards and containers - tighter padding on mobile */
+  .rounded-\\[32px\\] {
+    border-radius: 1rem;
+  }
+  
+  .p-6 {
+    padding: 1rem;
+  }
+  
+  .p-8 {
+    padding: 1.25rem;
+  }
+  
+  /* Fix badge/tag text from breaking */
+  .rounded-full,
+  .rounded-xl,
+  [class*="badge"],
+  [class*="tag"] {
+    white-space: nowrap;
+  }
+  
+  /* Smaller text for cramped mobile UI */
+  .text-3xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+  
+  .text-2xl {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+  }
+  
+  /* Fix grid layouts for mobile */
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .grid-cols-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* 🔧 Extra small screens (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  h1 {
+    font-size: 1.25rem !important;
+  }
+  
+  h2, h3 {
+    font-size: 1rem !important;
+  }
+  
+  button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  table th, table td {
+    font-size: 0.625rem;
+    padding: 0.25rem;
+  }
+}
+
+/* 📱 Safe area insets for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-20, .pb-32 {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+}
