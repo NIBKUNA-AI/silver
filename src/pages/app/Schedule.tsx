@@ -270,27 +270,42 @@ export function Schedule() {
                     )}
                 </div>
 
-                <div className={cn("flex-1 p-6 rounded-3xl shadow-sm border relative z-0 overflow-hidden", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100")}>
-                    <FullCalendar
-                        ref={calendarRef}
-                        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                        initialView="dayGridMonth"
-                        locale={koLocale}
-                        nowIndicator={true}
-                        headerToolbar={{ left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' }}
-                        buttonText={{ today: '오늘', month: '월간', week: '주간', day: '일간' }}
-                        events={selectedTherapistId === 'all' ? events : events.filter(e => e.extendedProps.therapist_id === selectedTherapistId)}
-                        height="100%"
-                        dayMaxEvents={true}
-                        eventClassNames="cursor-pointer hover:brightness-95 transition-all border-l-4 font-bold text-xs py-0.5 px-1 rounded-r-md shadow-sm"
-                        eventClick={handleEventClick}
-                        dateClick={handleDateClick}
-                        eventMouseEnter={handleEventMouseEnter}
-                        eventMouseLeave={handleEventMouseLeave}
-                        selectable={true}
-                        selectMirror={true}
-                        select={(info) => { handleDateClick({ date: info.start }); info.view.calendar.unselect(); }}
-                    />
+                <div className={cn("flex-1 p-2 md:p-6 rounded-3xl shadow-sm border relative z-0 flex flex-col overflow-hidden", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100")}>
+                    <div className="flex-1 overflow-x-auto overflow-y-hidden">
+                        <div className="min-w-[700px] h-full">
+                            <FullCalendar
+                                ref={calendarRef}
+                                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                                initialView="dayGridMonth"
+                                locale={koLocale}
+                                nowIndicator={true}
+                                headerToolbar={{
+                                    left: 'prev,next today',
+                                    center: 'title',
+                                    right: window.innerWidth < 768 ? 'dayGridMonth,listWeek' : 'dayGridMonth,timeGridWeek,timeGridDay'
+                                }}
+                                buttonText={{ today: '오늘', month: '월간', week: '주간', day: '일간', list: '목록' }}
+                                events={selectedTherapistId === 'all' ? events : events.filter(e => e.extendedProps.therapist_id === selectedTherapistId)}
+                                height="100%"
+                                dayMaxEvents={2} // ✨ 모바일에서 너무 많이 보이면 안됨
+                                eventClassNames="cursor-pointer hover:brightness-95 transition-all border-l-4 font-bold text-xs py-0.5 px-1 rounded-r-md shadow-sm truncate"
+                                eventClick={handleEventClick}
+                                dateClick={handleDateClick}
+                                eventMouseEnter={handleEventMouseEnter}
+                                eventMouseLeave={handleEventMouseLeave}
+                                selectable={true}
+                                selectMirror={true}
+                                select={(info) => { handleDateClick({ date: info.start }); info.view.calendar.unselect(); }}
+                                eventContent={(arg) => (
+                                    <div className="flex items-center gap-1 overflow-hidden w-full">
+                                        <div className="truncate w-full text-xs font-bold leading-tight">
+                                            {arg.event.title}
+                                        </div>
+                                    </div>
+                                )}
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 {/* 툴팁 영역 */}

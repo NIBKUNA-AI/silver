@@ -212,92 +212,141 @@ export function Header() {
                     {isMenuOpen && (
                         <motion.div
                             key="mobile-menu"
-                            initial={{ opacity: 0, y: -20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            transition={{ duration: 0.2 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
                             className={cn(
-                                "fixed inset-0 top-[64px] z-[9999] md:hidden overflow-y-auto",
-                                isDark ? "bg-slate-950" : "bg-white"
+                                "fixed inset-0 top-[64px] z-[9999] md:hidden overflow-hidden",
+                                isDark ? "bg-slate-950/98" : "bg-white/98",
+                                "backdrop-blur-xl"
                             )}
                         >
-                            <div className="container mx-auto px-6 py-8 flex flex-col gap-6">
-                                {navigation.map((item) => (
-                                    <Link
-                                        key={item.name}
-                                        to={item.href}
-                                        className={cn("text-2xl font-bold transition-colors py-2 border-b border-transparent hover:border-current w-full",
-                                            isActive(item.href)
-                                                ? (isDark ? "text-indigo-400" : "text-primary")
-                                                : (isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900")
-                                        )}
-                                        onClick={() => setIsMenuOpen(false)}
-                                    >{item.name}</Link>
-                                ))}
+                            {/* Decorative Background Elements */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
-                                <hr className={cn("border-t my-2", isDark ? "border-slate-800" : "border-slate-100")} />
-
-                                {user ? (
-                                    <div className="flex flex-col gap-4">
-                                        {(() => {
-                                            const rawEmail = user.email || '';
-                                            const isSuperAdminEmail = rawEmail.toLowerCase().trim() === 'anukbin@gmail.com';
-                                            const isParent = !isSuperAdminEmail && (role === 'parent');
-
-                                            return isParent ? (
-                                                <Link
-                                                    to="/parent/home"
-                                                    className="flex items-center justify-center w-full py-3 text-lg font-bold text-yellow-700 bg-yellow-100 rounded-xl hover:bg-yellow-200 transition-all"
-                                                    onClick={() => setIsMenuOpen(false)}
-                                                >
-                                                    👶 마이 페이지
-                                                </Link>
-                                            ) : (
-                                                <Link
-                                                    to="/app"
-                                                    className="flex items-center justify-center w-full py-3 text-lg font-bold text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all"
-                                                    onClick={() => setIsMenuOpen(false)}
-                                                >
-                                                    ⚙️ 업무 시스템 접속
-                                                </Link>
-                                            );
-                                        })()}
-                                        <button
-                                            onClick={handleLogout}
-                                            className={cn("w-full py-3 text-lg font-medium transition-colors rounded-xl border",
-                                                isDark ? "border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-red-400" : "border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-red-500"
-                                            )}
+                            <motion.div
+                                className="container mx-auto px-6 py-8 flex flex-col h-full overflow-y-auto relative z-10"
+                                variants={{
+                                    initial: { opacity: 0 },
+                                    animate: {
+                                        opacity: 1,
+                                        transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+                                    },
+                                    exit: {
+                                        opacity: 0,
+                                        transition: { staggerChildren: 0.05, staggerDirection: -1 }
+                                    }
+                                }}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                            >
+                                <div className="flex flex-col gap-2 mb-8">
+                                    {navigation.map((item) => (
+                                        <motion.div
+                                            key={item.name}
+                                            variants={{
+                                                initial: { opacity: 0, x: -20 },
+                                                animate: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
+                                                exit: { opacity: 0, x: -20 }
+                                            }}
                                         >
-                                            로그아웃
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col gap-4">
-                                        <Link
-                                            to="/login"
-                                            className={cn("flex items-center justify-center w-full py-3 text-lg font-medium transition-colors rounded-xl border",
-                                                isDark ? "border-slate-800 text-white hover:bg-slate-800" : "border-slate-200 text-slate-900 hover:bg-slate-50"
-                                            )}
-                                            onClick={() => setIsMenuOpen(false)}
-                                        >
-                                            로그인
-                                        </Link>
-                                        <Link
-                                            to="/contact"
-                                            className="flex items-center justify-center w-full py-3 text-lg font-bold text-white bg-primary rounded-xl hover:bg-primary/90 shadow-lg transition-all"
-                                            onClick={() => setIsMenuOpen(false)}
-                                        >
-                                            상담 예약 하기
-                                        </Link>
-                                    </div>
-                                )}
-
-                                <div className="pt-4 mt-auto mb-20">
-                                    <p className={cn("text-sm", isDark ? "text-slate-500" : "text-slate-400")}>
-                                        © 2026 Zarada Child Development Center.<br />All rights reserved.
-                                    </p>
+                                            <Link
+                                                to={item.href}
+                                                className={cn(
+                                                    "block text-4xl font-black tracking-tighter transition-all py-3",
+                                                    isActive(item.href)
+                                                        ? (isDark ? "text-indigo-400 translate-x-4" : "text-slate-900 translate-x-4")
+                                                        : (isDark ? "text-slate-400 hover:text-white hover:translate-x-2" : "text-slate-500 hover:text-slate-900 hover:translate-x-2")
+                                                )}
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                {item.name}
+                                                {isActive(item.href) && <span className="ml-2 text-indigo-500">.</span>}
+                                            </Link>
+                                        </motion.div>
+                                    ))}
                                 </div>
-                            </div>
+
+                                <motion.div
+                                    className="mt-auto space-y-6"
+                                    variants={{
+                                        initial: { opacity: 0, y: 20 },
+                                        animate: { opacity: 1, y: 0, transition: { delay: 0.3 } },
+                                        exit: { opacity: 0, y: 20 }
+                                    }}
+                                >
+                                    <hr className={cn("border-t", isDark ? "border-white/10" : "border-black/5")} />
+
+                                    {user ? (
+                                        <div className="flex flex-col gap-3">
+                                            {(() => {
+                                                const rawEmail = user.email || '';
+                                                const isSuperAdminEmail = rawEmail.toLowerCase().trim() === 'anukbin@gmail.com';
+                                                const isParent = !isSuperAdminEmail && (role === 'parent');
+
+                                                return isParent ? (
+                                                    <Link
+                                                        to="/parent/home"
+                                                        className="w-full py-4 text-center text-lg font-bold text-slate-900 bg-[#FFD700] rounded-2xl hover:bg-[#F4C400] transition-all shadow-lg shadow-yellow-500/20 active:scale-[0.98]"
+                                                        onClick={() => setIsMenuOpen(false)}
+                                                    >
+                                                        마이 페이지
+                                                    </Link>
+                                                ) : (
+                                                    <Link
+                                                        to="/app"
+                                                        className="w-full py-4 text-center text-lg font-bold text-white bg-indigo-600 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98]"
+                                                        onClick={() => setIsMenuOpen(false)}
+                                                    >
+                                                        업무 시스템
+                                                    </Link>
+                                                );
+                                            })()}
+                                            <button
+                                                onClick={handleLogout}
+                                                className={cn("w-full py-4 text-center text-lg font-medium transition-colors rounded-2xl",
+                                                    isDark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
+                                                )}
+                                            >
+                                                로그아웃
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-3">
+                                            <Link
+                                                to="/contact"
+                                                className={cn(
+                                                    "w-full py-4 text-center text-lg font-bold rounded-2xl transition-all shadow-lg active:scale-[0.98]",
+                                                    isDark
+                                                        ? "bg-indigo-600 text-white shadow-indigo-900/30"
+                                                        : "bg-slate-900 text-white shadow-slate-900/10"
+                                                )}
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                상담 예약하기
+                                            </Link>
+                                            <Link
+                                                to="/login"
+                                                className={cn("w-full py-4 text-center text-lg font-medium transition-colors rounded-2xl border-2",
+                                                    isDark ? "border-slate-800 text-white hover:bg-slate-800" : "border-slate-100 text-slate-900 hover:bg-slate-50"
+                                                )}
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                로그인
+                                            </Link>
+                                        </div>
+                                    )}
+
+                                    <div className="pb-8">
+                                        <p className={cn("text-xs font-medium text-center", isDark ? "text-slate-600" : "text-slate-400")}>
+                                            DESIGNED BY ZARADA
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            </motion.div>
                         </motion.div>
                     )}
                 </AnimatePresence>,
