@@ -111,8 +111,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 // ✨ [Password Recovery / Invite Redirect]
                 // 사용자가 비밀번호 재설정 메일이나 초대 메일을 타고 들어왔을 때,
                 // 즉시 비밀번호 변경 페이지로 납치합니다.
-                if (_event === 'PASSWORD_RECOVERY' || window.location.hash.includes('type=recovery') || window.location.hash.includes('type=invite')) {
-                    console.log('🔐 Redirecting to Password Update...');
+                const isInviteOrRecovery =
+                    _event === 'PASSWORD_RECOVERY' ||
+                    window.location.hash.includes('type=recovery') ||
+                    window.location.hash.includes('type=invite') ||
+                    new URLSearchParams(window.location.search).get('type') === 'invite' ||
+                    new URLSearchParams(window.location.search).get('type') === 'recovery';
+
+                if (isInviteOrRecovery) {
+                    console.log('🔐 Redirecting to Password Update (AuthContext)...');
+                    // ✨ [Force Redirect] React Router가 아닌 하드 리다이렉트로 확실하게 이동
                     window.location.href = '/auth/update-password';
                     return;
                 }
