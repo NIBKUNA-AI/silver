@@ -85,6 +85,13 @@ export function TherapistList() {
         try {
             if (!editingId) {
                 // ✨ [New Registration] Use Edge Function for Secure Invitation
+                // ✨ [DEBUG] Inspect Payload
+                console.log("🚀 Inviting User:", {
+                    email: formData.email,
+                    role: formData.system_role,
+                    hire_type: formData.hire_type
+                });
+
                 const { data, error } = await supabase.functions.invoke('invite-user', {
                     body: {
                         email: formData.email,
@@ -95,7 +102,7 @@ export function TherapistList() {
                         bank_name: formData.bank_name,
                         account_number: formData.account_number,
                         account_holder: formData.account_holder,
-                        account_holder: formData.account_holder,
+                        // account_holder: formData.account_holder, // Duplicate removed
                         center_id: import.meta.env.VITE_CENTER_ID || JAMSIL_CENTER_ID,
                     }
                 });
@@ -430,6 +437,23 @@ export function TherapistList() {
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                                             </div>
                                         </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-600 ml-1">부여 권한 (System Role)</label>
+                                        <input
+                                            readOnly
+                                            className={cn(
+                                                "w-full px-5 py-3.5 border rounded-2xl font-black outline-none transition-all cursor-not-allowed",
+                                                formData.system_role === 'admin'
+                                                    ? "bg-rose-50 border-rose-200 text-rose-600"
+                                                    : "bg-indigo-50 border-indigo-200 text-indigo-600"
+                                            )}
+                                            value={formData.system_role === 'admin' ? '🛡️ 관리자 (Admin)' : '🩺 치료사 (Therapist)'}
+                                        />
+                                        <p className="text-[11px] text-slate-400 font-medium px-1">
+                                            * 권한은 '관리자 등록' 또는 '치료사 등록' 버튼에 따라 자동 결정됩니다.
+                                        </p>
                                     </div>
                                 </div>
 
