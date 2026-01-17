@@ -19,7 +19,12 @@ function categorizeSource(referrer: string, utmSource?: string | null): string {
         const lower = utmSource.toLowerCase();
         if (lower.includes('naver')) return 'Naver';
         if (lower.includes('google')) return 'Google';
-        if (lower.includes('instagram') || lower.includes('facebook') || lower.includes('kakao')) return 'SNS';
+        if (lower.includes('youtube')) return 'Youtube';
+        // ✨ SNS 세분화 - 개별 플랫폼으로 표시
+        if (lower.includes('instagram')) return 'Instagram';
+        if (lower.includes('facebook')) return 'Facebook';
+        if (lower.includes('kakao')) return 'KakaoTalk';
+        if (lower.includes('twitter') || lower.includes('x.com')) return 'Twitter/X';
         return 'Others';
     }
 
@@ -28,8 +33,13 @@ function categorizeSource(referrer: string, utmSource?: string | null): string {
     const lowerRef = referrer.toLowerCase();
     if (lowerRef.includes('naver')) return 'Naver';
     if (lowerRef.includes('google')) return 'Google';
+    if (lowerRef.includes('youtube') || lowerRef.includes('youtu.be')) return 'Youtube';
     if (lowerRef.includes('daum')) return 'Naver'; // Daum = Naver group
-    if (lowerRef.includes('instagram') || lowerRef.includes('facebook') || lowerRef.includes('kakao')) return 'SNS';
+    // ✨ SNS 세분화 - 개별 플랫폼으로 표시
+    if (lowerRef.includes('instagram')) return 'Instagram';
+    if (lowerRef.includes('facebook')) return 'Facebook';
+    if (lowerRef.includes('kakao')) return 'KakaoTalk';
+    if (lowerRef.includes('twitter') || lowerRef.includes('x.com')) return 'Twitter/X';
     if (lowerRef.includes(window.location.hostname)) return 'Direct'; // Internal
 
     return 'Others';
@@ -59,6 +69,7 @@ export function useTrafficSource() {
 
             if (lowerRef.includes('naver')) derivedSource = 'naver_search';
             else if (lowerRef.includes('google')) derivedSource = 'google_search';
+            else if (lowerRef.includes('youtube') || lowerRef.includes('youtu.be')) derivedSource = 'youtube';
             else if (lowerRef.includes('daum')) derivedSource = 'daum_search';
             else if (lowerRef.includes('instagram')) derivedSource = 'instagram';
             else if (lowerRef.includes('facebook')) derivedSource = 'facebook';

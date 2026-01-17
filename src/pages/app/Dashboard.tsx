@@ -161,6 +161,24 @@ const KpiCard = ({ title, value, icon, trend, trendUp, color, bg, border }) => (
     </div>
 );
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload;
+        return (
+            <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-100 dark:border-slate-800 p-3 rounded-xl shadow-lg backdrop-blur-md text-left">
+                <p className="font-bold text-slate-900 dark:text-white mb-1 leading-tight text-sm">{data.fullName || label}</p>
+                <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                    <p className="text-blue-600 dark:text-blue-400 font-bold text-sm">
+                        조회수: {data.value.toLocaleString()}회
+                    </p>
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
 const ChartContainer = ({ title, icon, children, className = "", innerHeight = "h-[320px]" }) => (
     <div className={`bg-white dark:bg-slate-900 p-8 rounded-[36px] shadow-lg border border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden ${className} group hover:shadow-2xl transition-all duration-500 text-left`}>
         <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-3 relative z-10 text-left">
@@ -220,6 +238,7 @@ export function Dashboard() {
     const [marketingData, setMarketingData] = useState([]);
     const [totalInflow, setTotalInflow] = useState(0);
     const [bestChannel, setBestChannel] = useState({ name: '-', value: 0 });
+    const [blogTrafficTotals, setBlogTrafficTotals] = useState<Record<string, number>>({}); // ✨ Blog traffic by source
     const [programData, setProgramData] = useState([]);
     const [ageData, setAgeData] = useState([]);
     const [genderData, setGenderData] = useState([]);
@@ -354,27 +373,141 @@ export function Dashboard() {
 
             setTopChildren(Object.entries(childContribMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5));
 
-            // Conversion Logic (Simplified for brevity, or need to fetch consultations)
-            // Need to fetch consultations for marketing data
-            const { data: validConsults } = await supabase
-                .from('consultations')
-                .select('marketing_source, inflow_source, id, created_at')
-                .eq('center_id', JAMSIL_CENTER_ID)
-                .gte('created_at', selectedMonth + '-01'); // Filter specific month or general? Usually range.
+            // ✨ [TRAFFIC ANALYSIS] Fetch site_visits for overall visitor traffic source
+            const lastDayOfMonth = new Date(selYear, selMonth, 0).getDate(); // Get last day of selected month
+            const { data: siteVisits } = await (supabase as any)
+                .from('site_visits')
+                .select('source_category, visited_at, referrer_url, page_url') // ✨ Added page_url
+                .gte('visited_at', selectedMonth + '-01')
+                .lte('visited_at', selectedMonth + '-' + String(lastDayOfMonth).padStart(2, '0'));
 
-            // Marketing Data
-            const sourceMap: Record<string, number> = { 'Naver': 0, 'Google': 0, 'Instagram': 0, 'Zarada': 0, 'Others': 0 };
-            validConsults?.forEach(c => {
-                const src = c.marketing_source || c.inflow_source || 'Others';
-                sourceMap[src] = (sourceMap[src] || 0) + 1;
+            // Process site_visits for traffic source statistics
+            // ✨ SNS 세분화: 개별 플랫폼으로 초기화
+            const trafficMap: Record<string, number> = {
+                'Naver': 0, 'Google': 0, 'Youtube': 0,
+                'Instagram': 0, 'Facebook': 0, 'KakaoTalk': 0, 'Twitter/X': 0,
+                'Direct': 0, 'Others': 0
+            };
+            const blogTrafficMap: Record<string, Record<string, number>> = {}; // ✨ Blog Traffic Aggregation
+
+            siteVisits?.forEach((v: any) => {
+                let cat = v.source_category || 'Others';
+
+                // ✨ [Enhancement] Break down 'Others' using referrer domain
+                if (v.referrer_url) {
+                    try {
+                        const url = new URL(v.referrer_url);
+                        const hostname = url.hostname.replace('www.', '');
+
+                        // 1. Exclude Dev/Infra Domains & Internal
+                        if (hostname.includes('localhost') ||
+                            hostname.includes('127.0.0.1') ||
+                            hostname.includes('vercel.app') ||
+                            hostname.includes('vercel.com') ||
+                            hostname.includes('brainlitix.net')) {
+                            return; // Skip this visit
+                        }
+
+                        // 2. Normalize Platform Domains
+                        if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
+                            cat = 'Youtube';
+                        } else if (trafficMap[hostname] !== undefined || cat === 'Others') {
+                            if (cat === 'Others') {
+                                cat = hostname;
+                            }
+                        }
+                    } catch (e) {
+                        // Invalid URL
+                    }
+                }
+
+                // Initialize if new domain
+                if (trafficMap[cat] === undefined) trafficMap[cat] = 0;
+
+                if (trafficMap[cat] !== undefined) {
+                    trafficMap[cat] += 1;
+                } else {
+                    trafficMap['Others'] += 1;
+                }
+
+                // ✨ [Blog Analytics] Aggregate traffic per blog post (Exclude Direct)
+                if (v.page_url && v.page_url.includes('/blog/') && cat !== 'Direct' && v.referrer_url) {
+                    try {
+                        const parts = v.page_url.split('/blog/');
+                        if (parts.length > 1) {
+                            const slug = parts[1].split('?')[0];
+                            if (slug) {
+                                if (!blogTrafficMap[slug]) blogTrafficMap[slug] = {};
+                                // Use the categorized source 'cat' which is already normalized
+                                if (!blogTrafficMap[slug][cat]) blogTrafficMap[slug][cat] = 0;
+                                blogTrafficMap[slug][cat]++;
+                            }
+                        }
+                    } catch (e) {
+                        // Ignore parse error
+                    }
+                }
             });
-            const marketingArr = Object.entries(sourceMap).map(([name, value]) => ({
-                cat: 'CHANNEL', name, value, color: COLORS[Math.floor(Math.random() * COLORS.length)]
-            })).sort((a, b) => b.value - a.value);
+
+            // ✨ SNS 세분화: 개별 플랫폼 색상 매핑
+            const channelColors: Record<string, string> = {
+                'Naver': '#03C75A',
+                'Google': '#4285F4',
+                'Youtube': '#FF0000',
+                'Instagram': '#E1306C',
+                'Facebook': '#1877F2',
+                'KakaoTalk': '#FEE500',
+                'Twitter/X': '#1DA1F2',
+                'Direct': '#6366f1',
+                'Others': '#f59e0b'
+            };
+
+            const marketingArr = Object.entries(trafficMap)
+                .filter(([name]) => name !== 'Direct') // ✨ [MOD] 'Direct' 제외
+                .filter(([_, value]) => value > 0) // ✨ [MOD] Hide empty channels to clean up UI
+                .map(([name, value], idx) => ({
+                    cat: 'CHANNEL',
+                    name,
+                    value,
+                    // Use predefined color or pick from palette for dynamic domains
+                    color: channelColors[name] || COLORS[idx % COLORS.length]
+                }))
+                .sort((a, b) => b.value - a.value);
 
             setMarketingData(marketingArr);
-            setTotalInflow(validConsults?.length || 0);
+
+            // ✨ [MOD] Total inflow based ONLY on displayed channels (Direct excluded)
+            const totalDisplayedVisits = marketingArr.reduce((acc, curr) => acc + curr.value, 0);
+            setTotalInflow(totalDisplayedVisits);
+
             if (marketingArr.length > 0) setBestChannel(marketingArr[0]);
+
+            // ✨ [POPULAR CONTENT] Fetch top blog posts by view count
+            const { data: topBlogPosts } = await (supabase as any)
+                .from('blog_posts')
+                .select('title, view_count, slug')
+                .eq('is_published', true)
+                .order('view_count', { ascending: false })
+                .limit(10);
+
+            setTopPosts(
+                topBlogPosts?.map((p: any) => ({
+                    name: p.title.length > 25 ? p.title.slice(0, 25) + '...' : p.title,
+                    value: p.view_count || 0,
+                    fullName: p.title, // ✨ For tooltip
+                    slug: p.slug,
+                    sources: blogTrafficMap[p.slug] || {} // ✨ Attach traffic sources
+                })) || []
+            );
+
+            // ✨ [Blog Traffic Totals] Aggregate all blog traffic by source
+            const blogTotals: Record<string, number> = {};
+            Object.values(blogTrafficMap).forEach((sources: Record<string, number>) => {
+                Object.entries(sources).forEach(([src, cnt]) => {
+                    blogTotals[src] = (blogTotals[src] || 0) + cnt;
+                });
+            });
+            setBlogTrafficTotals(blogTotals);
 
             // Set KPI
             setKpi({
@@ -432,6 +565,14 @@ export function Dashboard() {
                     <p className="text-slate-500 dark:text-slate-400 font-bold mt-2">AI 기반 운영 & 마케팅 통합 분석 시스템</p>
                 </div>
                 <div className="flex gap-2 items-center bg-white dark:bg-slate-900 p-2 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    {/* ✨ Month Picker */}
+                    <input
+                        type="month"
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(e.target.value)}
+                        className="px-4 py-3 rounded-2xl border-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold cursor-pointer focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                    <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1" />
                     <button onClick={() => setSlide(0)} className={`px-6 py-3 rounded-2xl font-black transition-all gpu-accelerate ${slide === 0 ? 'bg-indigo-600 dark:bg-yellow-400 text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>운영 지표</button>
                     <button onClick={() => setSlide(1)} className={`px-6 py-3 rounded-2xl font-black transition-all gpu-accelerate ${slide === 1 ? 'bg-indigo-600 dark:bg-yellow-400 text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>마케팅 지능</button>
                 </div>
@@ -441,7 +582,7 @@ export function Dashboard() {
                 <KpiCard title="확정 매출" value={`₩${kpi.revenue.toLocaleString()}`} icon={SvgIcons.dollar} trend="확정" trendUp={true} color="text-blue-600 dark:text-blue-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
                 <KpiCard title="활성 아동" value={`${kpi.active}명`} icon={SvgIcons.users} trend="현재원" trendUp={true} color="text-indigo-600 dark:text-indigo-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
                 <KpiCard title="완료 수업" value={`${kpi.sessions}건`} icon={SvgIcons.calendar} trend="실적" trendUp={true} color="text-emerald-600 dark:text-emerald-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
-                <KpiCard title="상담 리드" value={`${totalInflow}건`} icon={SvgIcons.activity} trend="실시간" trendUp={true} color="text-rose-600 dark:text-rose-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
+                <KpiCard title="채널 유입" value={`${totalInflow}건`} icon={SvgIcons.activity} trend="실시간" trendUp={true} color="text-rose-600 dark:text-rose-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
             </div>
 
             {slide === 0 && (
@@ -548,7 +689,7 @@ export function Dashboard() {
                     <div className="bg-slate-900 rounded-[40px] p-10 text-white shadow-2xl flex justify-between items-center relative overflow-hidden text-left">
                         <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500 opacity-20 rounded-full blur-3xl -mr-20 -mt-20" />
                         <div className="relative z-10">
-                            <h3 className="text-3xl font-black mb-2 flex items-center gap-3">실시간 상담 리드: {totalInflow.toLocaleString()} 건</h3>
+                            <h3 className="text-3xl font-black mb-2 flex items-center gap-3">월간 채널 유입: {totalInflow.toLocaleString()} 건</h3>
                             <p className="text-indigo-200 font-bold text-lg underline underline-offset-8 decoration-yellow-400">최고 전환 채널: {bestChannel.name}</p>
                         </div>
                         <div className="hidden lg:block relative z-10 bg-white/10 p-6 rounded-3xl backdrop-blur-md border border-white/10 min-w-[280px]">
@@ -557,26 +698,72 @@ export function Dashboard() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <ChartContainer title="인기 콘텐츠 분석" icon={SvgIcons.bookOpen} innerHeight="h-[450px]">
+                    {/* ✨ [#1] Channel Leads Analysis - TOP, FULL WIDTH */}
+                    <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] shadow-lg border border-slate-100 dark:border-slate-800 text-left">
+                        <h3 className="font-bold text-xl text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-3">
+                            {SvgIcons.share("w-6 h-6 text-indigo-600 dark:text-indigo-400")}
+                            채널별 상세 유입 분석 (Leads)
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">우리 앱에 들어온 경로</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {marketingData.map((item, idx) => (
+                                <ChannelGridCard key={idx} channel={item} totalInflow={totalInflow} />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ✨ [#2] Blog Sections - BOTTOM, 2-COLUMN GRID, SMALLER */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Blog Traffic Sources */}
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] shadow-lg border border-slate-100 dark:border-slate-800 text-left">
+                            <h3 className="font-bold text-base text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+                                {SvgIcons.trendingUp("w-4 h-4 text-emerald-600 dark:text-emerald-400")}
+                                블로그 유입 경로 분석
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">어떤 플랫폼에서 블로그를 보러 들어왔는지</p>
+                            {Object.keys(blogTrafficTotals).length > 0 ? (
+                                <div className="space-y-2">
+                                    {Object.entries(blogTrafficTotals)
+                                        .filter(([source]) => source !== 'Direct' && source !== 'Direct/Other')
+                                        .sort(([, a], [, b]) => b - a)
+                                        .slice(0, 5)
+                                        .map(([source, count]) => {
+                                            const total = Object.values(blogTrafficTotals).reduce((a, b) => a + b, 0);
+                                            const percent = total > 0 ? ((count / total) * 100).toFixed(1) : '0';
+                                            return (
+                                                <div key={source} className="flex items-center gap-3">
+                                                    <div className="flex-1">
+                                                        <div className="flex justify-between items-center mb-1">
+                                                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{source}</span>
+                                                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{count}건 ({percent}%)</span>
+                                                        </div>
+                                                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                                            <div className="h-full rounded-full bg-emerald-500" style={{ width: `${percent}%` }} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    {Object.entries(blogTrafficTotals).filter(([source]) => source !== 'Direct' && source !== 'Direct/Other').length === 0 && (
+                                        <p className="text-sm text-slate-400 dark:text-slate-500">플랫폼 유입 데이터 없음</p>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-slate-400 dark:text-slate-500">데이터 없음</p>
+                            )}
+                        </div>
+
+                        {/* Popular Content Chart */}
+                        <ChartContainer title="인기 콘텐츠 분석" icon={SvgIcons.bookOpen} innerHeight="h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={topPosts} layout="vertical" margin={{ top: 80, right: 30, left: 20 }}>
-                                    <XAxis type="number" hide /><YAxis dataKey="name" type="category" width={180} tick={{ fontSize: 11, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
-                                    <RechartsTooltip {...tooltipProps} /><Bar dataKey="value" fill="#3b82f6" radius={[0, 6, 6, 0]} barSize={12} />
+                                <BarChart data={topPosts} layout="vertical" margin={{ top: 60, right: 30, left: 20 }}>
+                                    <XAxis type="number" hide />
+                                    <YAxis dataKey="name" type="category" width={180} tick={{ fontSize: 10, fontWeight: 'bold' }} axisLine={false} tickLine={false} />
+                                    <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+                                    <Bar dataKey="value" fill="#3b82f6" radius={[0, 6, 6, 0]} barSize={10} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </ChartContainer>
-
-                        <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] shadow-lg border border-slate-100 dark:border-slate-800 flex flex-col h-[550px] text-left">
-                            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 mb-8 flex items-center gap-3 text-left">{SvgIcons.share("w-5 h-5 text-indigo-600 dark:text-indigo-400")} 채널별 상세 유입 분석 (Leads)</h3>
-                            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {marketingData.map((item, idx) => (
-                                        <ChannelGridCard key={idx} channel={item} totalInflow={totalInflow} />
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             )}
