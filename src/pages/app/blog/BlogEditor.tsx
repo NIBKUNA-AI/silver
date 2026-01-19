@@ -12,7 +12,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Save, Globe, Image as ImageIcon, Loader2, Settings, Brain, X, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Globe, Image as ImageIcon, Loader2, Settings, Brain, X } from 'lucide-react';
 import { ImageUploader } from '@/components/common/ImageUploader';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { CENTER_DEFAULTS } from '@/config/center';
@@ -112,16 +112,7 @@ export default function BlogEditor() {
         }
     };
 
-    // ✨ Smart Alt Tag Image Insertion
-    const insertImageToContent = (url: string) => {
-        const altTag = `${formData.title || '블로그 이미지'} - ${CENTER_DEFAULTS.name}`;
-        const markdownImage = `![${altTag}](${url})`;
 
-        setFormData(prev => ({
-            ...prev,
-            content: (prev.content || '') + '\n\n' + markdownImage + '\n'
-        }));
-    };
 
     const handleSave = async (publish = false) => {
         if (!formData.title || !formData.slug) {
@@ -233,24 +224,8 @@ export default function BlogEditor() {
                             />
                         </div>
                         <div className="border-t border-slate-100 pt-6 relative">
-                            <label className="block text-sm font-bold text-slate-500 mb-2 flex justify-between">
-                                <span>본문 내용 (HTML/Markdown)</span>
-                                {/* ✨ 본문 이미지 추가 버튼 */}
-                                <div className="relative group">
-                                    <label htmlFor="content-image-upload" className="cursor-pointer text-indigo-600 text-xs flex items-center gap-1 hover:underline">
-                                        <Plus className="w-3 h-3" /> 본문에 이미지 추가
-                                    </label>
-                                    <div className="hidden">
-                                        <ImageUploader
-                                            currentImage={null}
-                                            onUploadComplete={insertImageToContent}
-                                            bucketName="images"
-                                            label="Content Image"
-                                        />
-                                        {/* Invisible Uploader logic placeholder - in reality, we use the visible one below or custom logic. 
-                                            For now, relying on the 'Content Image Helper' below is better UI. */}
-                                    </div>
-                                </div>
+                            <label className="block text-sm font-bold text-slate-500 mb-2">
+                                본문 내용 (HTML/Markdown)
                             </label>
 
                             <textarea
@@ -262,32 +237,20 @@ export default function BlogEditor() {
                         </div>
                     </div>
 
-                    {/* ✨ 본문 이미지 삽입 도우미 */}
-                    <div className="bg-indigo-50 p-6 rounded-[24px] border border-indigo-100 flex items-center justify-between">
-                        <div>
-                            <h4 className="font-bold text-indigo-900 text-sm mb-1">📸 본문에 이미지 삽입하기</h4>
-                            <p className="text-xs text-indigo-600">이미지를 업로드하면 자동으로 <b>SEO 태그({formData.title || '제목'} - {CENTER_DEFAULTS.name})</b>가 적용되어 본문에 추가됩니다.</p>
-                        </div>
-                        <div className="w-48 bg-white rounded-xl overflow-hidden border border-indigo-100">
-                            <div className="p-2">
-                                <ImageUploader
-                                    currentImage={null}
-                                    onUploadComplete={insertImageToContent}
-                                    bucketName="images"
-                                    label=""
-                                />
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
 
                 {/* Sidebar Settings */}
                 <div className="space-y-6">
                     {/* Cover Image */}
                     <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
-                        <h3 className="text-lg font-black text-slate-800 mb-4 flex items-center gap-2">
+                        <h3 className="text-lg font-black text-slate-800 mb-2 flex items-center gap-2">
                             <ImageIcon className="w-5 h-5 text-indigo-500" /> 커버 이미지
                         </h3>
+                        <p className="text-xs text-slate-500 mb-4 bg-indigo-50 p-3 rounded-xl border border-indigo-100 font-medium">
+                            이미지를 업로드하면 <b>자동으로 SEO 태그</b>가 적용되어 검색 노출에 유리해집니다.
+                            <br />(예: {formData.title || '제목'} - {CENTER_DEFAULTS.name})
+                        </p>
                         <ImageUploader
                             currentImage={formData.cover_image_url}
                             onUploadComplete={(url) => setFormData({ ...formData, cover_image_url: url })}
