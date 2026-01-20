@@ -20,7 +20,6 @@ import { GrowthIcon, HeartCareIcon, StarIcon, BackgroundShapes } from '@/compone
 import { PlayTherapyIcon, SpeechTherapyIcon, SensoryTherapyIcon, ArtTherapyIcon } from '@/components/icons/ProgramIcons';
 import { useTheme } from '@/contexts/ThemeProvider';
 import { cn } from '@/lib/utils';
-import { ReviewSection } from '@/components/public/ReviewSection';
 import { HeroBackground } from '@/components/public/HeroBackground';
 
 // Custom SVG Icons (no Lucide)
@@ -391,8 +390,6 @@ export function HomePage() {
                         </div>
                     </motion.section>
 
-                    {/* ✨ Review Section */}
-                    <ReviewSection />
 
                     {/* Final CTA Section */}
                     <motion.section
