@@ -243,6 +243,7 @@ export function Dashboard() {
     const [ageData, setAgeData] = useState([]);
     const [genderData, setGenderData] = useState([]);
     const [topChildren, setTopChildren] = useState([]);
+    const [channelConversionData, setChannelConversionData] = useState<{ name: string; total: number; converted: number; rate: number; color: string }[]>([]);
 
     const [exporting, setExporting] = useState(false);
 
@@ -509,12 +510,81 @@ export function Dashboard() {
             });
             setBlogTrafficTotals(blogTotals);
 
+            // ✨ [LEADS CONVERSION ANALYSIS] Fetch leads data for conversion rate
+            const { data: allLeads } = await (supabase as any)
+                .from('leads')
+                .select('id, source, status, created_at')
+                .gte('created_at', monthsToShow[0] + '-01')
+                .lte('created_at', selectedMonth + '-31');
+
+            // ✨ [MONTHLY CONVERSION] Calculate conversion by month
+            const monthlyLeadsMap: Record<string, { consults: number; converted: number }> = {};
+            monthsToShow.forEach(m => monthlyLeadsMap[m] = { consults: 0, converted: 0 });
+
+            // ✨ [CHANNEL CONVERSION] Calculate conversion by marketing channel
+            const channelLeadsMap: Record<string, { total: number; converted: number }> = {};
+
+            allLeads?.forEach((lead: any) => {
+                if (lead.created_at) {
+                    const m = (lead.created_at as string).slice(0, 7);
+
+                    // Monthly Trend Data
+                    if (monthlyLeadsMap[m]) {
+                        monthlyLeadsMap[m].consults++;
+                        if (lead.status === 'converted') {
+                            monthlyLeadsMap[m].converted++;
+                        }
+                    }
+
+                    // ✨ [FIX] Channel Conversion Data (Strictly Filtered by Selected Month)
+                    if (m === selectedMonth) {
+                        const channel = lead.source || 'Direct';
+                        if (!channelLeadsMap[channel]) {
+                            channelLeadsMap[channel] = { total: 0, converted: 0 };
+                        }
+                        channelLeadsMap[channel].total++;
+                        if (lead.status === 'converted') {
+                            channelLeadsMap[channel].converted++;
+                        }
+                    }
+                }
+            });
+
+            // ✨ Set monthly conversion data for existing chart
+            const conversionArr = monthsToShow.map(m => ({
+                name: m.slice(5) + '월',
+                consults: monthlyLeadsMap[m].consults,
+                converted: monthlyLeadsMap[m].converted,
+                rate: monthlyLeadsMap[m].consults > 0
+                    ? Math.round((monthlyLeadsMap[m].converted / monthlyLeadsMap[m].consults) * 100)
+                    : 0
+            }));
+            setConversionData(conversionArr);
+
+            // ✨ Set channel conversion data for new chart
+            const channelConvArr = Object.entries(channelLeadsMap)
+                .map(([name, data], idx) => ({
+                    name,
+                    total: data.total,
+                    converted: data.converted,
+                    rate: data.total > 0 ? Math.round((data.converted / data.total) * 100) : 0,
+                    color: channelColors[name] || COLORS[idx % COLORS.length]
+                }))
+                .filter(c => c.total > 0)
+                .sort((a, b) => b.total - a.total);
+            setChannelConversionData(channelConvArr);
+
+            // ✨ [NEW CHILDREN KPI] Count children registered in the selected month
+            const newCount = existingChildren?.filter(c =>
+                c.created_at && (c.created_at as string).startsWith(selectedMonth)
+            ).length || 0;
+
             // Set KPI
             setKpi({
                 revenue: monthlyRevMap[selectedMonth] || 0,
                 active: existingChildren?.length || 0,
                 sessions: statusMap.completed,
-                new: 0 // logic for new...
+                new: newCount
             });
 
         } catch (error) {
@@ -582,7 +652,7 @@ export function Dashboard() {
                 <KpiCard title="확정 매출" value={`₩${kpi.revenue.toLocaleString()}`} icon={SvgIcons.dollar} trend="확정" trendUp={true} color="text-blue-600 dark:text-blue-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
                 <KpiCard title="활성 아동" value={`${kpi.active}명`} icon={SvgIcons.users} trend="현재원" trendUp={true} color="text-indigo-600 dark:text-indigo-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
                 <KpiCard title="완료 수업" value={`${kpi.sessions}건`} icon={SvgIcons.calendar} trend="실적" trendUp={true} color="text-emerald-600 dark:text-emerald-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
-                <KpiCard title="채널 유입" value={`${totalInflow}건`} icon={SvgIcons.activity} trend="실시간" trendUp={true} color="text-rose-600 dark:text-rose-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
+                <KpiCard title="신규 아동" value={`${kpi.new}명`} icon={SvgIcons.activity} trend="이번달" trendUp={kpi.new > 0} color="text-rose-600 dark:text-rose-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
             </div>
 
             {slide === 0 && (
@@ -764,6 +834,81 @@ export function Dashboard() {
                                 </BarChart>
                             </ResponsiveContainer>
                         </ChartContainer>
+                    </div>
+
+                    {/* ✨ [#3] Channel Conversion Rate Analysis - NEW SECTION */}
+                    <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] shadow-lg border border-slate-100 dark:border-slate-800 text-left">
+                        <h3 className="font-bold text-xl text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-3">
+                            {SvgIcons.trendingUp("w-6 h-6 text-emerald-600 dark:text-emerald-400")}
+                            채널별 등록 전환율
+                        </h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">마케팅 채널별 상담 문의 → 등록 전환 성과</p>
+
+                        {channelConversionData.length > 0 ? (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Chart */}
+                                <div className="h-[350px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <ComposedChart data={channelConversionData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                                            <CartesianGrid stroke="#f1f5f9" vertical={false} />
+                                            <XAxis
+                                                dataKey="name"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fontSize: 11, fontWeight: 'bold' }}
+                                                angle={-45}
+                                                textAnchor="end"
+                                                height={80}
+                                            />
+                                            <YAxis yAxisId="left" axisLine={false} tickLine={false} />
+                                            <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} unit="%" domain={[0, 100]} />
+                                            <RechartsTooltip {...tooltipProps} />
+                                            <Legend verticalAlign="top" align="right" wrapperStyle={{ top: 0 }} />
+                                            <Bar yAxisId="left" dataKey="total" name="상담 문의" fill="#e2e8f0" barSize={35} radius={[6, 6, 0, 0]} />
+                                            <Bar yAxisId="left" dataKey="converted" name="등록 완료" fill="#10b981" barSize={35} radius={[6, 6, 0, 0]} />
+                                            <Line yAxisId="right" type="monotone" dataKey="rate" name="전환율(%)" stroke="#f59e0b" strokeWidth={4} dot={{ fill: '#f59e0b', strokeWidth: 2, r: 6 }} />
+                                        </ComposedChart>
+                                    </ResponsiveContainer>
+                                </div>
+
+                                {/* Stats Cards */}
+                                <div className="space-y-3">
+                                    {channelConversionData.slice(0, 6).map((channel, idx) => (
+                                        <div key={channel.name} className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                                            <div
+                                                className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-black shadow-md"
+                                                style={{ backgroundColor: channel.color }}
+                                            >
+                                                {idx + 1}
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-bold text-slate-900 dark:text-white text-sm">{channel.name}</h4>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                                        문의 <span className="font-bold text-slate-700 dark:text-slate-300">{channel.total}</span>건
+                                                    </span>
+                                                    <span className="text-xs text-slate-400">→</span>
+                                                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">
+                                                        등록 {channel.converted}건
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className={`px-4 py-2 rounded-xl font-black text-lg ${channel.rate >= 50 ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400' :
+                                                channel.rate >= 25 ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400' :
+                                                    'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                                                }`}>
+                                                {channel.rate}%
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-slate-500">
+                                <p className="font-bold text-lg">상담 문의 데이터가 없습니다</p>
+                                <p className="text-sm mt-1">리드가 등록되면 채널별 전환율이 표시됩니다</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
