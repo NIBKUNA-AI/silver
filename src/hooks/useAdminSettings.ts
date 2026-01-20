@@ -8,12 +8,12 @@
  * 이 파일의 UI/UX 설계 및 데이터 연동 로직은 독자적인 기술과
  * 예술적 영감을 바탕으로 구축되었습니다.
  */
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { JAMSIL_CENTER_ID } from '@/config/center';
 
-// ✨ [Logo Cache] localStorage 키
-const BRAND_CACHE_KEY = 'brand_cache';
+// ✨ [Logo Cache] localStorage 키 - 센터 아이디별로 구분하여 Flicker 방지
+const BRAND_CACHE_KEY = `brand_cache_${JAMSIL_CENTER_ID}`;
 
 // Define the keys we expect to use
 export type AdminSettingKey =
@@ -57,7 +57,11 @@ export interface AdminSetting {
 function getCachedBrand(): Record<string, string | null> {
     try {
         const cached = localStorage.getItem(BRAND_CACHE_KEY);
-        if (cached) return JSON.parse(cached);
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            // 해당 캐시가 현재 센터의 것인지 확인 (추가 검증 단계)
+            if (parsed.cid === JAMSIL_CENTER_ID) return parsed.data || {};
+        }
     } catch (e) { }
     return {};
 }
@@ -66,8 +70,12 @@ function getCachedBrand(): Record<string, string | null> {
 function setCachedBrand(settings: Record<string, string | null>) {
     try {
         const brandData = {
-            center_logo: settings['center_logo'] || null,
-            center_name: settings['center_name'] || null
+            cid: JAMSIL_CENTER_ID, // 센터 아이디 저장
+            data: {
+                center_logo: settings['center_logo'] || null,
+                center_name: settings['center_name'] || null,
+                main_banner_url: settings['main_banner_url'] || null // 히어로 이미지도 캐시 추가
+            }
         };
         localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify(brandData));
     } catch (e) { }
@@ -75,7 +83,10 @@ function setCachedBrand(settings: Record<string, string | null>) {
 
 export const useAdminSettings = () => {
     // ✨ [Flash Prevention] 캐시된 브랜드 데이터로 초기화
-    const [settings, setSettings] = useState<Record<string, string | null>>(() => getCachedBrand());
+    const [settings, setSettings] = useState<Record<string, string | null>>(() => {
+        const cached = getCachedBrand();
+        return cached;
+    });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 

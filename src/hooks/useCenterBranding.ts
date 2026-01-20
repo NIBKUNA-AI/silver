@@ -39,8 +39,12 @@ export function useCenterBranding() {
     // ✨ [Instant Render] Try LocalStorage First -> Then Default -> Then Async Update
     const [branding, setBranding] = useState<CenterBranding>(() => {
         try {
-            const cached = localStorage.getItem('cached_branding_v2');
-            if (cached) return JSON.parse(cached);
+            const cacheKey = `cached_branding_v3_${JAMSIL_CENTER_ID}`;
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed.id === JAMSIL_CENTER_ID) return parsed;
+            }
         } catch (e) { }
         return DEFAULT_BRANDING;
     });
@@ -61,6 +65,7 @@ export function useCenterBranding() {
                     const data = centerData as any;
                     const newBranding = {
                         ...branding,
+                        id: data.id,
                         name: data.name,
                         phone: data.phone,
                         address: data.address,
@@ -72,12 +77,11 @@ export function useCenterBranding() {
                     };
 
                     setBranding(newBranding);
-                    // ✨ Cache Immediately
-                    localStorage.setItem('cached_branding_v2', JSON.stringify(newBranding));
+                    // ✨ Cache Immediately with specific key
+                    localStorage.setItem(`cached_branding_v3_${JAMSIL_CENTER_ID}`, JSON.stringify(newBranding));
                 }
             } catch (err) {
                 console.error("Failed to fetch center info:", err);
-                // On error, we rely on DEFAULT_BRANDING or Cached data
             } finally {
                 setCenterLoading(false);
             }

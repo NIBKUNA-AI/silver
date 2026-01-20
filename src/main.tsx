@@ -18,21 +18,23 @@ import { ThemeProvider } from '@/contexts/ThemeProvider'
 import './index.css'
 import App from './App.tsx'
 
-// ✨ [Logo Preload] 로고 이미지를 React 렌더링 전에 미리 다운로드
-const cachedLogoUrl = localStorage.getItem('cached_center_logo');
+import { JAMSIL_CENTER_ID } from '@/config/center';
+
+// ✨ [Logo Preload] 센터별 로고 구분 (Flicker 방지)
+const LOGO_CACHE_KEY = `cached_center_logo_${JAMSIL_CENTER_ID}`;
+const cachedLogoUrl = localStorage.getItem(LOGO_CACHE_KEY);
 if (cachedLogoUrl) {
   const preloadImg = new Image();
   preloadImg.src = cachedLogoUrl;
 }
 
 // ✨ [Instant Title] 센터 이름을 즉시 적용 (Flash 방지)
-// 우선순위: 1. localStorage 캐시 → 2. 환경 변수 → 3. 기본값
-const TITLE_CACHE_KEY = 'cached_center_name';
+const TITLE_CACHE_KEY = `cached_center_name_${JAMSIL_CENTER_ID}`;
 const cachedName = localStorage.getItem(TITLE_CACHE_KEY);
-const envName = import.meta.env.VITE_CENTER_NAME;
+const envName = import.meta.env.VITE_SITE_TITLE; // VITE_CENTER_NAME -> VITE_SITE_TITLE 로 통일
 const defaultName = '아동발달센터';
 
-// 즉시 타이틀 설정 (0ms 지연 없음)
+// 즉시 타이틀 설정
 document.title = cachedName || envName || defaultName;
 
 // 비동기로 DB에서 최신 이름 가져와서 갱신
@@ -53,9 +55,7 @@ document.title = cachedName || envName || defaultName;
       document.title = data.value;
       localStorage.setItem(TITLE_CACHE_KEY, data.value);
     }
-  } catch (e) {
-    // 실패해도 캐시된 이름 유지
-  }
+  } catch (e) { }
 })();
 
 // ✨ [Developer Signature]
