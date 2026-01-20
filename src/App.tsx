@@ -10,8 +10,7 @@
  * 이 파일의 UI/UX 설계 및 데이터 연동 로직은 독자적인 기술과
  * 예술적 영감을 바탕으로 구축되었습니다.
  */
-import { HelmetProvider } from 'react-helmet-async';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { SEOHead } from '@/components/seo/SEOHead';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -19,8 +18,6 @@ import { useAuth } from '@/contexts/AuthContext';
 
 import { PublicLayout } from '@/layouts/PublicLayout';
 import { AppLayout } from '@/layouts/AppLayout';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { ThemeProvider } from '@/contexts/ThemeProvider';
 
 // 공개 페이지
 import { HomePage } from '@/pages/public/HomePage';
@@ -110,139 +107,133 @@ function App() {
   };
 
   return (
-    <HelmetProvider>
-      <AuthProvider>
-        <ThemeProvider>
-          <BrowserRouter>
-            <SEOHead />
-            {showSplash ? (
-              <SplashScreen onComplete={handleSplashComplete} />
-            ) : (
-              <Routes>
-                {/* 1. 공개 페이지 */}
-                <Route element={<PublicLayout />}>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/about" element={<AboutPage />} />
-                  <Route path="/programs" element={<ProgramsPage />} />
-                  <Route path="/contact" element={<ContactPage />} />
-                  <Route path="/blog" element={<BlogPage />} />
-                  <Route path="/blog/:slug" element={<BlogPostPage />} />
-                </Route>
+    <>
+      <SEOHead />
+      {showSplash ? (
+        <SplashScreen onComplete={handleSplashComplete} />
+      ) : (
+        <Routes>
+          {/* 1. 공개 페이지 */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/programs" element={<ProgramsPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/blog/:slug" element={<BlogPostPage />} />
+          </Route>
 
-                {/* 2. 로그인/회원가입 */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-                <Route path="/auth/update-password" element={<UpdatePassword />} />
-                {/* ✨ [Hotfix] Catch old email links pointing to wrong path */}
-                <Route path="/update-password" element={<Navigate to="/auth/update-password" replace />} />
+          {/* 2. 로그인/회원가입 */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/update-password" element={<UpdatePassword />} />
+          {/* ✨ [Hotfix] Catch old email links pointing to wrong path */}
+          <Route path="/update-password" element={<Navigate to="/auth/update-password" replace />} />
 
-                {/* 3. 학부모 전용 구역 */}
-                <Route element={<ProtectedRoute allowedRoles={['parent', 'admin']} />}>
-                  <Route element={<ParentLayout />}>
-                    <Route path="/parent/home" element={<ParentHomePage />} />
-                    <Route path="/parent/stats" element={<ParentStatsPage />} />
-                    <Route path="/parent/logs" element={<ParentLogsPage />} />
-                    <Route path="/parent/mypage" element={<ParentMyPage />} />
-                  </Route>
-                </Route>
+          {/* 3. 학부모 전용 구역 */}
+          <Route element={<ProtectedRoute allowedRoles={['parent', 'admin']} />}>
+            <Route element={<ParentLayout />}>
+              <Route path="/parent/home" element={<ParentHomePage />} />
+              <Route path="/parent/stats" element={<ParentStatsPage />} />
+              <Route path="/parent/logs" element={<ParentLogsPage />} />
+              <Route path="/parent/mypage" element={<ParentMyPage />} />
+            </Route>
+          </Route>
 
-                {/* 4. 관리자/직원/치료사 공통 앱 구역 */}
-                <Route
-                  path="/app"
-                  element={
-                    <ProtectedRoute allowedRoles={['admin', 'staff', 'therapist']}>
-                      <AppLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<AppHomeRedirect />} />
+          {/* 4. 관리자/직원/치료사 공통 앱 구역 */}
+          <Route
+            path="/app"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'staff', 'therapist']}>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<AppHomeRedirect />} />
 
-                  <Route path="dashboard" element={
-                    <ProtectedRoute allowedRoles={['admin', 'staff', 'therapist']}>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } />
+            <Route path="dashboard" element={
+              <ProtectedRoute allowedRoles={['admin', 'staff', 'therapist']}>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
 
-                  <Route path="leads" element={
-                    <ProtectedRoute allowedRoles={['admin', 'staff']}>
-                      <ConsultationInquiryList />
-                    </ProtectedRoute>
-                  } />
+            <Route path="leads" element={
+              <ProtectedRoute allowedRoles={['admin', 'staff']}>
+                <ConsultationInquiryList />
+              </ProtectedRoute>
+            } />
 
-                  <Route path="schedule" element={<Schedule />} />
+            <Route path="schedule" element={<Schedule />} />
 
-                  <Route path="children" element={<ChildList />} />
-                  <Route path="parents" element={<ParentList />} />
-                  <Route path="programs" element={<Programs />} />
+            <Route path="children" element={<ChildList />} />
+            <Route path="parents" element={<ParentList />} />
+            <Route path="programs" element={<Programs />} />
 
-                  <Route path="therapists" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <TherapistList />
-                    </ProtectedRoute>
-                  } />
+            <Route path="therapists" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <TherapistList />
+              </ProtectedRoute>
+            } />
 
-                  <Route path="sessions" element={<SessionList />} />
-                  <Route path="sessions/:scheduleId/note" element={<SessionNote />} />
+            <Route path="sessions" element={<SessionList />} />
+            <Route path="sessions/:scheduleId/note" element={<SessionNote />} />
 
-                  <Route path="billing" element={
-                    <ProtectedRoute allowedRoles={['admin', 'staff']}>
-                      <Billing />
-                    </ProtectedRoute>
-                  } />
+            <Route path="billing" element={
+              <ProtectedRoute allowedRoles={['admin', 'staff']}>
+                <Billing />
+              </ProtectedRoute>
+            } />
 
-                  <Route path="settlement" element={
-                    <ProtectedRoute allowedRoles={['admin']}>
-                      <Settlement />
-                    </ProtectedRoute>
-                  } />
+            <Route path="settlement" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Settlement />
+              </ProtectedRoute>
+            } />
 
-                  <Route path="consultations" element={<ConsultationList />} />
+            <Route path="consultations" element={<ConsultationList />} />
 
-                  {/* 블로그 관리 */}
-                  <Route path="blog" element={
-                    <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                      <BlogList />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="blog/new" element={
-                    <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                      <BlogEditor />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="blog/:id" element={
-                    <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                      <BlogEditor />
-                    </ProtectedRoute>
-                  } />
+            {/* 블로그 관리 */}
+            <Route path="blog" element={
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                <BlogList />
+              </ProtectedRoute>
+            } />
+            <Route path="blog/new" element={
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                <BlogEditor />
+              </ProtectedRoute>
+            } />
+            <Route path="blog/:id" element={
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                <BlogEditor />
+              </ProtectedRoute>
+            } />
 
-                  {/* 사이트 관리 */}
-                  <Route path="settings" element={
-                    <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                      <SettingsPage />
-                    </ProtectedRoute>
-                  } />
+            {/* 사이트 관리 */}
+            <Route path="settings" element={
+              <ProtectedRoute allowedRoles={['admin', 'manager']}>
+                <SettingsPage />
+              </ProtectedRoute>
+            } />
 
-                  {/* ✅ 전체 센터 관리 (슈퍼 어드민 전용) */}
-                  <Route path="admin/centers" element={
-                    <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                      <CenterList />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="admin/centers/:centerId" element={
-                    <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                      <CenterDetailPage />
-                    </ProtectedRoute>
-                  } />
-                </Route>
+            {/* ✅ 전체 센터 관리 (슈퍼 어드민 전용) */}
+            <Route path="admin/centers" element={
+              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                <CenterList />
+              </ProtectedRoute>
+            } />
+            <Route path="admin/centers/:centerId" element={
+              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                <CenterDetailPage />
+              </ProtectedRoute>
+            } />
+          </Route>
 
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            )}
-          </BrowserRouter>
-        </ThemeProvider>
-      </AuthProvider>
-    </HelmetProvider>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      )}
+    </>
   );
 }
 
