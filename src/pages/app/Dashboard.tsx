@@ -510,10 +510,11 @@ export function Dashboard() {
             });
             setBlogTrafficTotals(blogTotals);
 
-            // ✨ [LEADS CONVERSION ANALYSIS] Fetch leads data for conversion rate
+            // ✨ [LEADS CONVERSION ANALYSIS] Fetch LEADS data (from 'consultations' table)
             const { data: allLeads } = await (supabase as any)
-                .from('leads')
-                .select('id, source, status, created_at')
+                .from('consultations')
+                .select('id, inflow_source, status, created_at')
+                .eq('center_id', JAMSIL_CENTER_ID)
                 .gte('created_at', monthsToShow[0] + '-01')
                 .lte('created_at', selectedMonth + '-31');
 
@@ -531,19 +532,19 @@ export function Dashboard() {
                     // Monthly Trend Data
                     if (monthlyLeadsMap[m]) {
                         monthlyLeadsMap[m].consults++;
-                        if (lead.status === 'converted') {
+                        if (lead.status === 'completed') {
                             monthlyLeadsMap[m].converted++;
                         }
                     }
 
                     // ✨ [FIX] Channel Conversion Data (Strictly Filtered by Selected Month)
                     if (m === selectedMonth) {
-                        const channel = lead.source || 'Direct';
+                        const channel = lead.inflow_source || 'Direct';
                         if (!channelLeadsMap[channel]) {
                             channelLeadsMap[channel] = { total: 0, converted: 0 };
                         }
                         channelLeadsMap[channel].total++;
-                        if (lead.status === 'converted') {
+                        if (lead.status === 'completed') {
                             channelLeadsMap[channel].converted++;
                         }
                     }
