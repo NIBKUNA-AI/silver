@@ -431,8 +431,11 @@ export function Dashboard() {
                     trafficMap['Others'] += 1;
                 }
 
-                // ✨ [Blog Analytics] Aggregate traffic per blog post (Exclude Direct)
-                if (v.page_url && v.page_url.includes('/blog/') && cat !== 'Direct' && v.referrer_url) {
+                // ✨ [Blog Analytics] Aggregate traffic per blog post (Exclude Direct entries with NO info)
+                const isBlog = v.page_url && v.page_url.includes('/blog/');
+                const hasInfo = cat !== 'Direct' || v.referrer_url;
+
+                if (isBlog && hasInfo) {
                     try {
                         const parts = v.page_url.split('/blog/');
                         if (parts.length > 1) {

@@ -78,9 +78,15 @@ export function useTrafficSource() {
             sessionStorage.setItem('marketing_source', derivedSource);
         }
 
-        // ✨ [DB Persistence] 세션당 한 번만 방문 기록 저장
+        // ✨ [DB Persistence] 세션당 한 번만 방문 기록 저장 (단, 블로그 보기는 매번 기록)
+        const isBlogPage = window.location.pathname.includes('/blog/');
         const visitRecorded = sessionStorage.getItem('visit_recorded');
-        if (!visitRecorded) {
+
+        // 블로그 페이지는 visit_recorded와 상관없이 (또는 해당 블로그 포스트별로) 기록을 남겨야 통계가 잡힘
+        const blogVisitKey = `blog_recorded_${window.location.pathname}`;
+        const blogRecorded = sessionStorage.getItem(blogVisitKey);
+
+        if (!visitRecorded || (isBlogPage && !blogRecorded)) {
             const category = categorizeSource(referrer, source);
 
             const recordVisit = async () => {
@@ -95,10 +101,13 @@ export function useTrafficSource() {
                         user_agent: navigator.userAgent,
                         visited_at: new Date().toISOString()
                     });
-                    console.log('Visit recorded:', category);
-                    sessionStorage.setItem('visit_recorded', 'true');
+
+                    if (isBlogPage) {
+                        sessionStorage.setItem(blogVisitKey, 'true');
+                    } else {
+                        sessionStorage.setItem('visit_recorded', 'true');
+                    }
                 } catch (error) {
-                    // Silently fail - don't break the app for tracking
                     console.warn('Failed to record visit:', error);
                 }
             };
