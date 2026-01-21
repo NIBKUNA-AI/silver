@@ -841,15 +841,15 @@ export function Dashboard() {
                     <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] shadow-lg border border-slate-100 dark:border-slate-800 text-left">
                         <h3 className="font-bold text-xl text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-3">
                             {SvgIcons.trendingUp("w-6 h-6 text-emerald-600 dark:text-emerald-400")}
-                            채널별 등록 전환율
+                            채널별 상담 예약 현황
                         </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">마케팅 채널별 상담 문의 → 등록 전환 성과</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">마케팅 채널별 유입 → 상담 예약 접수 및 확정 성과</p>
 
                         {channelConversionData.length > 0 ? (
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 {/* Chart 1: Conversion Rate (Main) */}
                                 <div className="h-[400px]">
-                                    <h4 className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-4">채널별 전환 성과</h4>
+                                    <h4 className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-4">채널별 상담 예약 현황</h4>
                                     <ResponsiveContainer width="100%" height="90%">
                                         <ComposedChart data={channelConversionData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                                             <CartesianGrid stroke="#f1f5f9" vertical={false} />
@@ -867,8 +867,8 @@ export function Dashboard() {
                                             <RechartsTooltip {...tooltipProps} />
                                             <Legend verticalAlign="top" align="right" wrapperStyle={{ top: 0 }} />
                                             <Bar yAxisId="left" dataKey="total" name="상담 문의" fill="#6366f1" barSize={35} radius={[6, 6, 0, 0]} />
-                                            <Bar yAxisId="left" dataKey="converted" name="등록 완료" fill="#10b981" barSize={35} radius={[6, 6, 0, 0]} />
-                                            <Line yAxisId="right" type="monotone" dataKey="rate" name="전환율(%)" stroke="#f59e0b" strokeWidth={4} dot={{ fill: '#f59e0b', strokeWidth: 2, r: 6 }} />
+                                            <Bar yAxisId="left" dataKey="converted" name="예약 확정" fill="#10b981" barSize={35} radius={[6, 6, 0, 0]} />
+                                            <Line yAxisId="right" type="monotone" dataKey="rate" name="예약 전환율(%)" stroke="#f59e0b" strokeWidth={4} dot={{ fill: '#f59e0b', strokeWidth: 2, r: 6 }} />
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -908,7 +908,7 @@ export function Dashboard() {
                                                         </span>
                                                         <span className="text-[10px] text-slate-300">|</span>
                                                         <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">
-                                                            등록 {channel.converted}
+                                                            확정 {channel.converted}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -925,8 +925,8 @@ export function Dashboard() {
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-slate-500">
-                                <p className="font-bold text-lg">상담 문의 데이터가 없습니다</p>
-                                <p className="text-sm mt-1">리드가 등록되면 채널별 전환율이 표시됩니다</p>
+                                <p className="font-bold text-lg">상담 예약 데이터가 없습니다</p>
+                                <p className="text-sm mt-1">예약이 접수되면 채널별 현황이 표시됩니다</p>
                             </div>
                         )}
                     </div>
