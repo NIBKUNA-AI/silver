@@ -48,7 +48,7 @@ serve(async (req: any) => {
         let finalUserId = authData?.user?.id;
         if (!finalUserId) {
             const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
-            const match = existingUser?.users?.find((u: any) => u.email === email);
+            const match = existingUser?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
             if (match) finalUserId = match.id;
         }
 

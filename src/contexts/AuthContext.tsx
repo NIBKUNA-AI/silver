@@ -187,18 +187,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!initialLoadComplete.current) setLoading(true);
 
         try {
-            // 일반 유저 로직
-            const { data, error } = await supabase
+            // 1. [Sync] 프로필 조회
+            let { data: dbProfile, error } = await supabase
                 .from('user_profiles')
                 .select('*')
                 .eq('id', user.id)
                 .maybeSingle();
 
-            if (data) {
-                const dbRole = (data.role as UserRole) || 'parent';
+            // 2. ✨ [Self-Healing] 치료사 권한 강제 동기화 (Sovereign Auto-Repair)
+            // 프로필이 아예 없거나, 'parent'로 되어 있는 경우 (잘못 가입한 치료사 구제)
+            if (!dbProfile || dbProfile.role === 'parent') {
+                // therapists 테이블에서 이메일로 검색 (대소문자 무시)
+                const { data: therapistSource } = await supabase
+                    .from('therapists')
+                    .select('*')
+                    .ilike('email', user.email)
+                    .maybeSingle();
+
+                if (therapistSource) {
+                    console.warn(`🩹 Self-Healing: [${user.email}] found in therapists but profile is ${dbProfile ? 'parent' : 'missing'}. Repairing...`);
+
+                    const repairData = {
+                        id: user.id,
+                        email: user.email,
+                        name: therapistSource.name || user.user_metadata?.full_name || dbProfile?.name || '치료사',
+                        role: therapistSource.system_role || 'therapist',
+                        status: 'active', // 초대받은 직원은 즉시 활성화
+                        center_id: CURRENT_CENTER_ID
+                    };
+
+                    const { data: repaired, error: repairError } = await supabase
+                        .from('user_profiles')
+                        .upsert(repairData)
+                        .select()
+                        .single();
+
+                    if (!repairError && repaired) {
+                        console.log("✅ Profile repaired successfully.");
+                        dbProfile = repaired;
+                    } else {
+                        console.error("❌ Profile repair failed:", repairError);
+                    }
+                }
+            }
+
+            if (dbProfile) {
+                const dbRole = (dbProfile.role as UserRole) || 'parent';
 
                 // 🚨 [보안] 퇴사자 및 비활성 계정 철저 차단
-                if (data.status === 'retired' || data.status === 'inactive' || dbRole === 'retired') {
+                if (dbProfile.status === 'retired' || dbProfile.status === 'inactive' || dbRole === 'retired') {
                     console.warn('[Auth] Access Blocked: Retired/Inactive User');
                     setRole(null);
                     setProfile(null);
@@ -209,10 +246,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 setRole(dbRole);
-                setProfile(data);
-                // Sovereign Template: 앱은 오직 하나의 센터(환경변수)만 바라본다.
-                // 유저가 다른 center_id를 가지고 있어도, 이 앱의 주인은 VITE_CENTER_ID이다.
-                // 만약 멀티센터 유저라면? 그래도 현재 앱의 Context는 VITE_CENTER_ID여야 한다.
+                setProfile(dbProfile);
                 setCenterId(CURRENT_CENTER_ID);
 
                 // 치료사 전용 ID 세팅
@@ -220,7 +254,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     const { data: therapistData } = await supabase
                         .from('therapists')
                         .select('id')
-                        .eq('email', user.email)
+                        .ilike('email', user.email)
                         .maybeSingle();
                     if (therapistData) setTherapistId(therapistData.id);
                 }
@@ -232,8 +266,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (retryCount < 5) {
                     setTimeout(() => executeFetchRole(forceUpdate, retryCount + 1), 500);
                 } else {
-                    // 프로필이 정말 없으면 Parent 취급 혹은 로그아웃 고민
-                    setRole('parent'); // 기본값
+                    // 정말 없으면 Parent 취급
+                    setRole('parent');
                     setLoading(false);
                     initialLoadComplete.current = true;
                 }

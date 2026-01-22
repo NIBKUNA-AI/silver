@@ -132,16 +132,28 @@ export function Login() {
                     return;
                 }
 
-                const { data: profile, error: profileError } = await supabase
+                let { data: profile, error: profileError } = await supabase
                     .from('user_profiles')
                     .select('role')
                     .eq('id', user.id)
                     .maybeSingle();
 
-                if (profileError || !profile) {
-                    console.error('프로필 정보를 가져올 수 없습니다:', profileError);
-                    setError('회원 프로필 정보를 찾을 수 없습니다. (계정 오류)');
-                    return;
+                // ✨ [Auto-Repair] 프로필이 없어도 치료사 테이블에 있으면 통과
+                if (!profile) {
+                    const { data: therapist } = await supabase
+                        .from('therapists')
+                        .select('system_role')
+                        .ilike('email', user.email)
+                        .maybeSingle();
+
+                    if (therapist) {
+                        console.log("🩹 Login: Therapist record found, bypass profile check.");
+                        profile = { role: therapist.system_role || 'therapist' };
+                    } else {
+                        console.error('프로필 정보를 가져올 수 없습니다:', profileError);
+                        setError('회원 프로필 정보를 찾을 수 없습니다. (계정 오류)');
+                        return;
+                    }
                 }
 
                 switch (profile.role) {

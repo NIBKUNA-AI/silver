@@ -130,15 +130,25 @@ export function Register() {
         setError(null);
 
         try {
-            // 일반 이메일 회원가입 (무조건 Parent)
+            // 기본값은 Parent
             let finalRole = 'parent';
             let finalStatus = 'active';
 
-            if (isSuperAdmin(email)) {
-                finalRole = 'super_admin'; // Keep super admin backdoor for now
+            // ✨ [Security] 하이재킹 방지 및 권한 자동 할당
+            // therapists 테이블에 이미 등록된 직원이면 'therapist' 권한 부여
+            const { data: preRegistered } = await supabase
+                .from('therapists')
+                .select('system_role')
+                .ilike('email', email)
+                .maybeSingle();
+
+            if (preRegistered) {
+                console.log("🛠️ Pre-registered staff detected. Assigning proper role.");
+                finalRole = preRegistered.system_role || 'therapist';
+                finalStatus = 'active'; // 이미 관리자가 등록했으므로 즉시 활성
+            } else if (isSuperAdmin(email)) {
+                finalRole = 'super_admin';
             }
-            // ✨ Staff/Admin registration logic REMOVED.
-            // Invite-only policy enforced. All self-signups are parents.
 
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email,
