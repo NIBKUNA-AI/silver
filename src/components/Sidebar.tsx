@@ -307,12 +307,13 @@ export function Sidebar() {
                     setHasUnreadInquiry(false);
                 }
 
-                // 2. 치료 일정 (치료사 개인에게 등록된 알림)
+                // 2. 치료 일정 (치료사 개인에게 등록된 알림 중 'schedule' 타입만)
                 if (user) {
                     const { count: notificationCount } = await supabase
                         .from('admin_notifications')
-                        .select('*', { count: 'exact', head: true })
+                        .select('id', { count: 'exact', head: true })
                         .eq('user_id', user.id)
+                        .eq('type', 'schedule')
                         .eq('is_read', false);
                     setHasUnreadSchedule((notificationCount || 0) > 0);
                 }
