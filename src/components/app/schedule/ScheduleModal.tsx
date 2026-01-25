@@ -12,11 +12,13 @@
  */
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 import {
     X, Loader2, Save, Trash2, Calendar, Clock, User,
     CheckCircle2, XCircle, ArrowRightCircle, CalendarClock, Repeat, Search, ChevronDown
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { isSuperAdmin } from '@/config/superAdmin';
 
 // ✨ [Searchable Select Component]
 function SearchableSelect({ label, placeholder, options, value, onChange, required }) {
@@ -98,6 +100,16 @@ function SearchableSelect({ label, placeholder, options, value, onChange, requir
 }
 
 export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSuccess }) {
+    const { center } = useCenter();
+    const centerId = center?.id;
+
+    // 🕵️ DEBUG: Log centerId to see why it's empty in Supabase requests
+    useEffect(() => {
+        if (isOpen) {
+            console.log("🎨 [ScheduleModal] Current Center ID:", centerId, "Type:", typeof centerId, "Length:", centerId?.length);
+        }
+    }, [isOpen, centerId]);
+
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
 
@@ -120,21 +132,24 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
     });
 
     useEffect(() => {
-        if (isOpen) {
-            loadInitialData();
+        if (isOpen && centerId && centerId.length >= 32) {
+            loadInitialData(centerId); // ✨ Pass ID directly as argument
             setIsRecurring(false);
             setRepeatWeeks(4);
         }
-    }, [isOpen, scheduleId, initialDate]);
+    }, [isOpen, scheduleId, initialDate, centerId]);
 
-    const loadInitialData = async () => {
+    const loadInitialData = async (targetId: string) => {
+        if (!targetId || targetId.length < 32) return;
+
+        console.log("🚀 [ScheduleModal] Fetching data for Center:", targetId);
         setFetching(true);
         try {
             const [childRes, progRes, therRes, profileRes] = await Promise.all([
-                supabase.from('children').select('id, name, credit, guardian_name, contact').order('name'),
-                supabase.from('programs').select('id, name, duration, price').order('name'),
-                supabase.from('therapists').select('id, name, email, profile_id, color').order('name'),
-                supabase.from('user_profiles').select('id, email, role')
+                supabase.from('children').select('*').eq('center_id', targetId).order('name'),
+                supabase.from('programs').select('*').eq('center_id', targetId).order('name'),
+                supabase.from('therapists').select('*').eq('center_id', targetId).order('name'),
+                supabase.from('user_profiles').select('*')
             ]);
 
             setChildrenList(childRes.data || []);
@@ -145,26 +160,18 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
             const rawTherapists = therRes.data || [];
 
             const filteredTherapists = rawTherapists.filter(t => {
-                // 1. 하드코딩된 슈퍼 어드민 이메일 즉시 차단 (안전장치)
-                if (t.email === 'anukbin@gmail.com') return false;
+                // 1. Centralized Super Admin Check (Email)
+                if (isSuperAdmin(t.email)) return false;
 
-                // 2. Profile ID로 정확한 역할 확인
+                // 2. Role Check via Linked Profile
                 if (t.profile_id) {
                     const profile = profiles.find(p => p.id === t.profile_id);
                     if (profile?.role === 'super_admin') return false;
                 }
 
-                // 3. Email로 역할 확인 (Fallback)
-                if (t.email) {
-                    const profile = profiles.find(p => p.email === t.email);
-                    if (profile?.role === 'super_admin') return false;
-                }
-
-                // 4. ✨ [Ghost Record Fix] 연결 끊긴 레코드 이름 기반 차단
-                // DB 분석 결과: '안욱빈 원장님' 레코드의 email/profile_id가 모두 null임
-                const blockList = ['안욱빈 원장님', 'Admin', 'admin', '관리자'];
-                if (blockList.includes(t.name)) return false;
-
+                // 3. ✨ [Ghost Record / Name Fix] Centralized check is always better, 
+                // but if email is missing, we still filter strictly if needed.
+                // However, based on the goal of removing hardcoding, we rely on isSuperAdmin.
                 return true;
             });
 
@@ -251,9 +258,11 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
         e.preventDefault();
         setLoading(true);
         try {
-            const { data: center } = await supabase.from('centers').select('id').limit(1).maybeSingle();
+            // ✨ [STRICT CHECK] 
+            if (!centerId) throw new Error("센터 정보가 없습니다. 다시 시도해 주세요.");
+
             const basePayload = {
-                center_id: center?.id,
+                center_id: centerId,
                 child_id: formData.child_id,
                 program_id: formData.program_id,
                 therapist_id: formData.therapist_id,

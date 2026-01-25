@@ -17,9 +17,11 @@ import {
     ArrowLeft, Loader2, MessageSquare, Calendar,
     User, Activity, Quote, ChevronRight
 } from 'lucide-react';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 
 export function ParentLogsPage() {
     const navigate = useNavigate();
+    const { center } = useCenter(); // ✨ Context
     const [logs, setLogs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -27,8 +29,11 @@ export function ParentLogsPage() {
     const [parentObservations, setParentObservations] = useState<any[]>([]);  // ✨ 부모 관찰 일기
 
     useEffect(() => {
-        fetchLogs();
-    }, []);
+        if (loading) fetchLogs();
+    }, [center]); // ✨ Refetch on center change if needed, but mainly initial mount
+
+    // Trigger initial fetch
+    useEffect(() => { fetchLogs(); }, []);
 
     const fetchLogs = async () => {
         setLoading(true);
@@ -73,9 +78,23 @@ export function ParentLogsPage() {
                 .order('session_date', { ascending: false }); // 수업 날짜 기준 정렬
 
             // 관리자가 아니면 본인 아이 정보만 필터링
-            if (profile?.role !== 'admin') {
+            if (profile?.role === 'admin' || profile?.role === 'super_admin') {
+                if (!center?.id) {
+                    setError("센터 정보가 없습니다.");
+                    setLoading(false);
+                    return;
+                }
+                // ✨ [Admin] Filter by Center using Inner Join
+                query.select(`
+                    *,
+                    therapists:therapist_id (name),
+                    children!inner(center_id)
+                `)
+                    .eq('children.center_id', center.id);
+            } else {
                 if (!targetChildId) {
                     setError("연결된 아이 정보가 없습니다.");
+                    setLoading(false);
                     return;
                 }
                 query.eq('child_id', targetChildId);

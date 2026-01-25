@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeProvider';
 import { isSuperAdmin } from '@/config/superAdmin';
 import { TermsModal } from '@/components/public/TermsModal';
-import { CURRENT_CENTER_ID } from '@/config/center';
+import { useCenter } from '@/contexts/CenterContext';
 
 // Custom SVG Icons
 const Icons = {
@@ -37,11 +37,16 @@ const Icons = {
 export function Register() {
     const { theme } = useTheme();
     const isDark = theme === 'dark';
+    const { center } = useCenter(); // ✨ SaaS Context
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
-    const [centerId, setCenterId] = useState(CURRENT_CENTER_ID); // ✨ Auto Assign
+    const [centerId, setCenterId] = useState(center?.id || import.meta.env.VITE_CENTER_ID || '');
+
+    useEffect(() => {
+        if (center?.id) setCenterId(center.id);
+    }, [center]);
 
     const [centers, setCenters] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -112,11 +117,6 @@ export function Register() {
             const { data } = await supabase.from('centers').select('id, name');
             if (data && data.length > 0) {
                 setCenters(data);
-                // ✨ [Auto-Select] If env var is missing or empty, pick the first center (Common for Single-Center apps)
-                if (!centerId) {
-                    console.log("📍 Auto-selecting center from DB:", data[0].name);
-                    setCenterId(data[0].id);
-                }
             }
         }
         fetchCenters();
@@ -207,15 +207,24 @@ export function Register() {
                 isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100"
             )}>
                 {/* Close Button */}
-                <Link
-                    to="/"
+                <button
+                    onClick={() => {
+                        // ✨ Intelligent Back Navigation
+                        // If we have history, go back (likely to Center Home).
+                        // If not, fallback to root.
+                        if (window.history.length > 1) {
+                            navigate(-1);
+                        } else {
+                            navigate('/');
+                        }
+                    }}
                     className={cn(
                         "absolute top-6 right-6 p-2 rounded-full transition-colors",
                         isDark ? "hover:bg-slate-800 text-slate-500" : "hover:bg-slate-100 text-slate-400"
                     )}
                 >
                     {Icons.close("w-5 h-5")}
-                </Link>
+                </button>
 
                 <div className="text-center mb-8 pt-4">
                     <h2 className={cn(
@@ -246,7 +255,7 @@ export function Register() {
                             <div>
                                 <p className="text-xs font-bold text-slate-500 dark:text-slate-400">가입 센터</p>
                                 <p className="text-sm font-black text-slate-800 dark:text-slate-200">
-                                    {import.meta.env.VITE_SITE_TITLE || '잠실 아동심리발달센터'}
+                                    {center?.name || import.meta.env.VITE_SITE_TITLE || '센터 정보 로딩 중...'}
                                 </p>
                             </div>
                         </div>

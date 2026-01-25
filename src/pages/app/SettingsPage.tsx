@@ -21,6 +21,7 @@ import { DEFAULT_PROGRAMS } from '@/constants/defaultPrograms';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 import { AccountDeletionModal } from '@/components/AccountDeletionModal';
 
 // --- ❌ 원본 로직 절대 보존 ---
@@ -33,19 +34,10 @@ const VALID_TABS: TabType[] = ['home', 'about', 'programs', 'branding', 'center_
 export function SettingsPage() {
     const { settings, getSetting, loading: settingsLoading, fetchSettings } = useAdminSettings();
     const { user } = useAuth();
+    const { center } = useCenter(); // ✨ Use center
+    const centerId = center?.id;
     const [saving, setSaving] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [centerId, setCenterId] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchCenterId = async () => {
-            if (user) {
-                const { data } = await supabase.from('user_profiles').select('center_id').eq('id', user.id).single();
-                if (data?.center_id) setCenterId(data.center_id);
-            }
-        };
-        fetchCenterId();
-    }, [user]);
 
     const [searchParams, setSearchParams] = useSearchParams();
     const tabParam = searchParams.get('tab') as TabType | null;
@@ -74,6 +66,10 @@ export function SettingsPage() {
                 }, { onConflict: 'center_id, key' }); // Composite Key Constraint
 
             if (error) throw error;
+
+            // ✨ [Sync Fix] Notify all listeners to refetch
+            window.dispatchEvent(new Event('settings-updated'));
+
             if (fetchSettings) await fetchSettings();
         } catch (error) {
             console.error('Save Error:', error);
@@ -88,12 +84,17 @@ export function SettingsPage() {
         setSaving(true);
         try {
             const jsonValue = JSON.stringify(newList);
-            await supabase.from('admin_settings').upsert({
+            const { error } = await supabase.from('admin_settings').upsert({
                 center_id: centerId,
                 key: 'programs_list',
                 value: jsonValue,
                 updated_at: new Date().toISOString()
             }, { onConflict: 'center_id, key' });
+
+            if (error) throw error;
+
+            // ✨ [Sync Fix] Notify all listeners to refetch
+            window.dispatchEvent(new Event('settings-updated'));
 
             if (fetchSettings) await fetchSettings();
             alert('프로그램 목록이 즉시 반영되었습니다.');
@@ -108,6 +109,21 @@ export function SettingsPage() {
     const programsList: ProgramItem[] = initialProgramsJson ? JSON.parse(initialProgramsJson) : DEFAULT_PROGRAMS;
 
     if (settingsLoading) return <div className="p-20 text-center"><Loader2 className="animate-spin inline w-10 h-10 text-slate-300" /></div>;
+
+    // ✨ [Safety] Super Admin Global Mode Guard
+    if (!centerId) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 text-center space-y-6">
+                <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
+                    <Pencil className="w-8 h-8 text-slate-400" />
+                </div>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white">센터를 선택해주세요</h2>
+                <p className="text-slate-500 font-bold max-w-md">
+                    설정을 변경할 센터가 선택되지 않았습니다. 상단 배너의 '센터 전환' 버튼을 눌러 관리할 지점을 선택해주세요.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-20 px-4 text-left font-bold">
@@ -179,9 +195,123 @@ export function SettingsPage() {
                 )}
 
                 {activeTab === 'branding' && (
-                    <SectionCard title="로고 및 브랜딩">
-                        <ImageUploader bucketName="logos" label="센터 공식 로고" currentImage={getSetting('center_logo')} onUploadComplete={(url) => handleSave('center_logo', url)} />
-                    </SectionCard>
+                    <div className="space-y-10">
+                        <SectionCard title="사이트 정체성 설정" icon={<Palette className="text-indigo-500" />}>
+                            <div className="space-y-10">
+                                {/* 🎨 Color Selection */}
+                                <div className="space-y-6">
+                                    <div className="flex justify-between items-end">
+                                        <div>
+                                            <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">브랜드 메인 컬러</label>
+                                            <p className="text-xs text-slate-400 font-medium ml-1">헤더, 버튼, 강조 문구 등에 적용됩니다.</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700">
+                                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getSetting('brand_color') || '#4f46e5' }} />
+                                            <span className="text-[10px] font-black text-slate-500 uppercase">{getSetting('brand_color') || '#4F46E5'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-4 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700 justify-center">
+                                        {[
+                                            { name: 'Indigo (Default)', hex: '#4f46e5' },
+                                            { name: 'Classic Blue', hex: '#2563eb' },
+                                            { name: 'Sky Blue', hex: '#0ea5e9' },
+                                            { name: 'Emerald', hex: '#10b981' },
+                                            { name: 'Rose', hex: '#e11d48' },
+                                            { name: 'Violet', hex: '#7c3aed' },
+                                            { name: 'Amber', hex: '#f59e0b' },
+                                            { name: 'Slate', hex: '#334155' },
+                                        ].map((color) => (
+                                            <button
+                                                key={color.hex}
+                                                onClick={() => handleSave('brand_color', color.hex)}
+                                                className={cn(
+                                                    "group relative flex flex-col items-center gap-2 p-2 rounded-2xl transition-all hover:bg-white dark:hover:bg-slate-700",
+                                                    (getSetting('brand_color') || '#4f46e5') === color.hex && "bg-white dark:bg-slate-700 shadow-lg ring-1 ring-black/5"
+                                                )}
+                                            >
+                                                <div
+                                                    className="w-12 h-12 rounded-xl shadow-inner transition-transform group-hover:scale-110"
+                                                    style={{ backgroundColor: color.hex }}
+                                                />
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{color.name.split(' ')[0]}</span>
+                                                {(getSetting('brand_color') || '#4f46e5') === color.hex && (
+                                                    <div className="absolute -top-1 -right-1 bg-emerald-500 text-white p-1 rounded-full shadow-sm">
+                                                        <CheckCircle2 className="w-2.5 h-2.5" />
+                                                    </div>
+                                                )}
+                                            </button>
+                                        ))}
+
+                                        {/* Custom Color Input */}
+                                        <div className="flex flex-col items-center gap-2 p-2">
+                                            <input
+                                                type="color"
+                                                value={getSetting('brand_color') || '#4f46e5'}
+                                                onChange={(e) => handleSave('brand_color', e.target.value)}
+                                                className="w-12 h-12 rounded-xl cursor-pointer bg-transparent border-none p-0 overflow-hidden"
+                                            />
+                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">CUSTOM</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="h-px bg-slate-100 dark:bg-slate-800" />
+
+                                {/* 🖼️ Logo Selection */}
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">센터 공식 로고</label>
+                                        <p className="text-xs text-slate-400 font-medium ml-1">상단 헤더와 플랫폼 내부 곳곳에 사용됩니다. (권장: 배경이 없는 PNG/WebP)</p>
+                                    </div>
+                                    <ImageUploader
+                                        bucketName="logos"
+                                        currentImage={getSetting('center_logo')}
+                                        onUploadComplete={(url) => handleSave('center_logo', url)}
+                                    />
+                                </div>
+                            </div>
+                        </SectionCard>
+
+                        {/* 🛠️ Preview Card */}
+                        <div className="bg-slate-900 rounded-[40px] p-10 text-white relative overflow-hidden shadow-2xl">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32" />
+                            <div className="relative z-10 space-y-6">
+                                <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10">Real-time Preview</span>
+                                <div className="space-y-2">
+                                    <h3 className="text-2xl font-black">브랜딩 적용 예시</h3>
+                                    <p className="text-slate-400 text-sm font-medium">선택하신 컬러와 로고가 앱 전반에 어떻게 보이는지 확인하세요.</p>
+                                </div>
+
+                                <div className="p-6 bg-white rounded-3xl space-y-6">
+                                    <div className="flex items-center justify-between border-b pb-4">
+                                        <div className="flex items-center gap-2">
+                                            {getSetting('center_logo') ? (
+                                                <img src={getSetting('center_logo')} className="h-6 w-auto" alt="Logo" />
+                                            ) : (
+                                                <div className="w-6 h-6 rounded bg-slate-200" />
+                                            )}
+                                            <span className="font-black text-slate-900 text-sm">Zarada</span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <div className="w-4 h-4 rounded-full bg-slate-100" />
+                                            <div className="w-4 h-4 rounded-full bg-slate-100" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <div className="h-4 w-3/4 bg-slate-100 rounded-full" />
+                                        <div className="h-4 w-1/2 bg-slate-100 rounded-full" />
+                                        <button
+                                            className="w-full py-3 rounded-2xl text-white font-black text-xs shadow-lg transition-transform active:scale-95"
+                                            style={{ backgroundColor: getSetting('brand_color') || '#4f46e5' }}
+                                        >
+                                            저장된 버튼 스타일
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 )}
 
                 {/* ✨ 정보/운영 탭 통합 섹션 - 원본 UI 보존 및 필드 추가 */}
@@ -234,22 +364,29 @@ export function SettingsPage() {
     );
 }
 
-// --- ✨ [원본 디자인 그대로] 센터 행정 및 운영시간 수정 섹션 ---
+// --- ✨ [SaaS Fix] 센터 행정 및 운영시간 수정 섹션 ---
 function CenterInfoSection() {
+    const { center } = useCenter(); // ✨ Use Center Context
+    const centerId = center?.id;
     const [info, setInfo] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
     const fetchCenter = async () => {
+        if (!centerId) return;
         setLoading(true);
         try {
-            const { data } = await supabase.from('centers').select('*').limit(1).maybeSingle();
+            const { data } = await supabase
+                .from('centers')
+                .select('*')
+                .eq('id', centerId) // ✨ [Security] Isolation
+                .maybeSingle();
             if (data) setInfo(data);
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
     };
 
-    useEffect(() => { fetchCenter(); }, []);
+    useEffect(() => { fetchCenter(); }, [centerId]);
 
     const handleInfoSave = async (key: string, value: string) => {
         if (!info?.id) return;
@@ -336,23 +473,34 @@ function CenterInfoSection() {
 // --- ✨ SNS 링크 설정 섹션 ---
 function SnsLinksSection() {
     const { getSetting, fetchSettings } = useAdminSettings();
+    const { center } = useCenter(); // ✨ Get current center
+    const centerId = center?.id;
     const [saving, setSaving] = useState(false);
 
     const handleSave = async (key: string, value: string) => {
-        if (!key) return;
+        if (!key || !centerId) return;
 
         // ✨ [API Key Validation] Gemini 키 (sk- 검사 제거)
         if (key === 'openai_api_key' && value && value.startsWith('sk-')) {
             alert('⚠️ 구글 Gemini 키를 입력해주세요. (현재 OpenAI 키 형식이 입력되었습니다)');
-            // 막지는 않음
         }
 
         setSaving(true);
         try {
+            // ✨ [Persistence Fix] Enforce center_id
             await supabase.from('admin_settings').upsert(
-                { key, value, updated_at: new Date().toISOString() },
-                { onConflict: 'key' }
+                {
+                    center_id: centerId,
+                    key,
+                    value,
+                    updated_at: new Date().toISOString()
+                },
+                { onConflict: 'center_id, key' }
             );
+
+            // ✨ [Sync Fix] Notify all listeners to refetch
+            window.dispatchEvent(new Event('settings-updated'));
+
             if (fetchSettings) await fetchSettings();
             alert('저장되었습니다.');
         } catch (e) {

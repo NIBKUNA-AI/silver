@@ -56,10 +56,9 @@ export function AccountDeletionModal({ isOpen, onClose, userId, userEmail }: Acc
                 .update({ parent_id: null })
                 .eq('parent_id', userId);
 
-            // 🔐 Secure RPC Call (Auth User Deletion)
-            // This triggers Cascade deletion for profiles etc. if configured,
-            // or simply removes the login account.
-            const { error: rpcError } = await supabase.rpc('delete_own_account');
+            // 🔐 Secure RPC Call (Auth User Withdrawal)
+            // This triggers the cleaned-up withdrawal process for SaaS
+            const { error: rpcError } = await supabase.rpc('user_withdraw');
 
             if (rpcError) throw rpcError;
 

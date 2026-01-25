@@ -10,14 +10,20 @@
  * 이 파일의 UI/UX 설계 및 데이터 연동 로직은 독자적인 기술과
  * 예술적 영감을 바탕으로 구축되었습니다.
  */
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { SEOHead } from '@/components/seo/SEOHead';
+import { CenterProvider } from '@/contexts/CenterContext';
+import { CenterGuard } from '@/components/auth/CenterGuard';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 
 import { PublicLayout } from '@/layouts/PublicLayout';
 import { AppLayout } from '@/layouts/AppLayout';
+import { MasterLayout } from '@/layouts/MasterLayout';
+
+// Global Landing (Center Selector)
+import { GlobalLanding } from '@/pages/public/GlobalLanding';
 
 // 공개 페이지
 import { HomePage } from '@/pages/public/HomePage';
@@ -28,8 +34,8 @@ import { Login } from '@/pages/auth/Login';
 import { Register } from '@/pages/auth/Register';
 import { ForgotPassword } from '@/pages/auth/ForgotPassword';
 import { UpdatePassword } from '@/pages/auth/UpdatePassword';
-import { BlogPage } from '@/pages/public/BlogPage';
-import { BlogPostPage } from '@/pages/public/BlogPostPage';
+// import { BlogPage } from '@/pages/public/BlogPage';
+// import { BlogPostPage } from '@/pages/public/BlogPostPage';
 
 // 부모님 전용 페이지
 import { ParentLayout } from '@/layouts/ParentLayout';
@@ -48,8 +54,8 @@ import SessionList from '@/pages/app/sessions/SessionList';
 import SessionNote from '@/pages/app/sessions/SessionNote';
 import { LeadList } from '@/pages/app/leads/LeadList';
 import ConsultationInquiryList from '@/pages/app/consultations/ConsultationInquiryList';
-import BlogList from '@/pages/app/blog/BlogList';
-import BlogEditor from '@/pages/app/blog/BlogEditor';
+// import BlogList from '@/pages/app/blog/BlogList';
+// import BlogEditor from '@/pages/app/blog/BlogEditor';
 import Programs from '@/pages/app/Programs';
 import { Billing } from '@/pages/app/Billing';
 import { Settlement } from '@/pages/app/Settlement';
@@ -62,16 +68,33 @@ import { useState, useEffect } from 'react';
 
 function AppHomeRedirect() {
   const { role } = useAuth();
-  if (role === 'super_admin' || role === 'admin' || role === 'staff') {
-    return <Navigate to="/app/schedule" replace />;
+
+  if (role === 'super_admin') {
+    // 👑 [Sovereign Rule] If a specific center is selected, go to dashboard.
+    // Otherwise, always land on Master Console.
+    const stickySlug = localStorage.getItem('zarada_center_slug');
+    if (stickySlug) return <Navigate to="/app/dashboard" replace />;
+    return <Navigate to="/master/centers" replace />;
   }
-  if (role === 'therapist') {
+
+  if (role === 'admin' || role === 'staff' || role === 'employee' || role === 'therapist') {
     return <Navigate to="/app/schedule" replace />;
   }
   return <Navigate to="/parent/home" replace />;
 }
 
 function App() {
+  // 🚀 [Critical] Force full purge if HMR fails - v1.3.0 (SCHEMA ALIGNMENT)
+  useEffect(() => {
+    const SAAS_ENGINE_VER = "1.3.0";
+    if (localStorage.getItem('zarada_ver') !== SAAS_ENGINE_VER) {
+      localStorage.clear();
+      sessionStorage.clear();
+      localStorage.setItem('zarada_ver', SAAS_ENGINE_VER);
+      window.location.reload();
+    }
+  }, []);
+
   const [showSplash, setShowSplash] = useState(() => {
     // Only show splash once per session
     const hasSeenSplash = sessionStorage.getItem('splash_shown');
@@ -79,7 +102,6 @@ function App() {
   });
 
   // ✨ [UTM Tracking] URL 파라미터 캡처 및 세션 저장
-  // MUST be before any conditional returns (React Hooks Rule)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const utmTags = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
@@ -107,31 +129,38 @@ function App() {
   };
 
   return (
-    <>
+    <CenterProvider>
       <SEOHead />
       {showSplash ? (
         <SplashScreen onComplete={handleSplashComplete} />
       ) : (
         <Routes>
-          {/* 1. 공개 페이지 */}
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/programs" element={<ProgramsPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/blog" element={<BlogPage />} />
-            <Route path="/blog/:slug" element={<BlogPostPage />} />
+          {/* 1. Global Landing (Center Selector) */}
+          <Route path="/" element={<GlobalLanding />} />
+
+          {/* 2. Public Center Pages (/centers/:slug/...) */}
+          <Route path="/centers/:slug" element={<CenterGuard><PublicLayout /></CenterGuard>}>
+            <Route index element={<HomePage />} />
+            <Route path="about" element={<AboutPage />} />
+            <Route path="programs" element={<ProgramsPage />} />
+            <Route path="contact" element={<ContactPage />} />
+            {/* Blog routes removed */}
           </Route>
 
-          {/* 2. 로그인/회원가입 */}
+          {/* 3. Authentication (Global & Branded) */}
           <Route path="/login" element={<Login />} />
+          <Route path="/centers/:slug/login" element={<CenterGuard><Login /></CenterGuard>} />
           <Route path="/register" element={<Register />} />
+          <Route path="/centers/:slug/register" element={<CenterGuard><Register /></CenterGuard>} />
           <Route path="/auth/forgot-password" element={<ForgotPassword />} />
           <Route path="/auth/update-password" element={<UpdatePassword />} />
-          {/* ✨ [Hotfix] Catch old email links pointing to wrong path */}
           <Route path="/update-password" element={<Navigate to="/auth/update-password" replace />} />
 
-          {/* 3. 학부모 전용 구역 */}
+          {/* 4. Parent Zone (Protected + Center Context) */}
+          {/* Note: In a real multi-tenant app, parents might also need a center context or sub-path. 
+              For now, keeping legacy paths but we might want /centers/:slug/parent/... later. 
+              Currently assuming parents log in and CenterGuard (if we wrap them) or Profile determines context.
+          */}
           <Route element={<ProtectedRoute allowedRoles={['parent', 'admin']} />}>
             <Route element={<ParentLayout />}>
               <Route path="/parent/home" element={<ParentHomePage />} />
@@ -141,25 +170,33 @@ function App() {
             </Route>
           </Route>
 
-          {/* 4. 관리자/직원/치료사 공통 앱 구역 */}
+          {/* 5. SaaS Admin/Staff App Zone (Protected + Center Guard) */}
+          {/* All routes here require a valid center context. Since we use LocalStorage persistence in CenterContext,
+              even if the URL is just /app/dashboard, the Context might try to restore center.
+              However, strictly speaking, pure SaaS usually enforces /centers/:slug/app/... 
+              But based on request "Maintain current App structure but add CenterContext", 
+              we will rely on the CenterGuard checking for a selected center (from previous selection or storage). 
+          */}
           <Route
             path="/app"
             element={
-              <ProtectedRoute allowedRoles={['admin', 'staff', 'therapist']}>
-                <AppLayout />
-              </ProtectedRoute>
+              <CenterGuard>
+                <ProtectedRoute allowedRoles={['admin', 'staff', 'employee', 'therapist']}>
+                  <AppLayout />
+                </ProtectedRoute>
+              </CenterGuard>
             }
           >
             <Route index element={<AppHomeRedirect />} />
 
             <Route path="dashboard" element={
-              <ProtectedRoute allowedRoles={['admin', 'staff', 'therapist']}>
+              <ProtectedRoute allowedRoles={['admin', 'staff', 'employee', 'therapist']}>
                 <Dashboard />
               </ProtectedRoute>
             } />
 
             <Route path="leads" element={
-              <ProtectedRoute allowedRoles={['admin', 'staff']}>
+              <ProtectedRoute allowedRoles={['admin', 'staff', 'employee']}>
                 <ConsultationInquiryList />
               </ProtectedRoute>
             } />
@@ -180,7 +217,7 @@ function App() {
             <Route path="sessions/:scheduleId/note" element={<SessionNote />} />
 
             <Route path="billing" element={
-              <ProtectedRoute allowedRoles={['admin', 'staff']}>
+              <ProtectedRoute allowedRoles={['admin', 'staff', 'employee']}>
                 <Billing />
               </ProtectedRoute>
             } />
@@ -193,22 +230,7 @@ function App() {
 
             <Route path="consultations" element={<ConsultationList />} />
 
-            {/* 블로그 관리 */}
-            <Route path="blog" element={
-              <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                <BlogList />
-              </ProtectedRoute>
-            } />
-            <Route path="blog/new" element={
-              <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                <BlogEditor />
-              </ProtectedRoute>
-            } />
-            <Route path="blog/:id" element={
-              <ProtectedRoute allowedRoles={['admin', 'manager']}>
-                <BlogEditor />
-              </ProtectedRoute>
-            } />
+            {/* 블로그 관리 메뉴 삭제됨 */}
 
             {/* 사이트 관리 */}
             <Route path="settings" element={
@@ -217,23 +239,21 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* ✅ 전체 센터 관리 (슈퍼 어드민 전용) */}
-            <Route path="admin/centers" element={
-              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                <CenterList />
-              </ProtectedRoute>
-            } />
-            <Route path="admin/centers/:centerId" element={
-              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                <CenterDetailPage />
-              </ProtectedRoute>
-            } />
           </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* ✨ Redirect Removed/Moved Routes */}
+          <Route path="/app/admin/centers" element={<Navigate to="/master/centers" replace />} />
+          <Route path="/app/admin/centers/*" element={<Navigate to="/master/centers" replace />} />
+
+          {/* 6. Master Console (Super Admin Only) - Dedicated Layout & Context */}
+          <Route path="/master" element={<MasterLayout />}>
+            <Route index element={<div className="text-slate-400 font-bold p-8">Master Dashboard (Coming Soon)</div>} />
+            <Route path="centers" element={<CenterList />} />
+            <Route path="centers/:centerId" element={<CenterDetailPage />} />
+          </Route>
         </Routes>
       )}
-    </>
+    </CenterProvider>
   );
 }
 

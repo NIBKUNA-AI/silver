@@ -11,12 +11,15 @@
  * 예술적 영감을 바탕으로 구축되었습니다.
  */
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation, useParams } from 'react-router-dom';
 import { supabase, setRememberMe, getRememberMe } from '@/lib/supabase';
 import { Helmet } from 'react-helmet-async';
 import { cn } from '@/lib/utils';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useTheme } from '@/contexts/ThemeProvider';
+import { useCenter } from '@/contexts/CenterContext';
+import { useCenterBranding } from '@/hooks/useCenterBranding';
+import { isSuperAdmin } from '@/config/superAdmin';
 
 // Custom SVG Icons
 const Icons = {
@@ -49,8 +52,10 @@ const Icons = {
 export function Login() {
     const { getSetting } = useAdminSettings();
     const { theme } = useTheme();
+    const { center } = useCenter(); // ✨ Get Center Context
+    const { branding } = useCenterBranding(); // ✨ Get Unified Branding
     const isDark = theme === 'dark';
-    const centerName = getSetting('center_name') || '아동발달센터';
+    const centerName = branding.name || getSetting('center_name') || '아동발달센터';
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -59,6 +64,8 @@ export function Login() {
     const [rememberMe, setRememberMeState] = useState(getRememberMe());
     const [selectedTab, setSelectedTab] = useState<'parent' | 'teacher' | 'admin'>('parent'); // ✨ Tab State
     const navigate = useNavigate();
+    const location = useLocation(); // ✨ Use Location Hook
+    const { slug } = useParams(); // ✨ [Sovereign SaaS] Get slug from URL params
 
     // ✨ Agreement Modal State
     const [showAgreement, setShowAgreement] = useState(false);
@@ -84,9 +91,19 @@ export function Login() {
                     return;
                 }
 
-                // 🛡️ Super Admin Whitelist (Bypass Consent)
-                if (session.user.email === 'anukbin@gmail.com') {
-                    navigate('/app/dashboard');
+                // 👑 [Sovereign SaaS] Super Admin God-Mode Recognition
+                if (isSuperAdmin(session.user.email)) {
+                    // Scenario 1: Global Login (No slug) -> Master Console
+                    // Scenario 2: Context Login (Slug present) -> Dashboard
+                    const isGlobalLogin = !slug;
+                    console.log("👑 Super Admin (OAuth Bypass):", isGlobalLogin ? "GLOBAL" : "CENTER");
+
+                    if (isGlobalLogin) {
+                        localStorage.removeItem('zarada_center_slug');
+                        navigate('/master/centers', { replace: true });
+                    } else {
+                        navigate('/app/dashboard');
+                    }
                     return;
                 }
 
@@ -126,50 +143,98 @@ export function Login() {
             if (authError) throw authError;
 
             if (user) {
-                // 🛡️ Super Admin Whitelist
-                if (user.email === 'anukbin@gmail.com') {
-                    navigate('/app/dashboard');
-                    return;
-                }
+                // 🛡️ Super Admin Whitelist check 
+                const isSuper = isSuperAdmin(user.email);
 
                 let { data: profile, error: profileError } = await supabase
                     .from('user_profiles')
-                    .select('role')
+                    .select('role, center_id')
                     .eq('id', user.id)
                     .maybeSingle();
 
-                // ✨ [Auto-Repair] 프로필이 없어도 치료사 테이블에 있으면 통과
+                // ✨ [God Mode / Auto-Repair] 
                 if (!profile) {
-                    const { data: therapist } = await supabase
-                        .from('therapists')
-                        .select('system_role')
-                        .ilike('email', user.email)
+                    if (isSuper) {
+                        console.log("👑 Super Admin detected during login, skipping profile check.");
+                        profile = { role: 'super_admin', center_id: null };
+                    } else {
+                        // Therapist Auto-Repair
+                        const { data: therapist } = await supabase
+                            .from('therapists')
+                            .select('system_role')
+                            .ilike('email', user.email)
+                            .maybeSingle();
+
+                        if (therapist) {
+                            console.log("🩹 Login: Therapist record found, bypass profile check.");
+                            profile = { role: therapist.system_role || 'therapist', center_id: null };
+                        } else {
+                            console.error('프로필 정보를 가져올 수 없습니다:', profileError);
+                            setError('회원 프로필 정보를 찾을 수 없습니다. (계정 오류)');
+                            return;
+                        }
+                    }
+                } else if (isSuper) {
+                    // 👑 Force clear center_id for existing Super Admin profiles to prevent captures
+                    profile = { ...profile, center_id: null };
+                }
+
+                // 3. ✨ [Sovereign SaaS] Center Routing Logic
+                // 유저의 소속 센터를 찾아 Context를 설정하고 해당 화면으로 이동
+                if (profile.role === 'super_admin') {
+                    // ✨ [Sovereign SaaS] Super Admin Context Management
+                    // If slug is present (Scenario 2), set it. If not (Scenario 1), clear it.
+                    if (slug) {
+                        localStorage.setItem('zarada_center_slug', slug);
+                    } else {
+                        localStorage.removeItem('zarada_center_slug');
+                    }
+                } else if (profile.center_id) {
+                    const { data: centerData } = await supabase
+                        .from('centers')
+                        .select('slug')
+                        .eq('id', profile.center_id)
                         .maybeSingle();
 
-                    if (therapist) {
-                        console.log("🩹 Login: Therapist record found, bypass profile check.");
-                        profile = { role: therapist.system_role || 'therapist' };
-                    } else {
-                        console.error('프로필 정보를 가져올 수 없습니다:', profileError);
-                        setError('회원 프로필 정보를 찾을 수 없습니다. (계정 오류)');
-                        return;
+                    if (centerData?.slug) {
+                        localStorage.setItem('zarada_center_slug', centerData.slug);
                     }
                 }
 
                 switch (profile.role) {
                     case 'super_admin':
-                    case 'admin':
-                        navigate('/app/schedule');
+                        // ✨ [Sovereign SaaS] Super Admin Directive
+                        // 1. Global Page > Admin Login -> Master Console
+                        // 2. Center Page > Login -> Center Dashboard
+                        const isGlobalPath = !slug;
+
+                        if (isGlobalPath) {
+                            localStorage.removeItem('zarada_center_slug'); // Clear sticky context
+                            console.log("👑 Super Admin (Global): Enforcing Master Console");
+                            navigate('/master/centers', { replace: true });
+                        } else {
+                            // Contextual Login - Respect existing context (set by URL/Guard)
+                            const selectedSlug = localStorage.getItem('zarada_center_slug');
+                            if (selectedSlug) {
+                                console.log("👑 Super Admin (Context): Entering", selectedSlug);
+                                navigate('/app/dashboard');
+                            } else {
+                                // Fallback: If for some reason we are not at /login but have no slug, go Master
+                                console.log("👑 Super Admin (Fallback): No slug found -> Master Console");
+                                navigate('/master/centers', { replace: true });
+                            }
+                        }
                         break;
+                    case 'admin':
                     case 'employee':
                     case 'therapist':
-                        navigate('/app/schedule');
+                        navigate('/app/dashboard'); // Go to Dashboard
                         break;
                     case 'parent':
                         navigate('/parent/home');
                         break;
                     default:
-                        navigate('/');
+                        navigate(center?.slug ? `/centers/${center.slug}` : '/');
                 }
             }
         } catch (err: any) {
@@ -182,14 +247,14 @@ export function Login() {
     };
 
     const handleAgree = () => {
-        // ✨ 약관 동의 후 회원가입 페이지로 이동
-        navigate('/register');
+        // ✨ 약관 동의 후 회원가입 페이지로 이동 (센터 컨텍스트 유지 시도)
+        navigate(center?.slug ? `/centers/${center.slug}/register` : '/register');
     };
 
     const handleDisagree = async () => {
         // 🛑 동의 거부 시 로그아웃 및 홈으로
         await supabase.auth.signOut();
-        navigate('/');
+        navigate(center?.slug ? `/centers/${center.slug}` : '/');
     };
 
     return (
@@ -208,7 +273,7 @@ export function Login() {
                 )}>
                     {/* Close Button */}
                     <Link
-                        to="/"
+                        to={center?.slug ? `/centers/${center.slug}` : "/"}
                         className={cn(
                             "absolute top-6 right-6 p-2 rounded-full transition-colors",
                             isDark ? "hover:bg-slate-800 text-slate-500" : "hover:bg-slate-100 text-slate-400"
@@ -218,10 +283,26 @@ export function Login() {
                     </Link>
 
                     <div className="text-center pt-2">
+                        {branding.logo_url && (
+                            <div className="flex justify-center mb-6">
+                                <img
+                                    src={branding.logo_url}
+                                    alt={centerName}
+                                    className="h-12 w-auto object-contain"
+                                    style={isDark ? { filter: 'brightness(0) invert(1)' } : undefined}
+                                />
+                            </div>
+                        )}
                         <h2 className={cn(
                             "text-2xl font-black tracking-tight",
                             isDark ? "text-white" : "text-slate-900"
-                        )}>다시 오신 걸 환영해요!</h2>
+                        )} style={branding.brand_color ? { color: branding.brand_color } : {}}>
+                            {branding.name || '자라다'}
+                        </h2>
+                        <h3 className={cn(
+                            "text-xl font-bold tracking-tight mt-2",
+                            isDark ? "text-slate-200" : "text-slate-800"
+                        )}>다시 오신 걸 환영해요!</h3>
                         <p className={cn(
                             "mt-2 text-sm font-medium",
                             isDark ? "text-slate-400" : "text-slate-500"
@@ -229,8 +310,6 @@ export function Login() {
                             센터 서비스를 위해 로그인이 필요합니다.
                         </p>
                     </div>
-
-
 
                     {/* Email Form */}
                     <form className="space-y-5" onSubmit={handleLogin}>
@@ -325,9 +404,11 @@ export function Login() {
                             disabled={loading}
                             className={cn(
                                 "flex w-full justify-center items-center py-4 px-4 text-sm font-black rounded-2xl shadow-lg transition-all",
-                                "bg-slate-900 text-white hover:bg-slate-800 hover:scale-[1.02] active:scale-95",
+                                !branding.brand_color ? "bg-slate-900 text-white hover:bg-slate-800" : "text-white hover:brightness-110",
+                                "hover:scale-[1.02] active:scale-95",
                                 loading && "opacity-80 cursor-not-allowed"
                             )}
+                            style={branding.brand_color ? { backgroundColor: branding.brand_color } : {}}
                         >
                             {loading ? (
                                 <>
@@ -344,7 +425,7 @@ export function Login() {
                         )}>
                             계정이 없으신가요?
                             <Link
-                                to="/register"
+                                to={center?.slug ? `/centers/${center.slug}/register` : "/register"}
                                 className={cn(
                                     "ml-1 font-bold hover:underline",
                                     isDark ? "text-indigo-400" : "text-indigo-600"
@@ -353,55 +434,69 @@ export function Login() {
                                 회원가입
                             </Link>
                         </div>
-                    </div>
-                </div>
-            </div >
 
-            {/* ✨ Agreement Modal */}
-            {
-                showAgreement && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-                        <div className={cn(
-                            "w-full max-w-md p-8 rounded-[32px] shadow-2xl space-y-6 relative overflow-hidden",
-                            isDark ? "bg-slate-900" : "bg-white"
-                        )}>
-                            <div className="text-center space-y-2">
-                                <h3 className={cn("text-2xl font-black", isDark ? "text-white" : "text-slate-900")}>이용 약관 동의</h3>
-                                <p className={cn("text-sm", isDark ? "text-slate-400" : "text-slate-500")}>
-                                    서비스 이용을 위해 필수 약관에 동의해주세요.<br />
-                                    동의 후 회원가입 절차가 진행됩니다.
-                                </p>
-                            </div>
-
-                            <div className={cn("p-4 rounded-2xl text-xs space-y-2 max-h-40 overflow-y-auto custom-scrollbar", isDark ? "bg-slate-800 text-slate-300" : "bg-slate-50 text-slate-600")}>
-                                <p className="font-bold">[필수] 서비스 이용 약관</p>
-                                <p>제 1조 (목적) 본 약관은...</p>
-                                <div className="h-px bg-current opacity-10 my-2" />
-                                <p className="font-bold">[필수] 개인정보 수집 및 이용 동의</p>
-                                <p>1. 수집 항목: 이메일, 프로필 이미지...</p>
-                            </div>
-
-                            <div className="flex gap-3 pt-2">
-                                <button
-                                    onClick={handleDisagree}
-                                    className={cn(
-                                        "flex-1 py-3.5 rounded-2xl font-bold text-sm transition-colors",
-                                        isDark ? "bg-slate-800 text-slate-400 hover:bg-slate-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                                    )}
-                                >
-                                    동의 안함
-                                </button>
-                                <button
-                                    onClick={handleAgree}
-                                    className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
-                                >
-                                    모두 동의하고 시작
-                                </button>
-                            </div>
+                        {/* ✨ Back to Global Landing Button */}
+                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <Link
+                                to="/"
+                                className={cn(
+                                    "text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+                                    isDark ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-indigo-600"
+                                )}
+                            >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                                다른 센터를 찾으시나요?
+                            </Link>
                         </div>
                     </div>
-                )
-            }
+                </div>
+            </div>
+
+            {/* ✨ Agreement Modal */}
+            {showAgreement && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+                    <div className={cn(
+                        "w-full max-w-md p-8 rounded-[32px] shadow-2xl space-y-6 relative overflow-hidden",
+                        isDark ? "bg-slate-900" : "bg-white"
+                    )}>
+                        <div className="text-center space-y-2">
+                            <h3 className={cn("text-2xl font-black", isDark ? "text-white" : "text-slate-900")}>이용 약관 동의</h3>
+                            <p className={cn("text-sm", isDark ? "text-slate-400" : "text-slate-500")}>
+                                서비스 이용을 위해 필수 약관에 동의해주세요.<br />
+                                동의 후 회원가입 절차가 진행됩니다.
+                            </p>
+                        </div>
+
+                        <div className={cn("p-4 rounded-2xl text-xs space-y-2 max-h-40 overflow-y-auto custom-scrollbar", isDark ? "bg-slate-800 text-slate-300" : "bg-slate-50 text-slate-600")}>
+                            <p className="font-bold">[필수] 서비스 이용 약관</p>
+                            <p>제 1조 (목적) 본 약관은...</p>
+                            <div className="h-px bg-current opacity-10 my-2" />
+                            <p className="font-bold">[필수] 개인정보 수집 및 이용 동의</p>
+                            <p>1. 수집 항목: 이메일, 프로필 이미지...</p>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={handleDisagree}
+                                className={cn(
+                                    "flex-1 py-3.5 rounded-2xl font-bold text-sm transition-colors",
+                                    isDark ? "bg-slate-800 text-slate-400 hover:bg-slate-700" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                                )}
+                            >
+                                동의 안함
+                            </button>
+                            <button
+                                onClick={handleAgree}
+                                className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
+                            >
+                                모두 동의하고 시작
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

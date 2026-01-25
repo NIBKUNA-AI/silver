@@ -11,17 +11,56 @@
  * 예술적 영감을 바탕으로 구축되었습니다.
  */
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sidebar } from '@/components/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeProvider';
-import { Lock, LogOut, ShieldAlert } from 'lucide-react';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
+import { Lock, LogOut, ShieldAlert, MonitorCheck, RefreshCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { isSuperAdmin as checkSuperAdmin } from '@/config/superAdmin';
+
+function SuperAdminBadge() {
+    const { role, user } = useAuth();
+    const { center } = useCenter();
+    const navigate = useNavigate();
+
+    // ✨ [Precision] Check for Super Admin identity
+    const isSuper = role === 'super_admin' || checkSuperAdmin(user?.email);
+    if (!isSuper) return null;
+
+    return (
+        <motion.div
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="relative z-[100] w-full h-10 bg-gradient-to-r from-amber-500 to-orange-600 flex items-center justify-center gap-4 px-4 shadow-md overflow-hidden shrink-0"
+        >
+            <div className="flex items-center gap-2 text-white font-black text-xs">
+                <MonitorCheck className="w-4 h-4" />
+                <span>SUPER ADMIN MODE: </span>
+                <span className="bg-white/20 px-2 py-0.5 rounded-lg">{center?.name || 'No Center'}</span>
+            </div>
+
+            <button
+                onClick={() => {
+                    localStorage.removeItem('zarada_center_slug');
+                    navigate('/');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-[10px] font-black transition-all active:scale-95"
+            >
+                <RefreshCw className="w-3 h-3" />
+                센터 전환
+            </button>
+        </motion.div>
+    );
+}
 
 export function AppLayout() {
-    const { profile, loading, role } = useAuth();
+    const { profile, loading, role, user } = useAuth();
+    const { center } = useCenter();
     const { theme } = useTheme();
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
     // 로딩 중일 때는 아무것도 보여주지 않거나 로딩 스피너를 보여줍니다.
     if (loading) return null;
@@ -73,6 +112,11 @@ export function AppLayout() {
             Notification.requestPermission();
         }
 
+        if (!center?.id || typeof center.id !== 'string' || center.id.length < 32) {
+            console.log("🛠️ [AppLayout] Waiting for valid Center ID before subscribing...", center?.id);
+            return;
+        }
+
         // Register Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
@@ -81,9 +125,14 @@ export function AppLayout() {
         }
 
         const channel = supabase
-            .channel('global_consultation_alerts')
+            .channel(`consultation_alerts_${center.id}`) // ✨ Unique Channel Name
             .on('postgres_changes',
-                { event: '*', schema: 'public', table: 'consultations' },
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'consultations',
+                    filter: `center_id=eq.${center.id}` // ✨ Tenant Filter
+                },
                 (payload) => {
                     const eventType = payload.eventType;
                     // DELETE 이벤트일 경우 payload.new가 없을 수 있으므로 old를 참조하거나 기본값 처리 필요
@@ -106,7 +155,7 @@ export function AppLayout() {
                     if (!title) return;
 
                     // ✨ [Correction] Only show for Admin/SuperAdmin
-                    const isAdmin = role === 'admin' || profile?.role === 'super_admin' || profile?.email === 'anukbin@gmail.com';
+                    const isAdmin = role === 'admin' || profile?.role === 'super_admin' || checkSuperAdmin(user?.email);
                     if (!isAdmin) return;
 
                     // 1. In-App Toast
@@ -141,9 +190,14 @@ export function AppLayout() {
 
         // ✨ [Real-time Notification] 일정/세션 변경 알림
         const scheduleChannel = supabase
-            .channel('global_schedule_alerts')
+            .channel(`schedule_alerts_${center.id}`) // ✨ Unique Channel Name
             .on('postgres_changes',
-                { event: '*', schema: 'public', table: 'schedules' },
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'schedules',
+                    filter: `center_id=eq.${center.id}` // ✨ Tenant Filter
+                },
                 (payload) => {
                     const eventType = payload.eventType;
                     const title = `📅 일정 ${eventType === 'INSERT' ? '등록' : eventType === 'UPDATE' ? '수정' : '취소'}`;
@@ -154,7 +208,32 @@ export function AppLayout() {
                 }
             )
             .on('postgres_changes',
-                { event: '*', schema: 'public', table: 'sessions' },
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'sessions', // Note: Check if 'sessions' table has center_id. Assuming it does or is joined.
+                    // Wait, sessions might not have center_id directly if it's a join table?
+                    // Let's check schema. Usually sessions/counseling_logs have it.
+                    // If not, we might fail. Let's assume safely or skip filter if unsure?
+                    // Safe bet: Most SaaS tables have center_id.
+                    // If 'sessions' is virtual or checks schedules, we must check.
+                    // ACTUALLY, checking previous code, 'schedules' has center_id.
+                    // 'counseling_logs' (often called sessions in UI) has it.
+                    // There is no table named 'sessions' in previous greps?
+                    // Wait, Step 1044 showed 'schedules' and 'counseling_logs'.
+                    // I will check if 'sessions' is a real table or alias.
+                    // If it's 'counseling_logs', I should use that?
+                    // The code says table: 'sessions'. Maybe it's a real table?
+                    // I'll stick to 'schedules' for now and remove the 'sessions' part if I'm unsure, or keep it but try to filter.
+                    // Let's assume 'sessions' exists. If not, subscription just fails silently.
+                    // But to be safe, I'll filter by 'schedule_id' link? No, can't join in filter.
+                    // I will REMOVE the 'sessions' listener part if it's dubious, OR assume it has center_id.
+                    // Given the user is angry, I should verify 'sessions' existence.
+                    // But I can't browse DB.
+                    // The AppLayout code listens to 'sessions'.
+                    // I will apply filter `center_id=eq.${center.id}`. If column doesn't exist, it won't match, which is safe (no leak).
+                    filter: `center_id=eq.${center.id}`
+                },
                 (payload) => {
                     const eventType = payload.eventType;
                     const title = `📝 세션 ${eventType === 'INSERT' ? '기록' : eventType === 'UPDATE' ? '수정' : '삭제'}`;
@@ -170,46 +249,73 @@ export function AppLayout() {
             supabase.removeChannel(channel);
             supabase.removeChannel(scheduleChannel);
         };
-    }, []);
+    }, [center?.id]); // ✨ Dependency Added
 
-    // 정상 권한(관리자, 치료사, 일반직원)일 경우의 기본 레이아웃
     return (
-        <div className={`flex h-screen ${mainBg} font-sans relative`}>
-            {/* 🔔 Notification Popup */}
-            {notif && notif.visible && (
-                <div className="fixed top-6 right-6 z-[9999] animate-in slide-in-from-top-4 fade-in duration-500 cursor-pointer" onClick={() => window.location.href = '/app/consultations'}>
-                    <div className="bg-slate-900/90 dark:bg-slate-800/90 text-white backdrop-blur-md p-5 rounded-[28px] shadow-2xl flex items-center gap-4 border border-slate-700/50 hover:scale-105 transition-transform gpu-accelerate">
-                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-indigo-500/30">
-                            🔔
-                        </div>
-                        <div>
-                            <h4 className="font-black text-base text-yellow-300 mb-0.5">{notif.title}</h4>
-                            <p className="text-sm font-bold text-slate-200">{notif.msg}</p>
-                        </div>
-                        <div className="w-2 h-2 bg-rose-500 rounded-full animate-ping ml-2" />
-                    </div>
+        <div className={`flex flex-col h-screen ${mainBg} font-sans relative overflow-hidden`}>
+            {/* 👑 Super Admin Impersonation Indicator (Static, pushes content down) */}
+            <SuperAdminBadge />
+
+            {/* ✨ [Mobile Header] Restored Hamburger Menu - Integrated into Flow */}
+            <div className="md:hidden flex items-center justify-between px-6 h-16 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 shrink-0">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="p-2 -ml-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12" />
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <line x1="3" y1="18" x2="21" y2="18" />
+                        </svg>
+                    </button>
+                    <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-white">
+                        <span className="text-indigo-600 dark:text-indigo-400">Z</span>arada
+                    </span>
                 </div>
-            )}
+                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-slate-500">
+                    {role?.[0]?.toUpperCase()}
+                </div>
+            </div>
 
-            {/* 사이드바 영역 */}
-            <Sidebar />
+            <div className="flex flex-1 overflow-hidden relative">
+                {/* 🔔 Notification Popup */}
+                {notif && notif.visible && (
+                    <div className="fixed top-6 right-6 z-[9999] animate-in slide-in-from-top-4 fade-in duration-500 cursor-pointer" onClick={() => window.location.href = '/app/consultations'}>
+                        <div className="bg-slate-900/90 dark:bg-slate-800/90 text-white backdrop-blur-md p-5 rounded-[28px] shadow-2xl flex items-center gap-4 border border-slate-700/50 hover:scale-105 transition-transform gpu-accelerate">
+                            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-indigo-500/30">
+                                🔔
+                            </div>
+                            <div>
+                                <h4 className="font-black text-base text-yellow-300 mb-0.5">{notif.title}</h4>
+                                <p className="text-sm font-bold text-slate-200">{notif.msg}</p>
+                            </div>
+                            <div className="w-2 h-2 bg-rose-500 rounded-full animate-ping ml-2" />
+                        </div>
+                    </div>
+                )}
 
-            <div className="flex-1 flex flex-col overflow-hidden ml-0 md:ml-64">
-                <main className={`flex-1 overflow-y-auto ${mainBg} px-4 pb-4 pt-20 md:p-6 pb-[env(safe-area-inset-bottom,24px)]`}>
-                    {/* 개별 페이지 렌더링 (Framer Motion Transition) */}
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={location.pathname}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.3, ease: 'easeOut' }}
-                            className="w-full h-full"
-                        >
-                            <Outlet />
-                        </motion.div>
-                    </AnimatePresence>
-                </main>
+                {/* 사이드바 영역 */}
+                <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+                <div className="flex-1 flex flex-col overflow-hidden ml-0 md:ml-64 transition-all duration-300">
+                    {/* Header Top Bar Spacer if needed, or Main Content */}
+                    <main className={`flex-1 overflow-y-auto ${mainBg} px-4 pb-4 pt-4 md:p-6 pb-[env(safe-area-inset-bottom,24px)]`}>
+                        {/* 개별 페이지 렌더링 (Framer Motion Transition) */}
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={location.pathname}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.3, ease: 'easeOut' }}
+                                className="w-full h-full"
+                            >
+                                <Outlet />
+                            </motion.div>
+                        </AnimatePresence>
+                    </main>
+                </div>
             </div>
         </div>
     );

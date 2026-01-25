@@ -21,6 +21,7 @@ import { PlayTherapyIcon, SpeechTherapyIcon, SensoryTherapyIcon, ArtTherapyIcon 
 import { useTheme } from '@/contexts/ThemeProvider';
 import { cn } from '@/lib/utils';
 import { HeroBackground } from '@/components/public/HeroBackground';
+import { useCenter } from '@/contexts/CenterContext';
 
 // Custom SVG Icons (no Lucide)
 const SvgIcons = {
@@ -72,16 +73,15 @@ export function HomePage() {
     const navigate = useNavigate();
     const { getSetting, loading } = useAdminSettings();
     const { theme } = useTheme();
+    const { center } = useCenter();
     const [centerInfo, setCenterInfo] = useState<any>(null);
     const isDark = theme === 'dark';
 
+    // ✨ Sync context center to local info for backward partial compatibility if needed, 
+    // but prefer using 'center' directly.
     useEffect(() => {
-        const fetchCenter = async () => {
-            const { data } = await supabase.from('centers').select('*').limit(1).maybeSingle();
-            if (data) setCenterInfo(data);
-        };
-        fetchCenter();
-    }, []);
+        if (center) setCenterInfo(center);
+    }, [center]);
 
     const bannerUrl = getSetting('main_banner_url');
     const noticeText = getSetting('notice_text');
@@ -112,24 +112,6 @@ export function HomePage() {
 
             {/* ✨ 모바일 최적화: 높이 조정 및 object-position */}
             <section className="relative h-[70vh] md:h-[85vh] flex items-center overflow-hidden">
-                {/* Background with slight scale animation */}
-                {/* Background with slight scale animation - ZERO FLICKER LOGIC */}
-                <motion.div
-                    className="absolute inset-0 bg-cover bg-top md:bg-center transition-opacity duration-700"
-                    style={{
-                        backgroundImage: `url(${bgImage})`,
-                        opacity: 0 // Default hidden
-                    }}
-                    animate={{
-                        scale: [1.1, 1],
-                        // ✨ Only show when loaded. The 'onLoad' logic is handled by a hidden <img> below or we can use a state.
-                        // But since we can't easily hook into background-image load, we will use a ref or simple class toggle.
-                        // Actually, for Framer Motion, we can control 'opacity' via animate prop with a state variable.
-                    }}
-                // We will override this component below with a better implementation
-                ></motion.div>
-
-                {/* ✨ ACTUAL ZERO FLICKER IMPLEMENTATION */}
                 <HeroBackground bgImage={bgImage} />
 
                 <div className="container relative z-10 mx-auto px-6 md:px-12">
@@ -189,7 +171,7 @@ export function HomePage() {
                         </motion.p>
 
                         <div className="flex gap-4 pt-4">
-                            <Link to="/contact">
+                            <Link to={center?.slug ? `/centers/${center.slug}/contact` : '/contact'}>
                                 <motion.button
                                     className="group px-8 py-4 bg-white text-slate-900 rounded-full font-black text-lg shadow-[0_10px_30px_rgba(255,255,255,0.3)] hover:shadow-[0_20px_40px_rgba(255,255,255,0.4)] transition-all flex items-center gap-3"
                                     whileHover={{ scale: 1.05 }}
@@ -321,7 +303,7 @@ export function HomePage() {
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: idx * 0.1 }}
-                                    onClick={() => navigate('/programs')}
+                                    onClick={() => navigate(center?.slug ? `/centers/${center.slug}/programs` : '/programs')}
                                 >
                                     <div className="w-14 h-14 mx-auto mb-3">
                                         <program.Icon className="w-14 h-14" />
@@ -331,7 +313,7 @@ export function HomePage() {
                                 </motion.div>
                             ))}
                         </div>
-                        <Link to="/programs" className={cn(
+                        <Link to={center?.slug ? `/centers/${center.slug}/programs` : '/programs'} className={cn(
                             "inline-flex items-center gap-2 mt-10 font-bold text-sm hover:underline",
                             isDark ? "text-indigo-400" : "text-indigo-600"
                         )}>
@@ -413,7 +395,7 @@ export function HomePage() {
                         )} style={{ wordBreak: 'keep-all' }}>
                             무료 초기 상담을 통해 우리 아이에게 필요한 지원을 알아보세요.
                         </p>
-                        <Link to="/contact">
+                        <Link to={center?.slug ? `/centers/${center.slug}/contact` : '/contact'}>
                             <motion.button
                                 className={cn(
                                     "px-10 py-5 rounded-full font-black text-lg shadow-xl transition-all flex items-center gap-3 mx-auto ring-2",

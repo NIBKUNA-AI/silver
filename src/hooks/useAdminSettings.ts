@@ -10,10 +10,7 @@
  */
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { CURRENT_CENTER_ID } from '@/config/center';
-
-// ✨ [Logo Cache] localStorage 키 - 센터 아이디별로 구분하여 Flicker 방지
-const BRAND_CACHE_KEY = `brand_cache_${CURRENT_CENTER_ID}`;
+import { useCenter } from '@/contexts/CenterContext';
 
 // Define the keys we expect to use
 export type AdminSettingKey =
@@ -36,6 +33,7 @@ export type AdminSettingKey =
     | 'ai_posting_day'
     | 'ai_posting_time'
     | 'ai_next_topic'
+    | 'brand_color'
     | 'openai_api_key';
 
 export interface ProgramItem {
@@ -54,49 +52,54 @@ export interface AdminSetting {
 }
 
 // ✨ [Brand Cache] localStorage에서 브랜드 정보 불러오기
-function getCachedBrand(): Record<string, string | null> {
+function getCachedBrand(centerId: string): Record<string, string | null> {
     try {
-        const cached = localStorage.getItem(BRAND_CACHE_KEY);
+        const cached = localStorage.getItem(`brand_cache_${centerId}`);
         if (cached) {
             const parsed = JSON.parse(cached);
-            // 해당 캐시가 현재 센터의 것인지 확인 (추가 검증 단계)
-            if (parsed.cid === CURRENT_CENTER_ID) return parsed.data || {};
+            return parsed.data || {};
         }
     } catch (e) { }
     return {};
 }
 
 // ✨ [Brand Cache] localStorage에 브랜드 정보 저장
-function setCachedBrand(settings: Record<string, string | null>) {
+function setCachedBrand(centerId: string, settings: Record<string, string | null>) {
     try {
         const brandData = {
-            cid: CURRENT_CENTER_ID, // 센터 아이디 저장
+            cid: centerId,
             data: {
                 center_logo: settings['center_logo'] || null,
                 center_name: settings['center_name'] || null,
-                main_banner_url: settings['main_banner_url'] || null // 히어로 이미지도 캐시 추가
+                brand_color: settings['brand_color'] || null, // ✨ New
+                main_banner_url: settings['main_banner_url'] || null
             }
         };
-        localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify(brandData));
+        localStorage.setItem(`brand_cache_${centerId}`, JSON.stringify(brandData));
     } catch (e) { }
 }
 
 export const useAdminSettings = () => {
+    const { center } = useCenter();
+
     // ✨ [Flash Prevention] 캐시된 브랜드 데이터로 초기화
     const [settings, setSettings] = useState<Record<string, string | null>>(() => {
-        const cached = getCachedBrand();
-        return cached;
+        if (!center?.id) return {};
+        return getCachedBrand(center.id);
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     // Fetch all settings
     const fetchSettings = async () => {
+        if (!center?.id) return;
+
         try {
             setLoading(true);
             const { data, error } = await (supabase
                 .from('admin_settings') as any)
-                .select('*');
+                .select('*')
+                .eq('center_id', center.id);
 
             if (error) throw error;
 
@@ -108,7 +111,7 @@ export const useAdminSettings = () => {
                 setSettings(settingsMap);
 
                 // ✨ 브랜드 정보 캐시 업데이트
-                setCachedBrand(settingsMap);
+                setCachedBrand(center.id, settingsMap);
             }
         } catch (err: any) {
             console.error('Error fetching admin settings:', err);
@@ -120,10 +123,13 @@ export const useAdminSettings = () => {
 
     // Update a specific setting
     const updateSetting = async (key: AdminSettingKey, value: string) => {
+        if (!center?.id) return { success: false, error: 'No center selected' };
+
         try {
             const { error } = await (supabase
                 .from('admin_settings') as any)
                 .upsert({
+                    center_id: center.id,
                     key,
                     value,
                     updated_at: new Date().toISOString()
@@ -136,18 +142,13 @@ export const useAdminSettings = () => {
                 const updated = { ...prev, [key]: value };
                 // ✨ 브랜드 정보 캐시 업데이트
                 if (key === 'center_logo' || key === 'center_name') {
-                    setCachedBrand(updated);
+                    setCachedBrand(center.id, updated);
                 }
                 return updated;
             });
 
-            // ✨ [Global Sync] 설정 변경 이벤트 발송 (다른 컴포넌트 즉시 갱신)
+            // ✨ [Global Sync] 설정 변경 이벤트 발송
             window.dispatchEvent(new Event('settings-updated'));
-
-            // ✨ [Cache Invalidation] 강제 무효화
-            try {
-                localStorage.removeItem(BRAND_CACHE_KEY);
-            } catch (e) { }
 
             // Refetch immediately to ensure strict consistency
             await fetchSettings();
@@ -161,7 +162,12 @@ export const useAdminSettings = () => {
 
     // Initial fetch & Listener
     useEffect(() => {
-        fetchSettings();
+        if (center?.id) {
+            fetchSettings();
+        } else {
+            // ✨ [Fix] Stop loading if no center is selected (Global Mode)
+            setLoading(false);
+        }
 
         // ✨ [Global Sync] 이벤트 리스너 등록
         const handleSync = () => {
@@ -173,7 +179,7 @@ export const useAdminSettings = () => {
         return () => {
             window.removeEventListener('settings-updated', handleSync);
         };
-    }, []);
+    }, [center]);
 
     const getSetting = (key: AdminSettingKey) => settings[key] || '';
 

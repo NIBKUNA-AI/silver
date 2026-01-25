@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Save, Globe, Image as ImageIcon, Loader2, Settings, Brain, X } from 'lucide-react';
 import { ImageUploader } from '@/components/common/ImageUploader';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 import { CENTER_DEFAULTS } from '@/config/center';
 
 // 1. Define Local Interface
@@ -34,11 +35,14 @@ interface LocalBlogPost {
     created_at?: string;
     updated_at?: string | null;
     author_id?: string | null;
+    center_id?: string; // ✨ Add center_id Support
 }
 
 export default function BlogEditor() {
     const { id } = useParams(); // id가 있으면 수정 모드
     const navigate = useNavigate();
+    const { center } = useCenter(); // ✨ Context
+    const centerId = center?.id;
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(!!id);
     const [showSettings, setShowSettings] = useState(false); // ✨ 생성 설정 모달
@@ -133,10 +137,17 @@ export default function BlogEditor() {
             keywords: formData.keywords ? formData.keywords.split(',').map(k => k.trim()).filter(k => k) : null,
             is_published: publish,
             published_at: publish ? new Date().toISOString() : null,
-            view_count: 0
+            view_count: 0,
+            center_id: centerId || undefined // ✨ [Security] Assign to current center
         };
 
         let error;
+
+        // ✨ [Safety] Ensure centerId exists for new posts
+        if (!id && !centerId) {
+            alert('인증 정보가 없습니다. 다시 로그인해주세요.');
+            return;
+        }
 
         if (id) {
             const { error: updateError } = await (supabase as any)

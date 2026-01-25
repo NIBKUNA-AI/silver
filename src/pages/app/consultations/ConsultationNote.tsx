@@ -12,29 +12,26 @@
  */
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 import { ConsultationNote } from '@/components/app/consultations/ConsultationNote';
 import { Users, Plus, ClipboardList, Search } from 'lucide-react';
 
 export function ConsultationList() {
+    const { center } = useCenter(); // ✨ Use Center Context
+    const centerId = center?.id;
     const [children, setChildren] = useState([]);
     const [selectedChildId, setSelectedChildId] = useState('');
-    const [centerId, setCenterId] = useState('');
     const [isWriting, setIsWriting] = useState(false);
 
     useEffect(() => {
-        fetchInitialData();
-    }, []);
+        if (centerId) fetchInitialData();
+    }, [centerId]);
 
     const fetchInitialData = async () => {
+        if (!centerId) return;
         // 1. 센터 정보 및 아동 목록 가져오기
-        const { data: { user } } = await supabase.auth.getUser();
-        const { data: profile } = await supabase.from('user_profiles').select('center_id').eq('id', user.id).maybeSingle();
-
-        if (profile) {
-            setCenterId(profile.center_id);
-            const { data: childList } = await supabase.from('children').select('id, name').eq('center_id', profile.center_id);
-            setChildren(childList || []);
-        }
+        const { data: childList } = await supabase.from('children').select('id, name').eq('center_id', centerId);
+        setChildren(childList || []);
     };
 
     return (

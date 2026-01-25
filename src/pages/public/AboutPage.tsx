@@ -4,16 +4,6 @@
  * 🎨 Project: Zarada ERP - The Sovereign Canvas
  * 🛠️ Created by: 안욱빈 (An Uk-bin)
  * 📅 Date: 2026-01-10
- * 🖋️ Description: "코드와 데이터로 세상을 채색하다."
- * ⚠️ Copyright (c) 2026 안욱빈. All rights reserved.
- * -----------------------------------------------------------
- * 이 파일의 UI/UX 설계 및 데이터 연동 로직은 독자적인 기술과
- * 예술적 영감을 바탕으로 구축되었습니다.
- */
-/**
- * ============================================
- * 🎨 ZARADA PREMIUM - AboutPage with Dark Mode
- * ============================================
  */
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
@@ -21,9 +11,8 @@ import { Link } from 'react-router-dom';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useTheme } from '@/contexts/ThemeProvider';
 import { cn } from '@/lib/utils';
-
-// ✨ [Dynamic] 환경 변수에서 센터 이름 가져오기
-const getCenterName = () => import.meta.env.VITE_CENTER_NAME || '아동발달센터';
+import { useCenter } from '@/contexts/CenterContext';
+import { useCenterBranding } from '@/hooks/useCenterBranding';
 
 // Custom SVG Icons
 const Icons = {
@@ -61,17 +50,20 @@ const Icons = {
 
 export function AboutPage() {
     const { getSetting } = useAdminSettings();
+    const { center } = useCenter();
     const { theme } = useTheme();
+    const { branding } = useCenterBranding();
     const isDark = theme === 'dark';
 
-    const centerName = getCenterName();
-    const introText = getSetting('about_intro_text') || `아이는 믿는 만큼 자라고, 사랑받는 만큼 행복해집니다.\n${centerName}는 아이들의 건강한 성장을 위해 진심을 다합니다.`;
-    const mainImage = getSetting('about_main_image');
-    const descTitle = getSetting('about_desc_title') || "따뜻한 시선으로\n아이의 잠재력을 발굴합니다";
-    const descBody = getSetting('about_desc_body') || `${centerName}는 각 분야별 석/박사 출신의 전문 치료진들이 협력하여 아동 개개인에게 최적화된 맞춤 치료 프로그램을 제공합니다.\n\n단순히 증상을 개선하는 것을 넘어, 아이가 스스로 긍정적인 자아를 형성하고 세상과 소통하며 행복하게 살아갈 수 있도록 돕는 것이 우리의 목표입니다.`;
+    const centerName = branding.name || center?.name || '아동발달센터';
+
+    const introText = branding.settings?.about_intro_text || getSetting('about_intro_text') || `아이는 믿는 만큼 자라고, 사랑받는 만큼 행복해집니다.\n${centerName}는 아이들의 건강한 성장을 위해 진심을 다합니다.`;
+    const mainImage = branding.settings?.about_main_image || getSetting('about_main_image');
+    const descTitle = branding.settings?.about_desc_title || getSetting('about_desc_title') || "따뜻한 시선으로\n아이의 잠재력을 발굴합니다";
+    const descBody = branding.settings?.about_desc_body || getSetting('about_desc_body') || `${centerName}는 각 분야별 석/박사 출신의 전문 치료진들이 협력하여 아동 개개인에게 최적화된 맞춤 치료 프로그램을 제공합니다.\n\n단순히 증상을 개선하는 것을 넘어, 아이가 스스로 긍정적인 자아를 형성하고 세상과 소통하며 행복하게 살아갈 수 있도록 돕는 것이 우리의 목표입니다.`;
 
     const values = [
-        { icon: Icons.award, title: "검증된 전문성", desc: "석/박사급 치료진의 체계적 접근", color: isDark ? "bg-indigo-900/50 text-indigo-400" : "bg-indigo-50 text-indigo-600" },
+        { icon: Icons.award, title: "검증된 전문성", desc: "석/박사급 치료진의 체계적 접근", color: isDark ? "bg-slate-800" : "bg-white", brandColor: true },
         { icon: Icons.heart, title: "진정성 있는 치료", desc: "아이 중심의 따뜻한 케어", color: isDark ? "bg-rose-900/50 text-rose-400" : "bg-rose-50 text-rose-600" },
         { icon: Icons.users, title: "체계적인 협진", desc: "다학제적 협력 시스템", color: isDark ? "bg-emerald-900/50 text-emerald-400" : "bg-emerald-50 text-emerald-600" },
         { icon: Icons.clock, title: "충분한 상담", desc: "부모님과의 깊은 소통", color: isDark ? "bg-amber-900/50 text-amber-400" : "bg-amber-50 text-amber-600" },
@@ -81,126 +73,45 @@ export function AboutPage() {
         <div className={cn("min-h-screen transition-colors", isDark ? "bg-slate-950" : "bg-[#F8FAFC]")}>
             <Helmet>
                 <title>센터 소개 - {centerName}</title>
-                <meta name="description" content={`따뜻한 마음과 전문성을 갖춘 ${centerName}의 치료진을 소개합니다.`} />
             </Helmet>
 
-            {/* Hero Section */}
-            <section className="relative bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 py-24 px-6 overflow-hidden">
+            <section className="relative py-24 px-6 overflow-hidden" style={{ backgroundColor: branding.brand_color }}>
                 <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-400/20 rounded-full blur-2xl"></div>
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
 
                 <div className="container mx-auto max-w-4xl relative z-10 text-center text-white">
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                    >
-                        <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-black tracking-wider uppercase mb-6">
-                            About Us
-                        </span>
-                        <h1
-                            className="text-4xl md:text-5xl font-black tracking-[-0.05em] mb-6"
-                            style={{ wordBreak: 'keep-all' }}
-                        >
-                            센터 소개
-                        </h1>
-                        <p
-                            className="text-lg text-white/80 font-medium max-w-xl mx-auto leading-relaxed whitespace-pre-line"
-                            style={{ wordBreak: 'keep-all' }}
-                        >
-                            {introText}
-                        </p>
+                    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+                        <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-black tracking-wider uppercase mb-6">About Us</span>
+                        <h1 className="text-4xl md:text-5xl font-black tracking-[-0.05em] mb-6">센터 소개</h1>
+                        <p className="text-lg text-white/80 font-medium max-w-xl mx-auto leading-relaxed whitespace-pre-line">{introText}</p>
                     </motion.div>
                 </div>
             </section>
 
-            {/* Floating Cards Container */}
-            <div className={cn(
-                "relative -mt-12 z-20 rounded-t-[50px] px-4 pb-24 transition-colors",
-                isDark ? "bg-slate-950" : "bg-[#F8FAFC]"
-            )}>
+            <div className={cn("relative -mt-12 z-20 rounded-t-[50px] px-4 pb-24 transition-colors", isDark ? "bg-slate-950" : "bg-[#F8FAFC]")}>
                 <div className="container mx-auto max-w-5xl">
-
-                    {/* Values Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-16">
                         {values.map((item, idx) => (
-                            <motion.div
-                                key={idx}
-                                className={cn(
-                                    "rounded-[28px] p-6 text-center border",
-                                    isDark
-                                        ? "bg-slate-900 border-slate-800 shadow-lg shadow-black/20"
-                                        : "bg-white border-slate-100 shadow-lg shadow-slate-100"
-                                )}
-                                initial={{ opacity: 0, y: 40 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ type: "spring", stiffness: 100, delay: idx * 0.1 }}
-                            >
-                                <div className={`w-14 h-14 rounded-2xl ${item.color} flex items-center justify-center mb-4 mx-auto`}>
+                            <motion.div key={idx} className={cn("rounded-[28px] p-6 text-center border", isDark ? "bg-slate-900 border-slate-800 shadow-lg" : "bg-white border-slate-100 shadow-lg shadow-slate-100")} initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.1 }}>
+                                <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center mb-4 mx-auto", item.color)} style={item.brandColor ? { backgroundColor: branding.brand_color + '10', color: branding.brand_color } : undefined}>
                                     {item.icon("w-7 h-7")}
                                 </div>
                                 <h3 className={cn("font-black text-sm mb-1", isDark ? "text-white" : "text-slate-800")}>{item.title}</h3>
-                                <p className={cn("text-xs font-medium", isDark ? "text-slate-400" : "text-slate-400")}>{item.desc}</p>
+                                <p className={cn("text-xs font-medium text-slate-400")}>{item.desc}</p>
                             </motion.div>
                         ))}
                     </div>
 
-                    {/* Main Content Card */}
-                    <motion.div
-                        className={cn(
-                            "mt-16 rounded-[50px] overflow-hidden border",
-                            isDark
-                                ? "bg-slate-900 border-slate-800 shadow-2xl shadow-black/30"
-                                : "bg-white border-slate-100 shadow-2xl shadow-slate-200/50"
-                        )}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.8 }}
-                    >
+                    <motion.div className={cn("mt-16 rounded-[50px] overflow-hidden border", isDark ? "bg-slate-900 border-slate-800 shadow-2xl shadow-black/30" : "bg-white border-slate-100 shadow-2xl shadow-slate-200/50")} initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
                         <div className="grid grid-cols-1 lg:grid-cols-2">
                             <div className="relative h-[350px] lg:h-auto">
-                                {mainImage ? (
-                                    <img src={mainImage} alt="Center View" className="absolute inset-0 w-full h-full object-cover" />
-                                ) : (
-                                    <div className={cn(
-                                        "absolute inset-0 flex items-center justify-center font-medium",
-                                        isDark
-                                            ? "bg-gradient-to-br from-slate-800 to-slate-700 text-slate-500"
-                                            : "bg-gradient-to-br from-slate-200 to-slate-300 text-slate-400"
-                                    )}>
-                                        센터 전경 이미지
-                                    </div>
-                                )}
+                                {mainImage ? <img src={mainImage} alt="Center" className="absolute inset-0 w-full h-full object-cover" /> : <div className={cn("absolute inset-0 flex items-center justify-center", isDark ? "bg-slate-800 text-slate-500" : "bg-slate-200 text-slate-400")}>센터 이미지</div>}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent lg:bg-gradient-to-r"></div>
                             </div>
                             <div className="p-10 md:p-16 flex flex-col justify-center space-y-6">
-                                <h2
-                                    className={cn(
-                                        "text-3xl font-black tracking-[-0.05em] leading-tight whitespace-pre-line",
-                                        isDark ? "text-white" : "text-slate-900"
-                                    )}
-                                    style={{ wordBreak: 'keep-all' }}
-                                >
-                                    {descTitle}
-                                </h2>
-                                <p
-                                    className={cn(
-                                        "font-medium leading-relaxed whitespace-pre-line",
-                                        isDark ? "text-slate-400" : "text-slate-500"
-                                    )}
-                                    style={{ wordBreak: 'keep-all' }}
-                                >
-                                    {descBody}
-                                </p>
-                                <Link
-                                    to="/contact"
-                                    className={cn(
-                                        "inline-flex items-center gap-2 font-bold text-sm hover:underline mt-4",
-                                        isDark ? "text-indigo-400" : "text-indigo-600"
-                                    )}
-                                >
+                                <h2 className={cn("text-3xl font-black tracking-[-0.05em] leading-tight whitespace-pre-line", isDark ? "text-white" : "text-slate-900")}>{descTitle}</h2>
+                                <p className={cn("font-medium leading-relaxed whitespace-pre-line", isDark ? "text-slate-400" : "text-slate-500")}>{descBody}</p>
+                                <Link to={center?.slug ? `/centers/${center.slug}/contact` : '/contact'} className="inline-flex items-center gap-2 font-bold text-sm hover:underline mt-4" style={{ color: branding.brand_color }}>
                                     상담 예약하기 {Icons.arrowRight("w-4 h-4")}
                                 </Link>
                             </div>

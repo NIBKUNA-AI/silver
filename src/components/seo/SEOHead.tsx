@@ -1,23 +1,36 @@
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { seoConfig } from '@/config/seo';
+import { useCenter } from '@/contexts/CenterContext';
 
 export function SEOHead() {
     // 👑 [Sovereign SEO] Fully Environment Variable Driven
     const {
-        title,
-        description,
-        ogImage,
-        keywords,
+        title: defaultTitle,
+        description: defaultDescription,
+        ogImage: defaultOgImage,
+        keywords: defaultKeywords,
         canonicalUrl: baseUrl,
         naverVerification,
-        phone,
-        address,
+        phone: defaultPhone,
+        address: defaultAddress,
         geo,
-        businessName
+        businessName: defaultBusinessName
     } = seoConfig;
 
     const location = useLocation();
+    const { center } = useCenter(); // ✨ SaaS Context
+
+    // 🏗️ Determine Meta Data (Center Override vs Default)
+    const title = center ? center.name : defaultTitle;
+    const description = center?.name
+        ? `${center.name} - 전문 아동 발달 센터. ${defaultDescription}`
+        : defaultDescription;
+    const ogImage = center?.logo_url || defaultOgImage;
+    const businessName = center?.name || defaultBusinessName;
+    const phone = center?.phone || defaultPhone;
+    const address = center?.address || defaultAddress;
+
     const canonicalUrl = `${baseUrl}${location.pathname}`;
 
     // 🏗️ Structured Data (JSON-LD)
@@ -26,10 +39,10 @@ export function SEOHead() {
         "@graph": [
             {
                 "@type": "LocalBusiness",
-                "@id": baseUrl,
+                "@id": canonicalUrl,
                 "name": businessName,
                 "image": ogImage,
-                "url": baseUrl,
+                "url": canonicalUrl,
                 "telephone": phone,
                 "address": {
                     "@type": "PostalAddress",
@@ -54,7 +67,7 @@ export function SEOHead() {
             },
             {
                 "@type": "SoftwareApplication",
-                "name": `Zarada ERP - ${businessName}`,
+                "name": `Zarada SaaS - ${businessName}`,
                 "operatingSystem": "Web",
                 "applicationCategory": "BusinessApplication",
                 "offers": {
@@ -68,7 +81,11 @@ export function SEOHead() {
 
     // 경로별 suffix 설정
     let pageSuffix = "";
-    if (location.pathname.includes('/parent/home')) pageSuffix = " - 학부모 홈";
+    if (location.pathname.includes('/about')) pageSuffix = " - 소개";
+    else if (location.pathname.includes('/programs')) pageSuffix = " - 프로그램";
+    else if (location.pathname.includes('/contact')) pageSuffix = " - 오시는길";
+    else if (location.pathname.includes('/blog')) pageSuffix = " - 블로그";
+    else if (location.pathname.includes('/parent/home')) pageSuffix = " - 학부모 홈";
     else if (location.pathname.includes('/app/dashboard')) pageSuffix = " - 대시보드";
     else if (location.pathname.includes('/login')) pageSuffix = " - 로그인";
 
@@ -78,7 +95,7 @@ export function SEOHead() {
         <Helmet>
             <title>{displayTitle}</title>
             <meta name="description" content={description} />
-            <meta name="keywords" content={keywords} />
+            <meta name="keywords" content={defaultKeywords} />
             {naverVerification && (
                 <meta name="naver-site-verification" content={naverVerification} />
             )}

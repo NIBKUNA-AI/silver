@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Star, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { CURRENT_CENTER_ID } from '@/config/center';
+import { useCenter } from '@/contexts/CenterContext';
 
 interface ReviewModalProps {
     isOpen: boolean;
@@ -14,17 +14,19 @@ export function ReviewModal({ isOpen, onClose, onSuccess, userId }: ReviewModalP
     const [rating, setRating] = useState(5);
     const [content, setContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const { center } = useCenter();
 
     if (!isOpen) return null;
 
     const handleSubmit = async () => {
         if (!content.trim()) return alert('내용을 입력해주세요.');
         if (!userId) return alert('로그인이 필요합니다.');
+        if (!center?.id) return alert('센터 정보가 없습니다.');
 
         setSubmitting(true);
         try {
             const { error } = await (supabase.from('reviews') as any).insert({
-                center_id: CURRENT_CENTER_ID,
+                center_id: center.id,
                 parent_id: userId,
                 rating,
                 content: content.trim(),

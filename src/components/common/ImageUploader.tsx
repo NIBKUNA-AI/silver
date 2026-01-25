@@ -12,6 +12,7 @@
 import { useState, useRef } from 'react';
 import { Upload, Loader2, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useCenter } from '@/contexts/CenterContext';
 
 interface ImageUploaderProps {
     currentImage: string | null;
@@ -26,6 +27,7 @@ export function ImageUploader({
     bucketName = 'images',
     label = '이미지 업로드'
 }: ImageUploaderProps) {
+    const { center } = useCenter();
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -40,8 +42,9 @@ export function ImageUploader({
             const optimizedFile = await compressImage(file);
 
             const fileExt = 'webp'; // Always WebP now
-            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-            const filePath = `${fileName}`;
+            const { data: { session } } = await supabase.auth.getSession();
+            const userCenterId = session?.user?.user_metadata?.center_id || center?.id || 'public';
+            const filePath = `${userCenterId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
             const { error: uploadError } = await supabase.storage
                 .from(bucketName)

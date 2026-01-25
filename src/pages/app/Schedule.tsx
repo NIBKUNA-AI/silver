@@ -20,12 +20,18 @@ import interactionPlugin from '@fullcalendar/interaction';
 import koLocale from '@fullcalendar/core/locales/ko';
 import { Plus, Loader2, Calendar, Clock, User, FileText, Filter, Users, X } from 'lucide-react';
 import { ScheduleModal } from '@/components/app/schedule/ScheduleModal';
+import { useAuth } from '@/contexts/AuthContext'; // ✨ Import
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 import { useTheme } from '@/contexts/ThemeProvider';
 import { cn } from '@/lib/utils';
+import { SUPER_ADMIN_EMAILS } from '@/config/superAdmin';
 
 export function Schedule() {
     const { theme } = useTheme();
     const isDark = theme === 'dark';
+    const { center } = useCenter(); // ✨ Use Center Context
+    const centerId = center?.id;
+
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,42 +45,42 @@ export function Schedule() {
     const [selectedTherapistId, setSelectedTherapistId] = useState('all');
 
     useEffect(() => {
-        fetchSchedules();
-        fetchTherapists();
-    }, []);
+        if (centerId && centerId.length >= 32) {
+            fetchSchedules(centerId);
+            fetchTherapists(centerId);
+        }
+    }, [centerId]);
 
     // ✨ [Therapist List] 치료사 목록 가져오기
-    const fetchTherapists = async () => {
+    const fetchTherapists = async (targetId: string) => {
+        if (!targetId || targetId.length < 32) return;
+        const superAdminList = `("${SUPER_ADMIN_EMAILS.join('","')}")`;
         const { data } = await supabase
             .from('therapists')
             .select('id, name, color')
-            .neq('email', 'anukbin@gmail.com') // 🛡️ Super Admin 제외
+            .eq('center_id', targetId)
+            .filter('email', 'not.in', superAdminList)
             .order('name');
         setTherapists(data || []);
     };
 
-    const fetchSchedules = async () => {
+    const fetchSchedules = async (targetId: string) => {
+        if (!targetId || targetId.length < 32) return;
         try {
-            // ✨ [수정] 발달 평가 작성 여부 확인을 위해 development_assessments 조인
+            // ✨ [Security] Filter via children!inner to handle potential schema variations
             const { data, error } = await supabase
                 .from('schedules')
                 .select(`
-                    id, date, start_time, end_time, status, session_note,
-                    child_id, program_id, therapist_id,
-                    children (name),
+                    id, date, start_time, end_time, status, notes,
+                    child_id, therapist_id, program_id,
+                    children!inner (name, center_id),
                     programs (name),
                     therapists (name, color)
-                `);
+                `)
+                .eq('children.center_id', targetId); // ✨ Filter by Center
 
             if (error) throw error;
 
-            // ✨ [NEW] 평가 작성된 Schedule ID (log_id) 목록 조회
-            const { data: assessments } = await supabase
-                .from('development_assessments')
-                .select('log_id')
-                .not('log_id', 'is', null);
-
-            const attendedLogIds = new Set(assessments?.map(a => a.log_id) || []);
 
             if (data) {
                 const formattedEvents = data.map(schedule => {

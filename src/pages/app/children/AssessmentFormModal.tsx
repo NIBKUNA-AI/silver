@@ -2,6 +2,7 @@
 /* eslint-disable */
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 import { X, Save, Loader2, Brain, Activity, MessageCircle, Baby, HeartHandshake, CheckSquare, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -56,6 +57,7 @@ const CHECKLIST_ITEMS = {
 };
 
 export function AssessmentFormModal({ isOpen, onClose, childId, childName, logId, therapistId, assessmentId, onSuccess }: AssessmentFormModalProps) {
+    const { center } = useCenter(); // ✨ Context
     const [loading, setLoading] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
 
@@ -184,6 +186,7 @@ export function AssessmentFormModal({ isOpen, onClose, childId, childName, logId
             }
 
             const payload = {
+                center_id: center?.id, // ✨ Inject Center ID
                 child_id: childId,
                 therapist_id: effectiveTherapistId, // ✨ therapists 테이블의 ID 사용
                 log_id: currentLogId,

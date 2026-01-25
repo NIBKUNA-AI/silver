@@ -19,9 +19,7 @@
  */
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useAuth, type UserRole } from './AuthContext';
-
-// Super Admin email list (add more as needed)
-const SUPER_ADMIN_EMAILS = ['admin_real_test@gmail.com', 'anukbin@gmail.com'];
+import { isSuperAdmin as checkSuperAdmin } from '@/config/superAdmin';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -91,8 +89,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     // Check if current user is Super Admin (Role OR Email)
     const isSuperAdmin = useMemo(() => {
-        const emailMatch = user?.email && SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === user.email?.toLowerCase());
-        return role === 'super_admin' || !!emailMatch;
+        return role === 'super_admin' || checkSuperAdmin(user?.email);
     }, [role, user?.email]);
 
     // Permission flags based on role

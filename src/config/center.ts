@@ -7,6 +7,6 @@ export const CURRENT_CENTER_ID = import.meta.env.VITE_CENTER_ID || "59d09adf-4c9
 export const CENTER_DEFAULTS = {
     id: CURRENT_CENTER_ID,
     name: import.meta.env.VITE_CENTER_NAME || import.meta.env.VITE_SITE_TITLE || '아동발달센터',
-    address: '서울특별시 송파구 석촌호수로12길 51 201호', // Default fallback
-    phone: '02-416-2213' // Default fallback
+    address: import.meta.env.VITE_CENTER_ADDRESS || '',
+    phone: import.meta.env.VITE_CENTER_PHONE || ''
 };

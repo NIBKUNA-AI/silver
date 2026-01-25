@@ -16,7 +16,6 @@
 
 import { supabase } from '@/lib/supabase';
 import * as XLSX from 'xlsx';
-import { CURRENT_CENTER_ID } from '@/config/center';
 
 // Helper: Format Date
 const formatDate = (dateString: string | null) => {
@@ -36,9 +35,11 @@ const formatEvidenceDetailed = (details: any) => {
     return summary.join('\n');
 };
 
-export const generateIntegratedReport = async (selectedMonth: string) => {
+export const generateIntegratedReport = async (selectedMonth: string, centerId: string) => {
     try {
-        console.log(`🚀 Starting Comprehensive Report for ${selectedMonth}...`);
+        console.log(`🚀 Starting Comprehensive Report for ${selectedMonth} (Center: ${centerId})...`);
+
+        if (!centerId) throw new Error("Center ID is required for report generation.");
 
         // Time Range Setup
         const startOfMonth = `${selectedMonth}-01T00:00:00.000Z`;
@@ -63,19 +64,19 @@ export const generateIntegratedReport = async (selectedMonth: string) => {
             supabase.from('children').select(`
                 id, name, gender, birth_date, is_active, created_at, parent_id,
                 profiles:user_profiles ( name, email )
-            `).eq('center_id', CURRENT_CENTER_ID),
+            `).eq('center_id', centerId),
             // 2. Profiles (Phone Numbers)
-            supabase.from('user_profiles').select('id, phone').eq('center_id', CURRENT_CENTER_ID),
+            supabase.from('user_profiles').select('id, phone').eq('center_id', centerId),
             // 3. Assessments (Latest)
-            supabase.from('development_assessments').select('*').order('evaluation_date', { ascending: false }),
+            supabase.from('development_assessments').select('*').eq('center_id', centerId).order('evaluation_date', { ascending: false }),
             // 4. Payments (Selected Month)
-            supabase.from('payments').select('*').eq('center_id', CURRENT_CENTER_ID).gte('paid_at', startOfMonth).lt('paid_at', startOfNextMonth),
+            supabase.from('payments').select('*').eq('center_id', centerId).gte('paid_at', startOfMonth).lt('paid_at', startOfNextMonth),
             // 5. Leads (Marketing)
-            supabase.from('leads').select('*').eq('center_id', CURRENT_CENTER_ID).order('created_at', { ascending: false }),
+            supabase.from('leads').select('*').eq('center_id', centerId).order('created_at', { ascending: false }),
             // 6. Staff (User Profiles with roles)
-            supabase.from('user_profiles').select('*').eq('center_id', CURRENT_CENTER_ID).in('role', ['admin', 'therapist', 'super_admin']),
+            supabase.from('user_profiles').select('*').eq('center_id', centerId).in('role', ['admin', 'therapist', 'super_admin']),
             // 7. Schedules (Selected Month for KPI)
-            supabase.from('schedules').select('status, date').eq('center_id', CURRENT_CENTER_ID).like('date', `${selectedMonth}%`)
+            supabase.from('schedules').select('status, date').eq('center_id', centerId).like('date', `${selectedMonth}%`)
         ]);
 
         // ------------------------------------------------------------------

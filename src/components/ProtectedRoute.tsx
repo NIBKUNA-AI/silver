@@ -12,6 +12,7 @@
  */
 import { Navigate, useLocation, Outlet } from 'react-router-dom'; // ✨ Outlet 추가
 import { useAuth } from '@/contexts/AuthContext';
+import { isSuperAdmin as checkSuperAdmin } from '@/config/superAdmin';
 
 interface ProtectedRouteProps {
     children?: React.ReactNode; // ✨ 물음표(?) 추가: children이 없을 수도 있음을 명시
@@ -41,8 +42,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     }
 
     // 3. ✨ [마스터 키] super_admin 역할은 모든 권한 통과 (DB 역할 기반)
-    // 💀 [HOTFIX] Explicit email check for anukbin@gmail.com to bypass ANY role restrictions
-    const isMasterUser = role === 'super_admin' || user?.email === 'anukbin@gmail.com';
+    const isMasterUser = role === 'super_admin' || checkSuperAdmin(user?.email);
 
     if (!isMasterUser && role && !allowedRoles.includes(role)) {
         return <Navigate to="/" replace />;

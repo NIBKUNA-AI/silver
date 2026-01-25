@@ -17,6 +17,7 @@ import { ArrowLeft, Share2, MessageSquare, Quote, Edit } from 'lucide-react';
 import { ConsultationSurveyModal } from '@/components/public/ConsultationSurveyModal';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCenter } from '@/contexts/CenterContext';
 import { BlogEditModal } from '@/components/admin/BlogEditModal';
 import { useTheme } from '@/contexts/ThemeProvider';
 import { cn } from '@/lib/utils';
@@ -35,12 +36,14 @@ interface BlogPost {
     seo_title: string;
     seo_description: string;
     keywords: string[] | string | null;
+    center_id: string; // ✨ Add center_id
 }
 
 export function BlogPostPage() {
     const { slug } = useParams();
     const navigate = useNavigate();
     const { getSetting } = useAdminSettings();
+    const { center } = useCenter(); // ✨ Context
     const { role } = useAuth();
     const { theme } = useTheme();
     const isDark = theme === 'dark';
@@ -59,11 +62,14 @@ export function BlogPostPage() {
     }, []);
 
     const fetchPost = async () => {
+        if (!center || !slug) return;
+
         setLoading(true);
         const { data: postData, error: postError } = await (supabase as any)
             .from('blog_posts')
             .select('*')
             .eq('slug', slug)
+            .eq('center_id', center.id) // ✨ Strict Context Filter
             .eq('is_published', true)
             .maybeSingle();
 
@@ -74,18 +80,9 @@ export function BlogPostPage() {
             }
         } else if (postData) {
             setPost(postData);
-            // ✨ [SEO Engine] Fetch specific center context for this post
-            if (postData.center_id) {
-                const { data: centerData } = await (supabase as any)
-                    .from('centers')
-                    .select('name, address, phone, naver_map_url')
-                    .eq('id', postData.center_id) // Strict Isolation
-                    .maybeSingle();
-                setCenterInfo(centerData);
-            } else {
-                // Fallback to default if no center assigned
-                fetchCenterInfo();
-            }
+            // ✨ Center Info is typically consistent with context, but good to ensure
+            // Actually, we can just use the 'center' object from context for display!
+            setCenterInfo(center); // Use context data directly
 
             // Increment view count in background
             await (supabase as any).from('blog_posts').update({ view_count: (postData.view_count || 0) + 1 }).eq('id', postData.id);
@@ -95,21 +92,11 @@ export function BlogPostPage() {
         setLoading(false);
     };
 
-    const fetchCenterInfo = async () => {
-        const { data } = await (supabase as any)
-            .from('centers')
-            .select('name, address, phone, naver_map_url')
-            .limit(1)
-            .maybeSingle();
-        if (data) setCenterInfo(data);
-    };
-
     useEffect(() => {
-        if (slug) {
+        if (slug && center) {
             fetchPost();
         }
-        // fetchCenterInfo is now called inside fetchPost depending on context
-    }, [slug]);
+    }, [slug, center]);
 
     if (loading) return <div className={cn("min-h-screen", isDark ? "bg-slate-950" : "bg-white")} />;
     if (!post) return null;
@@ -119,9 +106,10 @@ export function BlogPostPage() {
         : (typeof post.keywords === 'string' ? (post.keywords as string).split(',') : []);
 
     // ✨ [SEO Engine] Dynamic Meta Generation
-    const centerName = centerInfo?.name || getSetting('center_name') || '아동발달센터';
-    const centerAddress = centerInfo?.address || getSetting('center_address') || '';
-    const centerPhone = centerInfo?.phone || getSetting('center_phone') || '';
+    // Prefer Settings if available (for overridden specific text), else fallback to Center DB, else generic
+    const centerName = getSetting('center_name') || centerInfo?.name || '아동발달센터';
+    const centerAddress = getSetting('center_address') || centerInfo?.address || '';
+    const centerPhone = getSetting('center_phone') || centerInfo?.phone || '';
 
     // Extract Region (e.g., "송파구", "강남구")
     const regionMatch = centerAddress.match(/(\S+[시군구])/);
@@ -219,7 +207,7 @@ export function BlogPostPage() {
             <ConsultationSurveyModal
                 isOpen={isConsultModalOpen}
                 onClose={() => setIsConsultModalOpen(false)}
-                centerId={(post as any)?.center_id || centerInfo?.id} // ✨ Pass centerId from post or fallback
+                centerId={post.center_id} // ✨ Pass centerId from post
             />
 
             {post && (
@@ -230,8 +218,6 @@ export function BlogPostPage() {
                     onUpdate={fetchPost}
                 />
             )}
-
-
 
             {/* Navigation */}
             <nav className={cn(
@@ -343,8 +329,7 @@ export function BlogPostPage() {
                         </div>
                     )}
 
-                    {/* Content Body - Magazine Typography */}
-                    {/* leading-[1.8] line-height, expansive headers */}
+                    {/* Content Body */}
                     <div className="prose prose-lg prose-slate max-w-none 
                         prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900
                         prose-h2:text-3xl prose-h2:mt-20 prose-h2:mb-8 prose-h2:border-b prose-h2:border-slate-100 prose-h2:pb-4
@@ -374,19 +359,6 @@ export function BlogPostPage() {
                                     navigator.share({ title: post.title, url }).catch(console.error);
                                 } else {
                                     navigator.clipboard.writeText(url).then(() => alert('링크가 복사되었습니다!'));
-                                }
-                                // Kakao Share Logic (Optional, requires valid key in index.html)
-                                const kakaoWin = window as any;
-                                if (kakaoWin.Kakao?.isInitialized()) {
-                                    kakaoWin.Kakao.Share.sendDefault({
-                                        objectType: 'feed',
-                                        content: {
-                                            title: post.title,
-                                            description: post.excerpt || `${centerName} 블로그`,
-                                            imageUrl: post.cover_image_url || '',
-                                            link: { mobileWebUrl: url, webUrl: url },
-                                        },
-                                    });
                                 }
                             }}
                             className="flex items-center gap-3 px-6 py-3 bg-white border border-slate-200 rounded-full text-slate-600 font-bold hover:border-indigo-200 hover:text-indigo-600 hover:bg-indigo-50 transition-all shadow-sm group"
@@ -455,7 +427,7 @@ export function BlogPostPage() {
                                         <div className="flex gap-4 pt-4 border-t border-slate-200">
                                             {/* ✨ 네이버 지도 버튼 - Dynamic URL */}
                                             {(() => {
-                                                const naverMapUrl = centerInfo?.naver_map_url;
+                                                const naverMapUrl = getSetting('center_map_url') || centerInfo?.naver_map_url;
                                                 const fallbackSearchUrl = `https://map.naver.com/v5/search/${encodeURIComponent(centerAddress || centerName)}`;
                                                 const mapUrl = naverMapUrl || fallbackSearchUrl;
 

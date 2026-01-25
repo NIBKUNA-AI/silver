@@ -12,13 +12,16 @@
  */
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Plus, Edit2, Trash2, Briefcase, ClipboardList, MessageCircle, X } from 'lucide-react'; // 아이콘 추가
+import { useAuth } from '@/contexts/AuthContext';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import Center Context
+import { Plus, Edit2, Trash2, Briefcase, ClipboardList, MessageCircle, X } from 'lucide-react';
 
 export default function Programs() {
     const [programs, setPrograms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const { center } = useCenter(); // ✨ Use Center Context for SaaS capability
 
     const [formData, setFormData] = useState({
         name: '',
@@ -27,11 +30,17 @@ export default function Programs() {
         category: 'therapy' // 기본값
     });
 
-    useEffect(() => { fetchPrograms(); }, []);
+    useEffect(() => {
+        if (center?.id) fetchPrograms();
+    }, [center?.id]);
 
     const fetchPrograms = async () => {
         setLoading(true);
-        const { data, error } = await supabase.from('programs').select('*').order('category', { ascending: true }); // 카테고리끼리 모아보게 정렬
+        const { data, error } = await supabase
+            .from('programs')
+            .select('*')
+            .eq('center_id', center.id) // ✨ Filter by Center ID
+            .order('category', { ascending: true });
         if (!error) setPrograms(data || []);
         setLoading(false);
     };
@@ -42,7 +51,7 @@ export default function Programs() {
             if (editingId) {
                 await supabase.from('programs').update(formData).eq('id', editingId);
             } else {
-                await supabase.from('programs').insert([formData]);
+                await supabase.from('programs').insert([{ ...formData, center_id: center.id }]); // ✨ Insert with Center ID
             }
             setIsModalOpen(false);
             setEditingId(null);

@@ -14,7 +14,6 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useTrafficSource } from '@/hooks/useTrafficSource';
 import { useTheme } from '@/contexts/ThemeProvider';
-import { CURRENT_CENTER_ID } from '@/config/center';
 import { cn } from '@/lib/utils';
 
 // Custom SVG Icons (no Lucide)
@@ -136,18 +135,16 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
                 utmContent ? `Content: ${utmContent}` : null,
             ].filter(Boolean).join(' / ');
 
-            // ✨ [FIX] Submit to 'consultations' table
+            // ✨ [UNIFICATION] Submit to 'consultations' table (Source of Truth for Inquiry List)
             const { error } = await supabase.from('consultations').insert([{
-                center_id: centerId || CURRENT_CENTER_ID, // ✨ Fallback to Default
-                child_id: initialData?.childId, // ✨ Link to Child ID if available
-                guardian_name: formData.parent_name, // Mapped
-                guardian_phone: formData.phone, // Mapped
+                center_id: centerId,
                 child_name: formData.child_name,
                 child_gender: mappedGender,
-                // child_birth_year: parseInt(birth.year), // If needed in schema, otherwise omitted or added if schema allows
-                primary_concerns: `${formData.concern}\n\n[관리자 참고] 관계: ${formData.relation} / 장애진단: ${formData.diagnosis}`,
-                preferred_consult_schedule: formData.preferred_service.join(', '), // Joined Array
-                notes: `생년월일: ${birth.year}-${String(birth.month).padStart(2, '0')}-${String(birth.day).padStart(2, '0')}`,
+                child_birth_date: `${birth.year}-${String(birth.month).padStart(2, '0')}-${String(birth.day).padStart(2, '0')}`,
+                guardian_name: formData.parent_name,
+                guardian_phone: formData.phone,
+                concern: `${formData.concern}\n\n[관리자 참고] 관계: ${formData.relation} / 장애진단: ${formData.diagnosis}`,
+                preferred_consult_schedule: formData.preferred_service.join(', '),
                 inflow_source: getSource() || 'Direct', // useTrafficSource hook result
                 marketing_source: marketingInfo || null, // ✨ UTM Data Binding
                 status: 'pending',

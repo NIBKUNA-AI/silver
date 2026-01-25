@@ -3,7 +3,8 @@ import { Star, MessageSquarePlus, Quote } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { ReviewModal } from './ReviewModal';
-import { Skeleton } from '@/components/common/Skeleton'; // Zero-Delay Optimization
+import { Skeleton } from '@/components/common/Skeleton';
+import { useCenter } from '@/contexts/CenterContext';
 
 interface Review {
     id: string;
@@ -18,6 +19,7 @@ interface Review {
 
 export function ReviewSection() {
     const { user } = useAuth();
+    const { center } = useCenter();
     const [reviews, setReviews] = useState<Review[]>([]);
     const [avgRating, setAvgRating] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -34,6 +36,7 @@ export function ReviewSection() {
                 .from('reviews')
                 .select('*')
                 .eq('is_visible', true)
+                .eq('center_id', center?.id || '')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;

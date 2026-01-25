@@ -18,9 +18,13 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
+import { SUPER_ADMIN_EMAILS, isSuperAdmin as checkSuperAdmin } from '@/config/superAdmin';
 
 export function Settlement() {
     const { user } = useAuth();
+    const { center } = useCenter(); // ✨ Use Center Context
+    const centerId = center?.id;
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('therapist');
 
@@ -121,26 +125,30 @@ export function Settlement() {
     };
 
     useEffect(() => {
-        fetchSettlements();
-    }, [selectedMonth]);
+        if (centerId) fetchSettlements();
+    }, [selectedMonth, centerId]);
 
     const fetchSettlements = async () => {
+        if (!centerId) return; // ✨ Wait for auth
+
         setLoading(true);
         try {
-            // 1. Get Staff
+            // 1. Get Staff for this Center
+            const superAdminListHost = `("${SUPER_ADMIN_EMAILS.join('","')}")`;
             const { data: staffData } = await supabase
                 .from('therapists')
                 .select('*')
-                .neq('email', 'anukbin@gmail.com');
+                .eq('center_id', centerId) // ✨ Security Filter
+                .filter('email', 'not.in', superAdminListHost); // ✨ [Correction] Exclude all Super Admins from payroll list
 
             // 2. Get Sessions for Month (Table: schedules)
-            // Note: 'date' in sessions -> 'start_time' in schedules
             const startDate = `${selectedMonth}-01`;
             const endDate = new Date(new Date(startDate).setMonth(new Date(startDate).getMonth() + 1)).toISOString().slice(0, 10);
 
             const { data: sessionData } = await supabase
                 .from('schedules')
                 .select('id, therapist_id, status, start_time, service_type')
+                .eq('center_id', centerId) // ✨ Security Filter
                 .gte('start_time', startDate)
                 .lt('start_time', endDate)
                 .eq('status', 'completed');
@@ -264,7 +272,7 @@ export function Settlement() {
                     </div>
                     <div className="flex items-center gap-2">
                         {/* 🛡️ Super Admin Only Excel Button */}
-                        {user?.email === 'anukbin@gmail.com' && (
+                        {checkSuperAdmin(user?.email) && (
                             <button
                                 onClick={handleDownloadExcel}
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm shadow-md transition-all active:scale-95"

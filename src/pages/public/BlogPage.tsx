@@ -17,6 +17,8 @@ import { Helmet } from 'react-helmet-async';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { useTheme } from '@/contexts/ThemeProvider';
 import { cn } from '@/lib/utils';
+import { useCenter } from '@/contexts/CenterContext';
+import { useCenterBranding } from '@/hooks/useCenterBranding'; // ✨ Import
 
 interface BlogPost {
     id: string;
@@ -33,16 +35,22 @@ export function BlogPage() {
     const isDark = theme === 'dark';
     const [posts, setPosts] = useState<BlogPost[]>([]);
     const [loading, setLoading] = useState(true);
+    const { center } = useCenter();
+    const { branding } = useCenterBranding(); // ✨ Unified Branding
 
     useEffect(() => {
-        fetchPosts();
-    }, []);
+        // ✨ Only fetch if we have a center context
+        if (center) fetchPosts();
+    }, [center]);
 
     const fetchPosts = async () => {
+        if (!center) return;
+
         const { data, error } = await (supabase as any)
             .from('blog_posts')
             .select('id, title, slug, excerpt, cover_image_url, published_at')
             .eq('is_published', true)
+            .eq('center_id', center.id) // ✨ Strict Tenant Filtering
             .order('published_at', { ascending: false });
 
         if (error) {
@@ -53,7 +61,8 @@ export function BlogPage() {
         setLoading(false);
     };
 
-    const centerName = getSetting('center_name') || 'Center Blog';
+    // ✨ Dynamic Title from Settings or Center DB
+    const centerName = branding.name || getSetting('center_name') || center?.name || 'Center Blog';
 
     return (
         <div className={cn(
@@ -67,10 +76,10 @@ export function BlogPage() {
 
             {/* Spacious Centered Header */}
             <header className="pt-32 pb-20 px-6 text-center max-w-4xl mx-auto">
-                <p className={cn(
-                    "font-bold tracking-widest text-sm mb-4",
-                    isDark ? "text-indigo-400" : "text-indigo-600"
-                )}>
+                <p
+                    className="font-bold tracking-widest text-sm mb-4"
+                    style={{ color: branding.brand_color }} // ✨ Usage
+                >
                     아이와 함께 성장하는 이야기
                 </p>
                 <h1 className={cn(
@@ -115,7 +124,8 @@ export function BlogPage() {
                         {posts.map((post) => (
                             <Link
                                 key={post.id}
-                                to={`/blog/${post.slug}`}
+                                // ✨ Fix routing for nested center paths
+                                to={`${window.location.pathname}/${post.slug}`}
                                 className="group block h-full flex flex-col"
                             >
                                 {/* Thumbnail: 16:9 Aspect Ratio */}
@@ -154,12 +164,15 @@ export function BlogPage() {
                                     </div>
 
                                     {/* Bold Title */}
-                                    <h2 className={cn(
-                                        "text-2xl font-black leading-tight mb-3 line-clamp-2 transition-colors duration-300",
-                                        isDark
-                                            ? "text-white group-hover:text-indigo-400"
-                                            : "text-slate-900 group-hover:text-indigo-600"
-                                    )}>
+                                    <h2
+                                        className={cn(
+                                            "text-2xl font-black leading-tight mb-3 line-clamp-2 transition-colors duration-300",
+                                            isDark ? "text-white" : "text-slate-900"
+                                        )}
+                                        // Dynamic Color on hover
+                                        onMouseEnter={(e) => e.currentTarget.style.color = branding.brand_color}
+                                        onMouseLeave={(e) => e.currentTarget.style.color = ''}
+                                    >
                                         {post.title}
                                     </h2>
 

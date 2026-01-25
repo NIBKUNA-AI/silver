@@ -8,21 +8,25 @@
  * ⚠️ Copyright (c) 2026 안욱빈. All rights reserved.
  * -----------------------------------------------------------
  * 상담일지 및 발달 관리 - AssessmentFormModal 통합
- * - 슈퍼 어드민 예외 처리 (anukbin@gmail.com)
+ * - 슈퍼 어드민 예외 처리
  * - 상태 조건 완화 (완료 OR 날짜 지남)
  * - 발달 평가 기능 통합 (기존 4-슬라이더 제거)
  */
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 import {
     Clock, CheckCircle2, X,
     Pencil, Trash2, BarChart3
 } from 'lucide-react';
 import { AssessmentFormModal } from '@/pages/app/children/AssessmentFormModal';
+import { isSuperAdmin as checkSuperAdmin } from '@/config/superAdmin';
 
 export function ConsultationList() {
     const { user } = useAuth();
+    const { center } = useCenter(); // ✨ Use Center
+    const centerId = center?.id;
     const [userRole, setUserRole] = useState('therapist');
     const [todoChildren, setTodoChildren] = useState([]);
     const [recentAssessments, setRecentAssessments] = useState([]);
@@ -34,38 +38,36 @@ export function ConsultationList() {
     const [editingAssessmentId, setEditingAssessmentId] = useState(null);  // ✨ [수정 모드]
 
     useEffect(() => {
-        if (user) {
+        if (user && centerId) {
             fetchData();
         }
-    }, [user]);
+    }, [user, centerId]);
 
     const fetchData = async () => {
+        if (!centerId || typeof centerId !== 'string' || centerId.length < 32) return;
         setLoading(true);
         try {
             const { data: profile } = await supabase.from('user_profiles').select('role').eq('id', user.id).maybeSingle();
             const role = profile?.role || 'therapist';
             setUserRole(role);
 
-            // ✨ [Refactor] Removed hardcoded email check (anukbin@gmail.com)
-            // Now strictly relies on DB Role
-            const isSuperAdmin = role === 'super_admin';
+            // ✨ [Refactor] Using Centralized Super Admin Check
+            const isSuperAdmin = role === 'super_admin' || checkSuperAdmin(user?.email);
             const isAdmin = role === 'admin' || isSuperAdmin;
 
             // ✨ [FIX] therapists 테이블에서 현재 유저의 therapist 레코드 조회
             // therapists.profile_id = profiles.id = auth.users.id 이므로 profile_id로 조회
             let currentTherapistId = null;
             if (!isAdmin) {
+                // ✨ [FIX] Search by email because profile_id doesn't exist on therapists table
                 const { data: therapist } = await supabase
                     .from('therapists')
                     .select('id')
-                    .eq('profile_id', user.id)  // ✨ profile_id = auth.users.id
+                    .eq('email', user.email)
                     .maybeSingle();
 
                 currentTherapistId = therapist?.id;
-
-                // 치료사 레코드가 없으면 빈 목록 표시
                 if (!currentTherapistId) {
-                    console.warn('현재 로그인 유저에 연결된 therapist 레코드가 없습니다.');
                     setTodoChildren([]);
                     setRecentAssessments([]);
                     setLoading(false);
@@ -78,6 +80,7 @@ export function ConsultationList() {
             const { data: writtenLogs } = await supabase
                 .from('counseling_logs')
                 .select('schedule_id')
+                .eq('center_id', centerId) // 🔒 Security Filter
                 .not('schedule_id', 'is', null);
 
             const writtenScheduleIds = new Set(writtenLogs?.map(l => l.schedule_id));
@@ -87,7 +90,8 @@ export function ConsultationList() {
 
             let sessionQuery = supabase
                 .from('schedules')
-                .select(`id, child_id, status, therapist_id, start_time, children (id, name), programs (name)`)
+                .select(`id, child_id, status, therapist_id, start_time, service_type, children!inner (id, name, center_id)`)
+                .eq('children.center_id', centerId)
                 .or(`status.eq.completed,start_time.lt.${today}T23:59:59`);
 
             // ✨ [FIX] therapist 테이블의 ID로 필터 (user.id가 아님!)
@@ -103,7 +107,8 @@ export function ConsultationList() {
             // 최근 작성된 발달 평가 목록
             let assessQuery = supabase
                 .from('development_assessments')
-                .select('*, children(id, name)')
+                .select('*, children!inner(id, name, center_id)')
+                .eq('children.center_id', centerId) // 🔒 Security Filter
                 .order('created_at', { ascending: false })
                 .limit(20);
 
@@ -224,7 +229,7 @@ export function ConsultationList() {
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="bg-slate-50 dark:bg-slate-700 text-slate-400 dark:text-slate-300 px-6 py-3 rounded-3xl text-xs font-black uppercase">
-                        {userRole === 'super_admin' ? 'SUPER ADMIN' : userRole === 'admin' ? 'ADMIN MODE' : 'THERAPIST'}
+                        {(userRole === 'super_admin' || checkSuperAdmin(user?.email)) ? 'SUPER ADMIN' : userRole === 'admin' ? 'ADMIN MODE' : 'THERAPIST'}
                     </div>
                 </div>
             </header>
@@ -251,7 +256,7 @@ export function ConsultationList() {
                                         {session.children?.name[0]}
                                     </div>
                                     <h3 className="text-2xl font-black text-slate-900 dark:text-white">{session.children?.name} 아동</h3>
-                                    <p className="text-primary dark:text-indigo-400 text-xs font-black mt-2">{session.programs?.name}</p>
+                                    <p className="text-primary dark:text-indigo-400 text-xs font-black mt-2">{session.service_type || '치료 세션'}</p>
                                 </div>
                                 <button
                                     onClick={() => handleOpenAssessment(session)}

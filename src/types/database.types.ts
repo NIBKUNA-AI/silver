@@ -85,6 +85,7 @@ export type Database = {
             blog_posts: {
                 Row: {
                     id: string
+                    center_id: string | null
                     created_at: string
                     updated_at: string | null
                     title: string
@@ -102,6 +103,7 @@ export type Database = {
                 }
                 Insert: {
                     id?: string
+                    center_id?: string | null
                     created_at?: string
                     updated_at?: string | null
                     title: string
@@ -119,6 +121,7 @@ export type Database = {
                 }
                 Update: {
                     id?: string
+                    center_id?: string | null
                     created_at?: string
                     updated_at?: string | null
                     title?: string
@@ -145,18 +148,21 @@ export type Database = {
             }
             admin_settings: {
                 Row: {
+                    center_id: string
                     key: string
                     value: string | null
                     updated_at: string | null
                     updated_by: string | null
                 }
                 Insert: {
+                    center_id: string
                     key: string
                     value?: string | null
                     updated_at?: string | null
                     updated_by?: string | null
                 }
                 Update: {
+                    center_id?: string
                     key?: string
                     value?: string | null
                     updated_at?: string | null
@@ -166,6 +172,7 @@ export type Database = {
             centers: {
                 Row: {
                     id: string
+                    slug: string | null
                     name: string
                     address: string | null
                     phone: string | null
@@ -173,11 +180,13 @@ export type Database = {
                     business_number: string | null
                     representative: string | null
                     logo_url: string | null
+                    is_active: boolean | null
                     created_at: string
                     updated_at: string
                 }
                 Insert: {
                     id?: string
+                    slug?: string | null
                     name: string
                     address?: string | null
                     phone?: string | null
@@ -185,11 +194,13 @@ export type Database = {
                     business_number?: string | null
                     representative?: string | null
                     logo_url?: string | null
+                    is_active?: boolean | null
                     created_at?: string
                     updated_at?: string
                 }
                 Update: {
                     id?: string
+                    slug?: string | null
                     name?: string
                     address?: string | null
                     phone?: string | null
@@ -197,6 +208,7 @@ export type Database = {
                     business_number?: string | null
                     representative?: string | null
                     logo_url?: string | null
+                    is_active?: boolean | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -527,6 +539,7 @@ export type Database = {
             counseling_logs: {
                 Row: {
                     id: string
+                    center_id: string | null
                     child_id: string | null
                     therapist_id: string | null
                     schedule_id: string | null
@@ -545,6 +558,7 @@ export type Database = {
                 }
                 Insert: {
                     id?: string
+                    center_id?: string | null
                     child_id?: string | null
                     therapist_id?: string | null
                     schedule_id?: string | null
@@ -563,6 +577,7 @@ export type Database = {
                 }
                 Update: {
                     id?: string
+                    center_id?: string | null
                     child_id?: string | null
                     therapist_id?: string | null
                     schedule_id?: string | null

@@ -14,10 +14,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { X, Loader2, Save, Trash2, UserCheck, AlertCircle, Mail } from 'lucide-react';
 import { InvitationCodeAlert } from '@/components/InvitationCodeAlert';
-import { CURRENT_CENTER_ID } from '@/config/center';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 
 export function ChildModal({ isOpen, onClose, childId, onSuccess }) {
     const [loading, setLoading] = useState(false);
+    const { center } = useCenter(); // ✨ Use center
+    const centerId = center?.id;
     // ✨ [Removed] Manual Parent Connection State
     const [showCodeAlert, setShowCodeAlert] = useState(false);
     const [newChildCode, setNewChildCode] = useState('');
@@ -30,21 +33,21 @@ export function ChildModal({ isOpen, onClose, childId, onSuccess }) {
         diagnosis: '',
         guardian_name: '',
         contact: '',
-        center_id: CURRENT_CENTER_ID
+        center_id: ''
     });
 
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && centerId) {
             if (childId) {
                 loadChild();
             } else {
                 setFormData({
-                    name: '', registration_number: '', birth_date: '', gender: '남',
-                    center_id: CURRENT_CENTER_ID
+                    name: '', registration_number: '', birth_date: '', gender: '남', diagnosis: '', guardian_name: '', contact: '',
+                    center_id: centerId
                 });
             }
         }
-    }, [isOpen, childId]);
+    }, [isOpen, childId, centerId]);
 
     // ✨ [Removed] fetchParentAccounts logic
 
@@ -66,6 +69,7 @@ export function ChildModal({ isOpen, onClose, childId, onSuccess }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!centerId) return alert('센터 정보가 없습니다.');
         setLoading(true);
 
         try {
@@ -76,7 +80,7 @@ export function ChildModal({ isOpen, onClose, childId, onSuccess }) {
                 gender: formData.gender,
                 diagnosis: formData.diagnosis || null,
                 guardian_name: formData.guardian_name || null,
-                center_id: CURRENT_CENTER_ID
+                center_id: centerId
             };
 
             let result;
@@ -86,20 +90,9 @@ export function ChildModal({ isOpen, onClose, childId, onSuccess }) {
                 alert('성공적으로 저장되었습니다.');
                 onSuccess();
             } else {
-                const generateInvitationCode = () => {
-                    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-                    let result = '';
-                    for (let i = 0; i < 5; i++) {
-                        result += chars.charAt(Math.floor(Math.random() * chars.length));
-                    }
-                    return result;
-                };
-
-                const newCode = generateInvitationCode();
-                console.log('Generating Invitation Code:', newCode);
-
+                // ✨ Let the Database Trigger handle invitation_code generation
                 result = await supabase.from('children')
-                    .insert([{ ...submissionData, invitation_code: newCode }])
+                    .insert([{ ...submissionData }])
                     .select('invitation_code, name')
                     .single();
 

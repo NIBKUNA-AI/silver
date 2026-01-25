@@ -12,6 +12,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 
 // ✨ 트래픽 소스 카테고리 분류
 function categorizeSource(referrer: string, utmSource?: string | null): string {
@@ -47,6 +48,7 @@ function categorizeSource(referrer: string, utmSource?: string | null): string {
 
 export function useTrafficSource() {
     const [searchParams] = useSearchParams();
+    const { center } = useCenter(); // ✨ Get center context
 
     useEffect(() => {
         const source = searchParams.get('utm_source');
@@ -90,8 +92,11 @@ export function useTrafficSource() {
             const category = categorizeSource(referrer, source);
 
             const recordVisit = async () => {
+                if (!center?.id) return; // ✨ Wait for center context
+
                 try {
                     await (supabase as any).from('site_visits').insert({
+                        center_id: center.id, // ✨ Security Filter
                         source_category: category,
                         referrer_url: referrer || null,
                         utm_source: source || null,

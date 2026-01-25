@@ -17,13 +17,16 @@ import { Search, UserPlus, Pencil, Link as LinkIcon, User, Copy, Check, Eye } fr
 import { ChildModal } from './ChildModal';
 import { ChildDetailModal } from '@/components/app/children/ChildDetailModal';
 import { cn } from '@/lib/utils';
-import { CURRENT_CENTER_ID } from '@/config/center';
 import { ExcelExportButton } from '@/components/common/ExcelExportButton';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 
 export function ChildList() {
     const [children, setChildren] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+    const { center } = useCenter(); // ✨ Use center
+    const centerId = center?.id;
 
     // 모달 상태
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,8 +52,8 @@ export function ChildList() {
     };
 
     useEffect(() => {
-        fetchChildren();
-    }, []);
+        if (centerId) fetchChildren();
+    }, [centerId]);
 
     const fetchChildren = async () => {
         try {
@@ -60,7 +63,7 @@ export function ChildList() {
                     *,
                     parent:user_profiles!children_parent_id_fkey(*)
                 `)
-                .eq('center_id', CURRENT_CENTER_ID) // ✨ [SECURITY] Enforce Center ID Filter
+                .eq('center_id', centerId) // ✨ [SECURITY] Enforce Center ID Filter
                 .order('name');
 
             if (error) throw error;

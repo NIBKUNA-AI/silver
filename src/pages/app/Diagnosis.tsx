@@ -14,20 +14,24 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell } from 'recharts';
 import { Database, Activity, ShieldAlert, CheckCircle2, LayoutDashboard, Share2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 
 const Diagnosis = () => {
     const [stats, setStats] = useState({ staffCount: 0, hasConflict: false });
     const [isScanning, setIsScanning] = useState(false);
+    const { center } = useCenter(); // ✨ Context
 
     const checkSystemHealth = useCallback(async () => {
+        if (!center?.id) return;
+
         setIsScanning(true);
         try {
             // 1. 직원 인식 로직: profiles 테이블에서 원장님, 치료사님 데이터를 직접 읽어옴
-            const { count: profileCount } = await supabase.from('user_profiles').select('*', { count: 'exact', head: true });
-            const { count: staffCount } = await supabase.from('therapists').select('*', { count: 'exact', head: true });
+            const { count: profileCount } = await supabase.from('user_profiles').select('*', { count: 'exact', head: true }).eq('center_id', center.id);
+            const { count: staffCount } = await supabase.from('therapists').select('*', { count: 'exact', head: true }).eq('center_id', center.id);
 
             // 2. 저장 충돌 테스트 (409 에러 방지 체크)
-            const { error } = await supabase.from('admin_settings').upsert({ key: 'system_check', value: 'active' });
+            const { error } = await supabase.from('admin_settings').upsert({ center_id: center.id, key: 'system_check', value: 'active' });
 
             setStats({
                 staffCount: (profileCount || 0) + (staffCount || 0),

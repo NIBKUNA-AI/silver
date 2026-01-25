@@ -12,8 +12,9 @@
  */
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { CURRENT_CENTER_ID } from '@/config/center';
 import { ExcelExportButton } from '@/components/common/ExcelExportButton';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 import {
     MessageCircle, Phone, Clock, FileText, UserPlus,
     ShieldCheck, RefreshCcw, AlertCircle, Trash2,
@@ -27,8 +28,12 @@ export default function ConsultationInquiryList() {
     const [loading, setLoading] = useState(true);
     const [memoValues, setMemoValues] = useState({}); // 각 문의별 메모 임시 상태
     const [viewMode, setViewMode] = useState<'pending' | 'archived'>('pending'); // ✨ Tab State
+    const { center } = useCenter(); // ✨ Use Center
+    const centerId = center?.id;
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        if (centerId) fetchData();
+    }, [centerId]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -37,7 +42,7 @@ export default function ConsultationInquiryList() {
                 .from('consultations')
                 .select('*')
                 .is('schedule_id', null)
-                .eq('center_id', CURRENT_CENTER_ID) // ✨ [SECURITY] Enforce Center ID Filter
+                .eq('center_id', centerId) // ✨ [SECURITY] Enforce Center ID Filter
                 .order('created_at', { ascending: false });
 
             if (error) throw error;

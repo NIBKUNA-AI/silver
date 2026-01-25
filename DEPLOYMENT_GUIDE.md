@@ -23,6 +23,9 @@
     VALUES ('신규 센터명', '02-000-0000', '센터 주소')
     RETURNING id; -- 여기서 나온 UUID를 VITE_CENTER_ID로 사용합니다.
     ```
+5.  **센터 초기화 스크립트 실행 (필수):**
+    *   `scripts/INIT_JAMSIL_CENTER.sql` 파일의 내용을 참고하여, 신규 센터를 위한 초기 설정(Admin Settings, 기본 블로그 글 등)을 반드시 Insert 해야 합니다.
+    *   이 과정을 생략하면 홈페이지에서 404 오류가 발생하거나 빈 화면이 나올 수 있습니다.
 
 ---
 

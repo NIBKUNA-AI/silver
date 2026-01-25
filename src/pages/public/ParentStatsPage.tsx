@@ -14,11 +14,11 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Loader2, BarChart3, Users, ChevronDown, Printer } from 'lucide-react';
 import { ParentDevelopmentChart } from '@/components/app/parent/ParentDevelopmentChart';
-
-
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 
 export function ParentStatsPage() {
     const navigate = useNavigate();
+    const { center } = useCenter(); // ✨ Context
     const [loading, setLoading] = useState(true);
     const [devData, setDevData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
@@ -48,15 +48,26 @@ export function ParentStatsPage() {
 
             setRole(profile?.role || 'parent');
 
-            // ✨ 관리자 또는 슈퍼 어드민이라면: 전체 아동 목록 가져오기
+            // ✨ 관리자 또는 슈퍼 어드민이라면: 현재 센터의 아동 목록만 가져오기
             if (profile?.role === 'admin' || profile?.role === 'super_admin') {
-                const { data: childList } = await supabase.from('children').select('id, name');
+                if (!center?.id) {
+                    setError("센터 정보가 없습니다.");
+                    setLoading(false);
+                    return;
+                }
+                const { data: childList } = await supabase
+                    .from('children')
+                    .select('id, name')
+                    .eq('center_id', center.id); // ✨ Security Filter
+
                 setChildren(childList || []);
 
                 if (childList && childList.length > 0) {
                     setSelectedChildId(childList[0].id);
                     setSelectedChildName(childList[0].name);
                     await loadChildStats(childList[0].id);
+                } else {
+                    setError("등록된 아동이 없습니다.");
                 }
             } else {
                 // ✨ [FIX] 부모님: family_relationships 통해 연결된 자녀 조회

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { CURRENT_CENTER_ID, CENTER_DEFAULTS } from '@/config/center';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
+import { useCenter } from '@/contexts/CenterContext';
 
 export interface CenterBranding {
     id: string;
@@ -13,12 +13,13 @@ export interface CenterBranding {
     weekday_hours: string | null;
     saturday_hours: string | null;
     holiday_text: string | null;
+    brand_color: string | null; // ✨ New
     settings: Record<string, any>;
 }
 
 const DEFAULT_BRANDING: CenterBranding = {
-    id: CURRENT_CENTER_ID,
-    name: CENTER_DEFAULTS.name || '자라다 아동발달센터',
+    id: '',
+    name: 'Careple Center',
     logo_url: null,
     phone: '',
     address: '',
@@ -26,6 +27,7 @@ const DEFAULT_BRANDING: CenterBranding = {
     weekday_hours: '',
     saturday_hours: '',
     holiday_text: '일요일/공휴일 휴무',
+    brand_color: '#4f46e5',
     settings: {
         center_email: '',
         center_address: '',
@@ -34,31 +36,38 @@ const DEFAULT_BRANDING: CenterBranding = {
 };
 
 export function useCenterBranding() {
+    const { center } = useCenter();
     const { settings: adminSettings, loading: adminLoading } = useAdminSettings();
 
     // ✨ [Instant Render] Try LocalStorage First -> Then Default -> Then Async Update
     const [branding, setBranding] = useState<CenterBranding>(() => {
+        if (!center?.id) return DEFAULT_BRANDING;
         try {
-            const cacheKey = `cached_branding_v3_${CURRENT_CENTER_ID}`;
+            const cacheKey = `cached_branding_v3_${center.id}`;
             const cached = localStorage.getItem(cacheKey);
             if (cached) {
                 const parsed = JSON.parse(cached);
-                if (parsed.id === CURRENT_CENTER_ID) return parsed;
+                if (parsed.id === center.id) return parsed;
             }
         } catch (e) { }
-        return DEFAULT_BRANDING;
+        return { ...DEFAULT_BRANDING, id: center.id, name: center.name };
     });
 
     const [centerLoading, setCenterLoading] = useState(true);
 
     useEffect(() => {
+        if (!center?.id) {
+            setBranding(DEFAULT_BRANDING);
+            return;
+        }
+
         const fetchCenterData = async () => {
             try {
                 // ✨ Fetch Real Center Data (Source of Truth for Core Info)
                 const { data: centerData } = await supabase
                     .from('centers')
                     .select('*')
-                    .eq('id', CURRENT_CENTER_ID)
+                    .eq('id', center.id)
                     .maybeSingle();
 
                 if (centerData) {
@@ -78,7 +87,7 @@ export function useCenterBranding() {
 
                     setBranding(newBranding);
                     // ✨ Cache Immediately with specific key
-                    localStorage.setItem(`cached_branding_v3_${CURRENT_CENTER_ID}`, JSON.stringify(newBranding));
+                    localStorage.setItem(`cached_branding_v3_${center.id}`, JSON.stringify(newBranding));
                 }
             } catch (err) {
                 console.error("Failed to fetch center info:", err);
@@ -88,10 +97,10 @@ export function useCenterBranding() {
         };
 
         fetchCenterData();
-    }, []);
+    }, [center]);
 
     // ✨ [Optimization] derives final branding directly to prevent flicker (no useEffect sync)
-    const finalBranding = (!adminLoading && adminSettings) ? {
+    const finalBranding = (!adminLoading && adminSettings && center?.id) ? {
         ...branding,
         name: adminSettings.center_name || branding.name,
         phone: adminSettings.center_phone || branding.phone,
@@ -102,6 +111,7 @@ export function useCenterBranding() {
         weekday_hours: adminSettings.center_weekday_hours || branding.weekday_hours,
         saturday_hours: adminSettings.center_saturday_hours || branding.saturday_hours,
         holiday_text: adminSettings.center_holiday_text || branding.holiday_text,
+        brand_color: adminSettings.brand_color || '#4f46e5', // ✨ New (Default indigo-600)
         settings: {
             sns_instagram: adminSettings.sns_instagram,
             sns_facebook: adminSettings.sns_facebook,

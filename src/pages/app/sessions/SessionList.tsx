@@ -14,8 +14,8 @@ import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database.types';
 import { FileText, CheckCircle, Calendar, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { CURRENT_CENTER_ID } from '@/config/center';
 import { Skeleton } from '@/components/common/Skeleton';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 
 type Schedule = Database['public']['Tables']['schedules']['Row'] & {
     children: { name: string } | null;
@@ -26,10 +26,12 @@ export default function SessionList() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [sessions, setSessions] = useState<Schedule[]>([]);
+    const { center } = useCenter(); // ✨ Use Center Context
+    const centerId = center?.id;
 
     useEffect(() => {
-        fetchSessions();
-    }, []);
+        if (centerId) fetchSessions();
+    }, [centerId]);
 
     const fetchSessions = async () => {
         setLoading(true);
@@ -53,16 +55,20 @@ export default function SessionList() {
         }
 
         // 2. Fetch all sessions (Filtered by Center)
-        const { data, error } = await supabase
+        let query = supabase
             .from('schedules')
             .select(`
                 *,
                 children ( name ),
                 therapists ( name ),
                 counseling_logs ( created_at, session_date )
-            `)
-            .eq('center_id', CURRENT_CENTER_ID) // ✨ Data Isolation: Strict Filter
-            .order('start_time', { ascending: false });
+            `);
+
+        if (centerId) {
+            query = query.eq('center_id', centerId); // ✨ Data Isolation: Strict Filter
+        }
+
+        const { data, error } = await query.order('start_time', { ascending: false });
 
         if (error) {
             console.error('Error fetching sessions:', error);

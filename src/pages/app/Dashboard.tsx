@@ -12,10 +12,12 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 import { Helmet } from 'react-helmet-async';
 import * as XLSX from 'xlsx';
 import { generateIntegratedReport } from '@/utils/reportGenerator';
-import { CURRENT_CENTER_ID } from '@/config/center';
+import { useCenter } from '@/contexts/CenterContext';
+import { useCenterBranding } from '@/hooks/useCenterBranding';
 import {
     Users, Calendar, TrendingUp, DollarSign,
     ArrowUpRight, ArrowDownRight, Activity, PieChart as PieIcon,
@@ -179,10 +181,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
-const ChartContainer = ({ title, icon, children, className = "", innerHeight = "h-[320px]" }) => (
+const ChartContainer = ({ title, icon, children, className = "", innerHeight = "h-[320px]", brandColor = '#4f46e5' }) => (
     <div className={`bg-white dark:bg-slate-900 p-8 rounded-[36px] shadow-lg border border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden ${className} group hover:shadow-2xl transition-all duration-500 text-left`}>
         <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-3 relative z-10 text-left">
-            <div className={`p-2 rounded-xl ${icon ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400' : 'bg-slate-50 dark:bg-slate-800 text-slate-400'}`}>
+            <div
+                className="p-2 rounded-xl transition-colors"
+                style={{ backgroundColor: brandColor + '10', color: brandColor }}
+            >
                 {icon && icon("w-5 h-5")}
             </div>
             {title}
@@ -229,6 +234,9 @@ export function Dashboard() {
     const [slide, setSlide] = useState(0);
     const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
     const [kpi, setKpi] = useState({ revenue: 0, active: 0, sessions: 0, new: 0 });
+    const { center } = useCenter();
+    const { branding } = useCenterBranding();
+    const BRAND_COLOR = branding?.brand_color || '#6366f1';
 
     const [revenueData, setRevenueData] = useState([]);
     const [statusData, setStatusData] = useState([]);
@@ -248,10 +256,11 @@ export function Dashboard() {
     const [exporting, setExporting] = useState(false);
 
     const exportIntegratedReport = async () => {
+        if (!center?.id) return alert('센터 정보가 없습니다.');
         if (!confirm('현재 화면의 데이터로 통합 보고서를 생성하시겠습니까?')) return;
         setExporting(true);
         try {
-            await generateIntegratedReport(selectedMonth); // ✨ [FIX] Pass string directly
+            await generateIntegratedReport(selectedMonth, center.id); // ✨ Pass center.id dynamically
         } catch (e) {
             console.error(e);
             alert('보고서 생성 실패');
@@ -261,6 +270,7 @@ export function Dashboard() {
     };
 
     const fetchData = async () => {
+        if (!center) return;
         try {
             const today = new Date();
             const currentYear = today.getFullYear();
@@ -275,15 +285,15 @@ export function Dashboard() {
             // ✨ [SECURITY] Enforce Center ID Filter using Inner Join on Children
             const { data: allSchedules } = await supabase
                 .from('schedules')
-                .select(`id, date, status, child_id, children!inner(id, name, gender, birth_date, center_id), therapists (name), programs (name, category, price)`)
-                .eq('children.center_id', CURRENT_CENTER_ID) // 🔒 Security Filter
-                .order('date', { ascending: true });
+                .select(`id, start_time, status, child_id, service_type, children!inner(id, name, gender, birth_date, center_id), therapists (name)`)
+                .eq('children.center_id', center.id)
+                .order('start_time', { ascending: true });
 
             // ✨ [SECURITY] Fetch Children only for this center
             const { data: existingChildren } = await supabase
                 .from('children')
                 .select('id, name, gender, birth_date, created_at')
-                .eq('center_id', CURRENT_CENTER_ID); // 🔒 Security Filter
+                .eq('center_id', center.id); // 🔒 Security Filter
 
             const validChildIds = new Set(existingChildren?.map(c => c.id) || []);
 
@@ -295,7 +305,10 @@ export function Dashboard() {
                 }
             });
 
-            const { data: allPayments } = await supabase.from('payments').select('amount, child_id, paid_at');
+            const { data: allPayments } = await supabase
+                .from('payments')
+                .select('amount, child_id, paid_at')
+                .in('child_id', [...validChildIds]); // 🔒 Security Filter
 
             // Calculation Maps
             const monthlyRevMap: Record<string, number> = {};
@@ -318,7 +331,7 @@ export function Dashboard() {
 
             // Schedule Processing
             allSchedules?.forEach(s => {
-                if (s.date.startsWith(selectedMonth)) {
+                if (s.start_time && s.start_time.startsWith(selectedMonth)) {
                     // Status
                     if (s.status === 'completed') statusMap.completed++;
                     else if (s.status === 'canceled' || s.status === 'cancelled') statusMap.cancelled++;
@@ -327,15 +340,17 @@ export function Dashboard() {
                     if (s.status === 'completed') {
                         // Therapist
                         const tName = s.therapists?.name || '미배정';
-                        therapistRevMap[tName] = (therapistRevMap[tName] || 0) + (s.programs?.price || 0);
+                        // ✨ [Fallback] Use fixed session price if programs table is missing or price is null
+                        const sessionPrice = 60000;
+                        therapistRevMap[tName] = (therapistRevMap[tName] || 0) + sessionPrice;
 
-                        // Program
-                        const pName = s.programs?.name || '기타';
+                        // Program / Service Type
+                        const pName = s.service_type || '치료 세션';
                         progCountMap[pName] = (progCountMap[pName] || 0) + 1;
 
-                        // Child Contribution (Estimated by session price)
+                        // Child Contribution
                         const cName = s.children?.name || '알수없음';
-                        childContribMap[cName] = (childContribMap[cName] || 0) + (s.programs?.price || 0);
+                        childContribMap[cName] = (childContribMap[cName] || 0) + sessionPrice;
                     }
                 }
             });
@@ -379,6 +394,7 @@ export function Dashboard() {
             const { data: siteVisits } = await (supabase as any)
                 .from('site_visits')
                 .select('source_category, visited_at, referrer_url, page_url') // ✨ Added page_url
+                .eq('center_id', center.id) // 🔒 Security Filter
                 .gte('visited_at', selectedMonth + '-01')
                 .lte('visited_at', selectedMonth + '-' + String(lastDayOfMonth).padStart(2, '0'));
 
@@ -516,8 +532,8 @@ export function Dashboard() {
             // ✨ [LEADS CONVERSION ANALYSIS] Fetch LEADS data (from 'consultations' table)
             const { data: allLeads } = await (supabase as any)
                 .from('consultations')
-                .select('id, inflow_source, status, created_at, child_id')
-                .eq('center_id', CURRENT_CENTER_ID)
+                .select('id, marketing_source, inflow_source, status, created_at, child_id')
+                .eq('center_id', center.id)
                 .gte('created_at', monthsToShow[0] + '-01')
                 .lte('created_at', selectedMonth + '-31');
 
@@ -543,7 +559,7 @@ export function Dashboard() {
 
                     // ✨ [FIX] Channel Conversion Data (Strictly Filtered by Selected Month)
                     if (m === selectedMonth) {
-                        const channel = lead.inflow_source || 'Direct';
+                        const channel = lead.marketing_source || lead.inflow_source || 'Direct';
                         if (!channelLeadsMap[channel]) {
                             channelLeadsMap[channel] = { total: 0, converted: 0 };
                         }
@@ -597,7 +613,7 @@ export function Dashboard() {
         }
     };
 
-    useEffect(() => { fetchData(); }, [selectedMonth]);
+    useEffect(() => { fetchData(); }, [selectedMonth, center]);
 
     return (
         <div ref={dashboardRef} className="p-8 max-w-[1600px] mx-auto space-y-8 min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
@@ -640,7 +656,6 @@ export function Dashboard() {
                     <p className="text-slate-500 dark:text-slate-400 font-bold mt-2">AI 기반 운영 & 마케팅 통합 분석 시스템</p>
                 </div>
                 <div className="flex gap-2 items-center bg-white dark:bg-slate-900 p-2 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700">
-                    {/* ✨ Month Picker */}
                     <input
                         type="month"
                         value={selectedMonth}
@@ -648,8 +663,20 @@ export function Dashboard() {
                         className="px-4 py-3 rounded-2xl border-none bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold cursor-pointer focus:ring-2 focus:ring-indigo-500 outline-none"
                     />
                     <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1" />
-                    <button onClick={() => setSlide(0)} className={`px-6 py-3 rounded-2xl font-black transition-all gpu-accelerate ${slide === 0 ? 'bg-indigo-600 dark:bg-yellow-400 text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>운영 지표</button>
-                    <button onClick={() => setSlide(1)} className={`px-6 py-3 rounded-2xl font-black transition-all gpu-accelerate ${slide === 1 ? 'bg-indigo-600 dark:bg-yellow-400 text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>마케팅 지능</button>
+                    <button
+                        onClick={() => setSlide(0)}
+                        className={cn("px-6 py-3 rounded-2xl font-black transition-all gpu-accelerate", slide === 0 ? "text-white shadow-lg" : "text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800")}
+                        style={slide === 0 ? { backgroundColor: BRAND_COLOR } : undefined}
+                    >
+                        운영 지표
+                    </button>
+                    <button
+                        onClick={() => setSlide(1)}
+                        className={cn("px-6 py-3 rounded-2xl font-black transition-all gpu-accelerate", slide === 1 ? "text-white shadow-lg" : "text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800")}
+                        style={slide === 1 ? { backgroundColor: BRAND_COLOR } : undefined}
+                    >
+                        마케팅 지능
+                    </button>
                 </div>
             </div>
 
@@ -663,19 +690,19 @@ export function Dashboard() {
             {slide === 0 && (
                 <div ref={operationsRef} className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <ChartContainer title="월별 누적 매출 추이" icon={SvgIcons.trendingUp} className="lg:col-span-2" innerHeight="h-[350px]">
+                        <ChartContainer title="월별 누적 매출 추이" icon={SvgIcons.trendingUp} className="lg:col-span-2" innerHeight="h-[350px]" brandColor={BRAND_COLOR}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={revenueData} margin={{ top: 80, right: 30, left: 20 }}>
-                                    <defs><linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} /><stop offset="95%" stopColor="#3b82f6" stopOpacity={0} /></linearGradient></defs>
+                                    <defs><linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={BRAND_COLOR} stopOpacity={0.3} /><stop offset="95%" stopColor={BRAND_COLOR} stopOpacity={0} /></linearGradient></defs>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
                                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} tickFormatter={v => v >= 10000 ? `${(v / 10000).toFixed(0)}만` : v} />
                                     <RechartsTooltip {...tooltipProps} formatter={val => [`₩${val.toLocaleString()}`, '매출']} />
-                                    <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorRevenue)" />
+                                    <Area type="monotone" dataKey="value" stroke={BRAND_COLOR} strokeWidth={4} fillOpacity={1} fill="url(#colorRevenue)" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </ChartContainer>
-                        <ChartContainer title="수업 상태 점유율" icon={SvgIcons.pieChart} innerHeight="h-[350px]">
+                        <ChartContainer title="수업 상태 점유율" icon={SvgIcons.pieChart} innerHeight="h-[350px]" brandColor={BRAND_COLOR}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart margin={{ top: 80 }}>
                                     <Pie data={statusData} cx="50%" cy="50%" innerRadius={80} outerRadius={110} paddingAngle={4} dataKey="value" stroke="none">
@@ -687,21 +714,21 @@ export function Dashboard() {
                         </ChartContainer>
                     </div>
 
-                    <ChartContainer title="치료사별 매출 기여도" icon={SvgIcons.stethoscope} innerHeight="h-[250px]">
+                    <ChartContainer title="치료사별 매출 기여도" icon={SvgIcons.stethoscope} innerHeight="h-[250px]" brandColor={BRAND_COLOR}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={therapistData} layout="vertical" margin={{ top: 20, right: 50, left: 20, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="name" type="category" width={100} tick={{ fontWeight: 'bold' }} axisLine={false} tickLine={false} />
                                 <RechartsTooltip {...tooltipProps} formatter={val => [`₩${val.toLocaleString()}`, '매출']} />
-                                <Bar dataKey="value" fill="#8b5cf6" radius={[0, 8, 8, 0]} barSize={32}>
+                                <Bar dataKey="value" fill={BRAND_COLOR} radius={[0, 8, 8, 0]} barSize={32}>
                                     <LabelList dataKey="value" position="right" formatter={v => `₩${v.toLocaleString()}`} style={{ fontWeight: 'bold', fill: '#64748b' }} />
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
                     </ChartContainer>
 
-                    <ChartContainer title="상담 후 등록 전환율" icon={SvgIcons.activity} innerHeight="h-[450px]">
+                    <ChartContainer title="상담 후 등록 전환율" icon={SvgIcons.activity} innerHeight="h-[450px]" brandColor={BRAND_COLOR}>
                         <ResponsiveContainer width="100%" height="100%">
                             <ComposedChart data={conversionData} margin={{ top: 80, right: 30, left: 20 }}>
                                 <CartesianGrid stroke="#f1f5f9" vertical={false} />
@@ -710,7 +737,7 @@ export function Dashboard() {
                                 <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} unit="%" />
                                 <RechartsTooltip {...tooltipProps} /><Legend verticalAlign="top" align="right" wrapperStyle={{ top: 0 }} />
                                 <Bar yAxisId="left" dataKey="consults" name="상담 진행" fill="#e2e8f0" barSize={50} radius={[6, 6, 0, 0]} />
-                                <Bar yAxisId="left" dataKey="converted" name="최종 등록" fill="#10b981" barSize={50} radius={[6, 6, 0, 0]} />
+                                <Bar yAxisId="left" dataKey="converted" name="최종 등록" fill={BRAND_COLOR} barSize={50} radius={[6, 6, 0, 0]} />
                                 <Line yAxisId="right" type="monotone" dataKey="rate" name="전환율(%)" stroke="#f59e0b" strokeWidth={4} />
                             </ComposedChart>
                         </ResponsiveContainer>

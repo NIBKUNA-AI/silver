@@ -24,7 +24,7 @@ import { useCenterBranding } from '@/hooks/useCenterBranding';
 import { useState, useEffect, useCallback } from 'react';
 import { cn } from "@/lib/utils";
 import { supabase } from '@/lib/supabase';
-import { CURRENT_CENTER_ID } from '@/config/center';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 
 // ============================================
 // 🔐 SIDEBAR STATE PERSISTENCE KEY
@@ -193,16 +193,16 @@ const MENU_GROUPS = [
             { name: '치료 일정', path: '/app/schedule', icon: Icons.calendar, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
             { name: '수납 관리', path: '/app/billing', icon: Icons.billing, roles: ['super_admin', 'admin', 'staff'] },
             { name: '상담일지', path: '/app/consultations', icon: Icons.consultation, roles: ['super_admin', 'admin', 'therapist'] },
-            { name: '프로그램 관리', path: '/app/programs', icon: Icons.program, roles: ['super_admin', 'admin', 'staff'] },
+            { name: '프로그램 관리', path: '/app/programs', icon: Icons.program, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
         ]
     },
     {
         name: '리소스 관리',  // Management
         icon: Icons.members,
         items: [
-            { name: '상담문의', path: '/app/leads', icon: Icons.leads, roles: ['super_admin', 'admin', 'staff'] },
+            { name: '상담문의', path: '/app/leads', icon: Icons.leads, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
             { name: '아동 관리', path: '/app/children', icon: Icons.child, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
-            { name: '부모 관리', path: '/app/parents', icon: Icons.members, roles: ['super_admin', 'admin', 'staff'] },
+            { name: '부모 관리', path: '/app/parents', icon: Icons.members, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
             { name: '직원 관리', path: '/app/therapists', icon: Icons.staff, roles: ['super_admin', 'admin'] },
             { name: '급여 관리', path: '/app/settlement', icon: Icons.salary, roles: ['super_admin', 'admin'] },
         ]
@@ -212,9 +212,8 @@ const MENU_GROUPS = [
         icon: Icons.system,
         items: [
             { name: '대시보드', path: '/app/dashboard', icon: Icons.dashboard, roles: ['super_admin', 'admin', 'staff'] },
-            // ✨ [Removed] 전체 센터 관리 (User Request)
-            { name: '블로그 관리', path: '/app/blog', icon: Icons.blog, roles: ['super_admin'] },
             { name: '사이트 설정', path: '/app/settings', icon: Icons.settings, roles: ['super_admin'] },
+            { name: '전체 센터 관리', path: '/master/centers', icon: Icons.globe, roles: ['super_admin'] }, // ✨ New Super Admin Link
         ]
     }
 ];
@@ -249,12 +248,13 @@ function ThemeToggle() {
     );
 }
 
-export function Sidebar() {
+export function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
     const location = useLocation();
     const { role, user, signOut } = useAuth();
+    const { center } = useCenter(); // ✨ Context
+    const centerId = center?.id;
     const { theme, isSuperAdmin } = useTheme();
     const { branding } = useCenterBranding();
-    const [isOpen, setIsOpen] = useState(false);
 
     // ✨ [Notification] 알림 표시 상태
     const [hasUnreadInquiry, setHasUnreadInquiry] = useState(false);
@@ -262,12 +262,13 @@ export function Sidebar() {
 
     // ✨ [Dismiss Logic] 메뉴 클릭 시 알림 숨기기 처리
     const handleMenuClick = async (itemName: string) => {
-        setIsOpen(false);
+        if (onClose) onClose();
+        const cid = centerId || 'global';
         try {
             if (itemName === '치료 일정') {
                 // 1. 로컬 상태 즉시 해제 및 마지막 확인 시간 저장
                 const now = new Date().toISOString();
-                localStorage.setItem(`last_schedule_check_${CURRENT_CENTER_ID}`, now);
+                localStorage.setItem(`last_schedule_check_${cid}`, now);
                 setHasUnreadSchedule(false);
 
                 // 2. DB 읽음 처리 (백그라운드)
@@ -283,7 +284,7 @@ export function Sidebar() {
 
             if (itemName === '상담문의') {
                 // 상담문의는 로컬 스토리지에 마지막 확인 일시 저장
-                localStorage.setItem(`last_inquiry_check_${CURRENT_CENTER_ID}`, new Date().toISOString());
+                localStorage.setItem(`last_inquiry_check_${cid}`, new Date().toISOString());
                 setHasUnreadInquiry(false);
             }
         } catch (err) {
@@ -294,15 +295,20 @@ export function Sidebar() {
     useEffect(() => {
         const checkNotifications = async () => {
             try {
+                const cid = centerId || 'global';
+
                 // 1. 상담문의 (어드민/슈퍼어드민만 표시)
                 if (isSuperAdmin || role === 'admin') {
-                    const lastCheck = localStorage.getItem(`last_inquiry_check_${CURRENT_CENTER_ID}`);
+                    const lastCheck = localStorage.getItem(`last_inquiry_check_${cid}`);
 
                     let query = supabase
-                        .from('consultations')
+                        .from('leads')
                         .select('created_at', { count: 'exact', head: true })
-                        .is('schedule_id', null)
-                        .in('status', ['pending', 'new', '']);
+                        .eq('status', 'new');
+
+                    if (centerId) {
+                        query = query.eq('center_id', centerId);
+                    }
 
                     if (lastCheck) {
                         query = query.gt('created_at', lastCheck);
@@ -316,7 +322,7 @@ export function Sidebar() {
 
                 // 2. 치료 일정 (치료사 개인에게 등록된 알림 중 'schedule' 타입만)
                 if (user) {
-                    const lastScheduleCheck = localStorage.getItem(`last_schedule_check_${CURRENT_CENTER_ID}`);
+                    const lastScheduleCheck = localStorage.getItem(`last_schedule_check_${cid}`);
 
                     let q = supabase
                         .from('admin_notifications')
@@ -341,7 +347,7 @@ export function Sidebar() {
         // 1분마다 주기적 체크 (데스크톱 최적화)
         const timer = setInterval(checkNotifications, 60000);
         return () => clearInterval(timer);
-    }, [user, role, isSuperAdmin]);
+    }, [user, role, isSuperAdmin, centerId]);
 
     // 🔐 Initialize openGroups from localStorage or default to empty (all closed)
     const [openGroups, setOpenGroups] = useState<string[]>(() => {
@@ -398,27 +404,9 @@ export function Sidebar() {
 
     return (
         <>
-            {/* ✨ [Mobile Header] Sticky Top Bar for Admin Mobile */}
-            <div className="md:hidden fixed top-0 left-0 right-0 z-50 h-16 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 shadow-sm transition-all">
-                <div className="flex items-center gap-3">
-                    <button
-                        className="p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                        onClick={() => setIsOpen(!isOpen)}
-                    >
-                        {isOpen ? Icons.close("w-6 h-6") : Icons.menu("w-6 h-6")}
-                    </button>
-                    <Link to="/" className="flex items-center gap-2 group">
-                        <span className="text-xl font-black tracking-tighter text-slate-900 dark:text-white transition-colors" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                            <span className="text-indigo-600 dark:text-indigo-400 mr-0.5">Z</span>arada
-                        </span>
-                    </Link>
-                </div>
-                <ThemeToggle />
-            </div>
-
             {/* Sidebar */}
             <aside className={cn(
-                "fixed top-0 left-0 z-40 h-screen transition-transform duration-300 w-64 shadow-2xl",
+                "fixed top-0 left-0 z-[110] h-screen transition-transform duration-300 w-64 shadow-2xl",
                 "bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800",
                 isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
             )}>
@@ -452,9 +440,9 @@ export function Sidebar() {
                     <nav className="flex-1 px-4 py-2 space-y-4 overflow-y-auto custom-scrollbar">
                         {/* Homepage Link */}
                         <Link
-                            to="/"
+                            to={localStorage.getItem('zarada_center_slug') ? `/centers/${localStorage.getItem('zarada_center_slug')}` : "/"}
                             className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold border text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 border-slate-200 dark:border-slate-800"
-                            onClick={() => setIsOpen(false)}
+                            onClick={onClose}
                         >
                             {Icons.globe("w-5 h-5 text-blue-500 dark:text-blue-400")}
                             홈페이지 바로가기
@@ -494,6 +482,28 @@ export function Sidebar() {
                                         <div className="space-y-1 animate-in fade-in slide-in-from-top-1 duration-200 border-l-2 border-slate-100 dark:border-slate-800 ml-6 pl-2 my-1">
                                             {visibleItems.map((item) => {
                                                 const isActive = location.pathname === item.path;
+                                                const isExternal = item.path.startsWith('http');
+
+                                                if (isExternal) {
+                                                    return (
+                                                        <a
+                                                            key={item.path}
+                                                            href={item.path}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className={cn(
+                                                                "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 font-bold text-sm gpu-accelerate relative",
+                                                                "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white"
+                                                            )}
+                                                            onClick={() => handleMenuClick(item.name)}
+                                                        >
+                                                            {item.icon("w-4 h-4 text-emerald-500")}
+                                                            {item.name}
+                                                            <span className="ml-auto text-[9px] bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded font-black">NEW</span>
+                                                        </a>
+                                                    );
+                                                }
+
                                                 return (
                                                     <Link
                                                         key={item.path}
@@ -527,7 +537,7 @@ export function Sidebar() {
                     <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
                         <button
                             onClick={() => {
-                                setIsOpen(false);
+                                if (onClose) onClose();
                                 handleLogout();
                             }}
                             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all font-bold text-sm text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950"
@@ -541,8 +551,8 @@ export function Sidebar() {
             {/* Mobile Overlay */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/70 backdrop-blur-sm z-30 md:hidden gpu-accelerate"
-                    onClick={() => setIsOpen(false)}
+                    className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[105] md:hidden gpu-accelerate"
+                    onClick={onClose}
                 />
             )}
         </>

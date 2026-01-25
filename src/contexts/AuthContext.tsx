@@ -9,10 +9,11 @@
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { CURRENT_CENTER_ID } from '@/config/center';
+import { isSuperAdmin } from '@/config/superAdmin';
+
 
 // ✨ UserRole 타입 유지 (retired 포함)
-export type UserRole = 'super_admin' | 'admin' | 'staff' | 'therapist' | 'parent' | 'retired' | null;
+export type UserRole = 'super_admin' | 'admin' | 'staff' | 'employee' | 'therapist' | 'parent' | 'retired' | null;
 
 const ROLE_CACHE_KEY = 'cached_user_role';
 
@@ -44,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [role, setRole] = useState<UserRole>(null);
     const [profile, setProfile] = useState<any>(null);
     const [therapistId, setTherapistId] = useState<string | null>(null);
-    const [centerId, setCenterId] = useState<string | null>(CURRENT_CENTER_ID);
+    const [centerId, setCenterId] = useState<string | null>(null); // ✨ Default to null
     const [loading, setLoading] = useState(true);
 
     const initialLoadComplete = useRef(false);
@@ -140,10 +141,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 // 👑 [Sovereign Fortress] Immediate Super Admin Recognition
-                if (session?.user?.email?.toLowerCase() === 'anukbin@gmail.com') {
+                if (isSuperAdmin(session?.user?.email)) {
                     console.log('👑 Sovereign Alert: Immediate Super Admin Recognition in Auth Change');
                     setRole('super_admin');
-                    setCenterId(CURRENT_CENTER_ID);
+                    setCenterId(null); // ✨ Global Access
                     setLoading(false);
                     initialLoadComplete.current = true;
                     return; // DB check skipped for speed and stability
@@ -168,15 +169,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!user) return;
 
         // 👑 [Sovereign Fortress] God Mode Injection - Bypass ALL checks
-        // 안욱빈 원장님 계정은 어떠한 상황에서도 무조건 Super Admin으로 간주한다.
-        if (user.email?.toLowerCase() === 'anukbin@gmail.com') {
-            console.log('👑 Sovereign Alert: GOD MODE ACTIVATED (anukbin@gmail.com)');
+        // 슈퍼 관리자 계정은 어떠한 상황에서도 무조건 Super Admin으로 간주한다.
+        if (isSuperAdmin(user.email)) {
+            console.log(`👑 Sovereign Alert: GOD MODE ACTIVATED (${user.email})`);
             setRole('super_admin');
-            setCenterId(CURRENT_CENTER_ID); // 환경변수에서 로드된 센터 ID
+            setCenterId(null); // ✨ Global Access
 
-            // 프로필 데이터가 없어도 무방하나, 있으면 로드. (비동기 병렬 처리로 UI 블로킹 방지)
+            // 프로필 데이터가 없어도 무방하나, 있으면 로드.
             supabase.from('user_profiles').select('*').eq('id', user.id).maybeSingle()
-                .then(({ data }) => { if (data) setProfile(data); });
+                .then(({ data }) => {
+                    if (data) {
+                        // 👑 [Conflict Resolution] Super Admin has NO primary center
+                        setProfile({ ...data, center_id: null });
+                    }
+                });
 
             setLoading(false);
             initialLoadComplete.current = true;
@@ -194,42 +200,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 .eq('id', user.id)
                 .maybeSingle();
 
-            // 2. ✨ [Self-Healing] 치료사 권한 강제 동기화 (Sovereign Auto-Repair)
-            // 프로필이 아예 없거나, 'parent'로 되어 있는 경우 (잘못 가입한 치료사 구제)
+            // 2. ✨ [Self-Healing] Removed hardcoded repair relying on CURRENT_CENTER_ID
+            // If needed, we can implement dynamic repair later.
+            /* 
             if (!dbProfile || dbProfile.role === 'parent') {
-                // therapists 테이블에서 이메일로 검색 (대소문자 무시)
-                const { data: therapistSource } = await supabase
-                    .from('therapists')
-                    .select('*')
-                    .ilike('email', user.email)
-                    .maybeSingle();
-
-                if (therapistSource) {
-                    console.warn(`🩹 Self-Healing: [${user.email}] found in therapists but profile is ${dbProfile ? 'parent' : 'missing'}. Repairing...`);
-
-                    const repairData = {
-                        id: user.id,
-                        email: user.email,
-                        name: therapistSource.name || user.user_metadata?.full_name || dbProfile?.name || '치료사',
-                        role: therapistSource.system_role || 'therapist',
-                        status: 'active', // 초대받은 직원은 즉시 활성화
-                        center_id: CURRENT_CENTER_ID
-                    };
-
-                    const { data: repaired, error: repairError } = await supabase
-                        .from('user_profiles')
-                        .upsert(repairData)
-                        .select()
-                        .single();
-
-                    if (!repairError && repaired) {
-                        console.log("✅ Profile repaired successfully.");
-                        dbProfile = repaired;
-                    } else {
-                        console.error("❌ Profile repair failed:", repairError);
-                    }
-                }
+                // ... (Logic removed for SaaS safety)
             }
+            */
 
             if (dbProfile) {
                 const dbRole = (dbProfile.role as UserRole) || 'parent';
@@ -247,7 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 setRole(dbRole);
                 setProfile(dbProfile);
-                setCenterId(CURRENT_CENTER_ID);
+                setCenterId(dbProfile.center_id);
 
                 // 치료사 전용 ID 세팅
                 if (dbRole === 'therapist') {
@@ -293,7 +270,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     { event: 'UPDATE', schema: 'public', table: 'user_profiles', filter: `id=eq.${user.id}` },
                     (payload) => {
                         // 👑 [Sovereign Fortress] 슈퍼 어드민은 감시 대상에서도 제외 (혹은 DB변경 무시)
-                        if (user.email === 'anukbin@gmail.com') return;
+                        if (isSuperAdmin(user.email)) return;
 
                         const newRole = payload.new.role;
                         const newStatus = payload.new.status;

@@ -9,14 +9,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 import {
     Plus, Search, Phone, Mail, Edit2, X, Check,
     Shield, Stethoscope, UserCog, UserCheck, AlertCircle, UserMinus, Lock, RotateCcw, Trash2, Archive, ArchiveRestore
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { isSuperAdmin } from '@/config/superAdmin';
+import { isSuperAdmin, SUPER_ADMIN_EMAILS } from '@/config/superAdmin';
 import { Helmet } from 'react-helmet-async';
-import { CURRENT_CENTER_ID } from '@/config/center';
 
 const COLORS = [
     '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981',
@@ -26,6 +26,8 @@ const COLORS = [
 
 export function TherapistList() {
     const { user } = useAuth();
+    const { center } = useCenter(); // ✨ Use Center Context
+    const centerId = center?.id;
     const [staffs, setStaffs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -39,22 +41,27 @@ export function TherapistList() {
         bank_name: '', account_number: '', account_holder: ''
     });
 
-    useEffect(() => { fetchStaffs(); }, []);
+    useEffect(() => {
+        if (centerId) fetchStaffs();
+    }, [centerId]);
 
     const fetchStaffs = async () => {
         setLoading(true);
         try {
-            // 🛡️ [Security] 원천 차단: DB 쿼리 단계에서 슈퍼 어드민 제외
+            // 🛡️ [SAAS] Filter by Center ID and exclude super admins
+            const superAdminList = `("${SUPER_ADMIN_EMAILS.join('","')}")`;
             const { data: therapistData } = await supabase
                 .from('therapists')
                 .select('*')
-                .neq('email', 'anukbin@gmail.com') // 🚫 Exclude Super Admin
+                .filter('email', 'not.in', superAdminList)
+                .eq('center_id', centerId)
                 .order('created_at', { ascending: false });
 
             const { data: profileData } = await supabase
                 .from('user_profiles')
                 .select('id, role, email, status')
-                .neq('email', 'anukbin@gmail.com'); // 🚫 Exclude Super Admin
+                .eq('center_id', centerId)
+                .filter('email', 'not.in', superAdminList);
 
             const mergedData = therapistData?.map(t => {
                 const profile = profileData?.find(p => p.email === t.email);
@@ -68,7 +75,7 @@ export function TherapistList() {
                     system_role: dbRole,
                     system_status: dbStatus
                 };
-            }).filter(u => u.email !== 'anukbin@gmail.com');
+            }).filter(u => !isSuperAdmin(u.email));
 
             setStaffs(mergedData || []);
         } catch (error) {
@@ -103,7 +110,7 @@ export function TherapistList() {
                         account_number: formData.account_number,
                         account_holder: formData.account_holder,
                         // account_holder: formData.account_holder, // Duplicate removed
-                        center_id: import.meta.env.VITE_CENTER_ID || CURRENT_CENTER_ID,
+                        center_id: centerId,
                     }
                 });
 
@@ -246,7 +253,7 @@ export function TherapistList() {
         return false;
     }).filter(s => s.name.includes(searchTerm));
 
-    const isSuper = user?.email === 'anukbin@gmail.com';  // Fortress Check
+    const isSuper = isSuperAdmin(user?.email);  // Fortress Check
 
     return (
         <div className="space-y-6 pb-20 p-8 bg-slate-50/50 dark:bg-slate-950 min-h-screen">
@@ -318,6 +325,23 @@ export function TherapistList() {
                     >
                         <Shield className="w-5 h-5" /> 관리자 등록
                     </button>
+                    <button
+                        onClick={() => {
+                            setEditingId(null);
+                            setFormData({
+                                name: '', contact: '', email: '', hire_type: 'parttime',
+                                system_role: 'staff', // ✨ Auto-set Staff
+                                system_status: 'active',
+                                remarks: '', color: '#f59e0b', // Amber for Staff
+                                bank_name: '', account_number: '', account_holder: '',
+                                base_salary: 0, required_sessions: 0, session_price_weekday: 0, session_price_weekend: 0, incentive_price: 0, evaluation_price: 0
+                            });
+                            setIsModalOpen(true);
+                        }}
+                        className="bg-amber-100 text-amber-700 px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all hover:bg-amber-200 border border-amber-200"
+                    >
+                        <UserCog className="w-5 h-5" /> 행정직원 등록
+                    </button>
                 </div>
             </div>
 
@@ -348,7 +372,9 @@ export function TherapistList() {
                                                 staff.system_role === 'admin' ? "bg-rose-100 text-rose-600 border-rose-200" :
                                                     "bg-emerald-100 text-emerald-600 border-emerald-200"
                                         )}>
-                                            {staff.system_status === 'retired' ? 'RETIRED' : (staff.system_role === 'admin' ? 'ADMIN' : 'THERAPIST')}
+                                            {staff.system_status === 'retired' ? 'RETIRED' : (
+                                                { 'admin': 'ADMIN', 'staff': 'STAFF' }[staff.system_role] || 'THERAPIST'
+                                            )}
                                         </span>
                                     </h3>
                                     <p className="text-xs text-slate-400 dark:text-slate-500 font-bold flex items-center gap-1 mt-0.5"><Mail className="w-3 h-3" /> {staff.email}</p>
@@ -389,8 +415,8 @@ export function TherapistList() {
                         <div className="flex justify-between items-center mb-8">
                             <h2 className="text-2xl font-black text-slate-900 dark:text-white">
                                 {editingId
-                                    ? (formData.system_role === 'admin' ? '관리자 정보 수정' : '치료사 정보 수정')
-                                    : (formData.system_role === 'admin' ? '새 관리자 등록' : '새 치료사 등록')}
+                                    ? ({ 'admin': '관리자 정보 수정', 'staff': '행정직원 정보 수정' }[formData.system_role] || '치료사 정보 수정')
+                                    : ({ 'admin': '새 관리자 등록', 'staff': '새 행정직원 등록' }[formData.system_role] || '새 치료사 등록')}
                             </h2>
                             <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><X className="w-6 h-6 text-slate-400" /></button>
                         </div>
@@ -449,7 +475,13 @@ export function TherapistList() {
                                                     ? "bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-900/20 dark:border-rose-900/50 dark:text-rose-400"
                                                     : "bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-900/50 dark:text-indigo-400"
                                             )}
-                                            value={formData.system_role === 'admin' ? '🛡️ 관리자 (Admin)' : '🩺 치료사 (Therapist)'}
+                                            value={
+                                                {
+                                                    'admin': '🛡️ 관리자 (Admin)',
+                                                    'staff': '💼 행정직원 (Staff)',
+                                                    'therapist': '🩺 치료사 (Therapist)'
+                                                }[formData.system_role] || '🩺 치료사 (Therapist)'
+                                            }
                                         />
                                         <p className="text-[11px] text-slate-400 font-medium px-1">
                                             * 권한은 '관리자 등록' 또는 '치료사 등록' 버튼에 따라 자동 결정됩니다.

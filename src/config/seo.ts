@@ -6,8 +6,8 @@ export const seoConfig = {
     keywords: import.meta.env.VITE_META_KEYWORDS || '자라다발달센터, 아동발달센터, 언어치료, 감각통합치료',
     canonicalUrl: import.meta.env.VITE_CANONICAL_URL || 'https://zaradacenter.co.kr',
     naverVerification: import.meta.env.VITE_NAVER_VERIFICATION || '',
-    phone: import.meta.env.VITE_CENTER_PHONE || '02-416-2213',
-    address: import.meta.env.VITE_CENTER_ADDRESS || '서울 송파구 석촌호수로 12길',
+    phone: import.meta.env.VITE_CENTER_PHONE || '02-000-0000',
+    address: import.meta.env.VITE_CENTER_ADDRESS || '서울특별시 송파구 석촌호수로 12길',
     geo: {
         lat: import.meta.env.VITE_CENTER_LAT || '37.5113',
         lng: import.meta.env.VITE_CENTER_LNG || '127.0982'

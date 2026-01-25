@@ -18,33 +18,66 @@ serve(async (req: any) => {
     }
 
     try {
-        // ✨ Admin Client (Service Role - Bypasses RLS)
+        // 1. [Auth] Verify the Caller's Authority (Anti-Privilege Escalation)
+        const authHeader = req.headers.get('Authorization')!;
+        const supabaseClient = createClient(
+            Deno.env.get("SUPABASE_URL") ?? "",
+            Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+            { global: { headers: { Authorization: authHeader } } }
+        );
+
+        // Get the caller's profile
+        const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+        if (authError || !user) throw new Error("Unauthorized: Invalid session");
+
+        // Fetch profile to check role and center_id
+        const { data: callerProfile, error: profileCheckError } = await supabaseClient
+            .from("user_profiles")
+            .select("role, center_id")
+            .eq("id", user.id)
+            .single();
+
+        if (profileCheckError || !callerProfile) throw new Error("Unauthorized: Profile not found");
+
+        const isSuperAdmin = user.email === 'anukbin@gmail.com';
+        const isAdmin = callerProfile.role === 'admin';
+
+        if (!isSuperAdmin && !isAdmin) {
+            throw new Error("Unauthorized: Only admins can invite users");
+        }
+
+        // 2. [Admin] Service Role Client for high-privilege operations
         const supabaseAdmin = createClient(
             Deno.env.get("SUPABASE_URL") ?? "",
             Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
             { auth: { autoRefreshToken: false, persistSession: false } }
         );
 
-        const { email, name, role, ...details } = await req.json();
+        const { email, name, role, center_id, ...details } = await req.json();
 
         if (!email) throw new Error("Email is required");
 
-        console.log(`📧 Inviting user: ${email} as ${role}`);
+        // 🛡️ Cross-Center Prevention: Branch admins can only invite to THEIR own center
+        const targetCenterId = isSuperAdmin ? center_id : callerProfile.center_id;
+        if (!targetCenterId) throw new Error("Center identification failed");
 
-        // 1. Send Invitation Email
+        console.log(`📧 Inviting user: ${email} as ${role} for center: ${targetCenterId}`);
+
+        // 3. Send Invitation Email
         const { data: authData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-            data: { name, role, full_name: name },
+            data: { name, role, full_name: name, center_id: targetCenterId },
             redirectTo: 'https://zaradacenter.co.kr/auth/update-password',
         });
 
         if (inviteError) {
             console.error("Invite Error:", inviteError.message);
+            // If user exists, we still continue to sync profiles (Recovery scenario)
             if (!inviteError.message.includes("already registered")) {
                 throw inviteError;
             }
         }
 
-        // 2. Resolve User ID
+        // 4. Resolve User ID
         let finalUserId = authData?.user?.id;
         if (!finalUserId) {
             const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
@@ -54,23 +87,9 @@ serve(async (req: any) => {
 
         if (!finalUserId) throw new Error("Failed to resolve User ID");
 
-        console.log(`👤 User ID resolved: ${finalUserId}`);
-
-        // 3. Sync to 'therapists' table
-        const { error: therapistError } = await supabaseAdmin
-            .from("therapists")
-            .upsert({
-                email,
-                name,
-                system_role: role || 'therapist',
-                system_status: 'active',
-                ...details
-            }, { onConflict: 'email' });
-
-        if (therapistError) throw therapistError;
-
-        // 4. Sync to 'user_profiles' table
-        const { error: profileError } = await supabaseAdmin
+        // 5. Sync Data (Strictly bound to center_id)
+        // Update user_profiles
+        const { error: profileSyncError } = await supabaseAdmin
             .from("user_profiles")
             .upsert({
                 id: finalUserId,
@@ -78,19 +97,32 @@ serve(async (req: any) => {
                 name,
                 role: role || 'therapist',
                 status: 'active',
-                center_id: details.center_id
+                center_id: targetCenterId
             }, { onConflict: 'id' });
 
-        if (profileError) throw profileError;
+        if (profileSyncError) throw profileSyncError;
 
-        console.log(`✅ Invitation successful for ${email}`);
+        // If it's a therapist, sync to therapists table too
+        if (role === 'therapist') {
+            const { error: therapistError } = await supabaseAdmin
+                .from("therapists")
+                .upsert({
+                    email,
+                    name,
+                    center_id: targetCenterId,
+                    system_role: 'therapist',
+                    system_status: 'active',
+                    ...details
+                }, { onConflict: 'email' });
+
+            if (therapistError) throw therapistError;
+        }
+
+        console.log(`✅ User ${email} successfully joined center ${targetCenterId}`);
 
         return new Response(
-            JSON.stringify({ message: "User invited successfully", userId: finalUserId }),
-            {
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-                status: 200,
-            }
+            JSON.stringify({ message: "User invited and synced successfully", userId: finalUserId }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
         );
 
     } catch (error: any) {

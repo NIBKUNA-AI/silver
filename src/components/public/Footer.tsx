@@ -49,9 +49,9 @@ export function Footer() {
 
     // Use settings directly if branding mapping fails, or fallback to branding
     // Priority: DB Settings -> Branding Hook Mapping -> Hardcoded Fallback
-    const centerEmail = settings?.center_email || branding.email || 'zaramom@naver.com';
-    const centerAddress = settings?.center_address || branding.address || '서울시 송파구 백제고분로 7길 6-12';
-    const centerPhone = settings?.center_phone || branding.phone || '02-423-7956';
+    const centerEmail = settings?.center_email || branding.email || '';
+    const centerAddress = settings?.center_address || branding.address || '본사: 서울특별시 송파구 석촌호수로 12길 (지점 운영 정보 등록 필요)';
+    const centerPhone = settings?.center_phone || branding.phone || '02-000-0000';
 
     // Hours
     const weekdayHours = settings?.weekday_hours || branding.weekday_hours || '10:00 - 19:00';

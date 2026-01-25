@@ -13,21 +13,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 import { Search, Plus, Loader2, Pencil, Trash2, RefreshCw } from 'lucide-react';
 
 export default function BlogList() {
-    const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const navigate = useNavigate();
+    const { center } = useCenter(); // ✨ Use Center Context
+    const centerId = center?.id;
 
     // ✨ [Fix] 함수명 변경 (loadBlogPosts) - 캐시 충돌 방지
     const loadBlogPosts = useCallback(async () => {
+        if (!centerId) return; // Wait for auth
+
         setLoading(true);
         try {
             const { data, error } = await supabase
                 .from('blog_posts')
                 .select('*')
+                .eq('center_id', centerId) // ✨ [Security] Isolation
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -37,7 +40,7 @@ export default function BlogList() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [centerId]);
 
     // ✨ 데이터 로딩 로직
     useEffect(() => {

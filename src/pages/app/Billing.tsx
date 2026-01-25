@@ -15,7 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { Helmet } from 'react-helmet-async';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeProvider';
-import { CURRENT_CENTER_ID } from '@/config/center';
+import { useCenter } from '@/contexts/CenterContext';
 import { ExcelExportButton } from '@/components/common/ExcelExportButton';
 import {
     ChevronLeft, ChevronRight, Search, CreditCard, Banknote, Receipt,
@@ -32,15 +32,17 @@ export function Billing() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedChild, setSelectedChild] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const { center } = useCenter(); // ✨ Use center from context
 
     const fetchData = async () => {
+        if (!center?.id) return;
         setLoading(true);
         try {
             // ✨ [SECURITY] Enforce Center ID Filter via Inner Join
             const { data: sData } = await supabase
                 .from('schedules')
                 .select(`*, children!inner (*), programs (*)`)
-                .eq('children.center_id', CURRENT_CENTER_ID)
+                .eq('children.center_id', center.id)
                 .order('start_time', { ascending: false });
 
             // ✨ [SECURITY] Enforce Center ID Filter via Inner Join on Payments
@@ -48,7 +50,7 @@ export function Billing() {
                 .from('payments')
                 .select(`*, payment_items(*), children!inner(center_id)`)
                 .eq('payment_month', selectedMonth)
-                .eq('children.center_id', CURRENT_CENTER_ID);
+                .eq('children.center_id', center.id);
 
             setSchedules(sData || []);
             setPayments(pData || []);
@@ -57,7 +59,7 @@ export function Billing() {
         }
     };
 
-    useEffect(() => { fetchData(); }, [selectedMonth]);
+    useEffect(() => { fetchData(); }, [selectedMonth, center]);
 
     const stats = useMemo(() => {
         const filteredSchedules = schedules.filter(s => s.start_time.includes(selectedMonth));
@@ -181,6 +183,7 @@ export function Billing() {
 }
 
 function PaymentModal({ childData, month, onClose, onSuccess, isDark }) {
+    const { center } = useCenter(); // ✨ Use context
     const [loading, setLoading] = useState(false);
     const [inputs, setInputs] = useState({ card: 0, cash: 0, creditUsed: 0, memo: '' });
     const [localSessions, setLocalSessions] = useState(childData.sessions);
@@ -196,6 +199,7 @@ function PaymentModal({ childData, month, onClose, onSuccess, isDark }) {
         try {
             const payAmount = Number(inputs.card) + Number(inputs.cash);
             const { data: pay } = await supabase.from('payments').insert([{
+                center_id: center.id, // ✨ Inject Center ID
                 child_id: childData.id, amount: payAmount, method: inputs.card > 0 ? '카드' : '계좌이체', credit_used: inputs.creditUsed, memo: inputs.memo, payment_month: month
             }]).select().maybeSingle();
 
@@ -225,6 +229,7 @@ function PaymentModal({ childData, month, onClose, onSuccess, isDark }) {
         if (!adj || isNaN(adj)) return;
         setLoading(true);
         await supabase.from('payments').insert([{
+            center_id: center.id, // ✨ Inject Center ID
             child_id: childData.id, amount: -Number(adj), method: '보정', payment_month: month, memo: '수동 과납 보정'
         }]);
         onSuccess(); onClose();

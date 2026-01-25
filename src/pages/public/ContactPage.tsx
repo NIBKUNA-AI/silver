@@ -13,12 +13,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Helmet } from 'react-helmet-async';
+import { motion } from 'framer-motion';
 import { ConsultationSurveyForm } from '@/components/public/ConsultationSurveyForm';
-import { useCenterBranding } from '@/hooks/useCenterBranding'; // ✨ Use Centralized Hook
+import { useCenterBranding } from '@/hooks/useCenterBranding';
 import { useTheme } from '@/contexts/ThemeProvider';
 import { cn } from '@/lib/utils';
+import { useAdminSettings } from '@/hooks/useAdminSettings';
 
-// ... icons (unchanged) ...
+// Custom SVG Icons
 const Icons = {
     mapPin: (className: string) => (
         <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -43,154 +45,175 @@ const Icons = {
 };
 
 export function ContactPage() {
-    const { branding, loading } = useCenterBranding(); // ✨ Use uniform data source
+    const { branding } = useCenterBranding();
+    const { getSetting } = useAdminSettings();
     const { theme } = useTheme();
     const isDark = theme === 'dark';
 
+    const weekdayHours = getSetting('center_weekday_hours') || branding?.weekday_hours || '09:00 - 19:00';
+    const saturdayHours = getSetting('center_saturday_hours') || branding?.saturday_hours || '09:00 - 16:00';
+    const holidayText = getSetting('center_holiday_text') || branding?.holiday_text || '매주 일요일 및 공휴일';
+    const brandColor = branding?.brand_color || '#6366f1';
+
     return (
-        <>
+        <div className={cn("min-h-screen transition-colors", isDark ? "bg-[#0a0c10]" : "bg-[#f8fafc]")}>
             <Helmet>
                 <title>문의 및 오시는 길 - {branding?.name || '센터'}</title>
                 <meta name="description" content="센터 위치 안내, 운영 시간, 상담 예약 문의 방법을 안내해드립니다." />
             </Helmet>
 
-            <div className={cn(
-                "py-12 md:py-20 transition-colors",
-                isDark ? "bg-slate-900" : "bg-orange-50/50"
-            )}>
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center pb-[env(safe-area-inset-bottom,24px)]">
-                    <h1 className={cn(
-                        "text-3xl font-bold tracking-tight sm:text-4xl mb-6",
-                        isDark ? "text-white" : "text-slate-900"
-                    )}>
-                        문의 및 오시는 길
-                    </h1>
-                    <p className={cn(
-                        "mx-auto max-w-2xl text-lg leading-relaxed",
-                        isDark ? "text-slate-400" : "text-slate-600"
-                    )}>
-                        궁금하신 점이 있다면 언제든 편하게 문의해주세요.<br />
-                        친절하고 상세하게 안내해 드리겠습니다.
-                    </p>
-                </div>
-            </div>
+            {/* ✨ Premium Header Section */}
+            <section className="relative py-28 overflow-hidden">
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-[120px] opacity-20" style={{ backgroundColor: brandColor }}></div>
+                <div className="absolute bottom-0 left-0 w-[300px] h-[300px] rounded-full blur-[100px] opacity-10" style={{ backgroundColor: brandColor }}></div>
 
-            <section className={cn(
-                "py-16 md:py-24 transition-colors",
-                isDark ? "bg-slate-950" : "bg-white"
-            )}>
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* ✨ 반응형 수정: xl 이상에서만 그리드 2열, 그 외는 세로 스택 */}
-                    <div className="grid gap-8 xl:gap-12 xl:grid-cols-2 xl:items-start">
-                        {/* Information Section */}
-                        <div className="space-y-6 h-fit xl:sticky xl:top-24">
-                            <div className={cn(
-                                "p-6 sm:p-8 rounded-[32px] border shadow-lg space-y-6 transition-colors",
-                                isDark
-                                    ? "bg-slate-900 border-slate-800"
-                                    : "bg-white border-slate-100 shadow-slate-200/50"
-                            )}>
-                                <h2 className={cn(
-                                    "text-xl font-black flex items-center gap-2",
-                                    isDark ? "text-white" : "text-slate-900"
-                                )}>
-                                    {Icons.mapPin(cn("w-6 h-6", isDark ? "text-indigo-400" : "text-indigo-600"))}
-                                    센터 정보
-                                </h2>
-                                <div className="space-y-4">
-                                    <div className={cn(
-                                        "flex flex-col sm:flex-row gap-2 sm:gap-4 p-4 rounded-2xl",
-                                        isDark ? "bg-slate-800" : "bg-slate-50"
-                                    )}>
-                                        <div className={cn("shrink-0 font-bold", isDark ? "text-white" : "text-slate-900")}>주소</div>
-                                        <div className={cn("text-sm", isDark ? "text-slate-400" : "text-slate-600")}>{branding?.address || '주소 정보가 없습니다.'}</div>
-                                    </div>
-                                    <div className={cn(
-                                        "flex flex-col sm:flex-row gap-2 sm:gap-4 p-4 rounded-2xl",
-                                        isDark ? "bg-slate-800" : "bg-slate-50"
-                                    )}>
-                                        <div className={cn("shrink-0 font-bold", isDark ? "text-white" : "text-slate-900")}>전화</div>
-                                        <div className={cn("text-lg font-bold", isDark ? "text-slate-200" : "text-slate-800")}>{branding?.phone || '전화번호가 없습니다.'}</div>
-                                    </div>
-                                    <div className={cn(
-                                        "flex flex-col sm:flex-row gap-2 sm:gap-4 p-4 rounded-2xl",
-                                        isDark ? "bg-slate-800" : "bg-slate-50"
-                                    )}>
-                                        <div className={cn("shrink-0 font-bold", isDark ? "text-white" : "text-slate-900")}>이메일</div>
-                                        <div className={cn("text-sm", isDark ? "text-slate-400" : "text-slate-600")}>{branding?.email || '이메일 정보가 없습니다.'}</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className={cn(
-                                "p-6 sm:p-8 rounded-[32px] border shadow-lg space-y-6 transition-colors",
-                                isDark
-                                    ? "bg-slate-900 border-slate-800"
-                                    : "bg-white border-slate-100 shadow-slate-200/50"
-                            )}>
-                                <h2 className={cn(
-                                    "text-xl font-black flex items-center gap-2",
-                                    isDark ? "text-white" : "text-slate-900"
-                                )}>
-                                    {Icons.clock(cn("w-6 h-6", isDark ? "text-indigo-400" : "text-indigo-600"))}
-                                    운영 시간
-                                </h2>
-                                <div className="space-y-4">
-                                    <div className={cn(
-                                        "flex justify-between border-b pb-3",
-                                        isDark ? "border-slate-700" : "border-slate-100"
-                                    )}>
-                                        <span className={cn("font-bold", isDark ? "text-slate-400" : "text-slate-600")}>평일 (월-금)</span>
-                                        {/* ✨ [Fix] Use dynamic data, no hardcoding */}
-                                        <span className={cn("font-bold", isDark ? "text-white" : "text-slate-900")}>{branding?.weekday_hours || '정보 없음'}</span>
-                                    </div>
-                                    <div className={cn(
-                                        "flex justify-between border-b pb-3",
-                                        isDark ? "border-slate-700" : "border-slate-100"
-                                    )}>
-                                        <span className={cn("font-bold", isDark ? "text-slate-400" : "text-slate-600")}>토요일</span>
-                                        {/* ✨ [Fix] Use dynamic data, no hardcoding */}
-                                        <span className={cn("font-bold", isDark ? "text-white" : "text-slate-900")}>{branding?.saturday_hours || '정보 없음'}</span>
-                                    </div>
-                                    <div className="flex justify-between text-rose-500 font-black">
-                                        <span>일요일/공휴일</span>
-                                        <span>{branding?.holiday_text || '휴무'}</span>
-                                    </div>
-                                </div>
-                                <p className={cn(
-                                    "text-xs p-4 rounded-xl leading-relaxed font-medium",
-                                    isDark ? "bg-amber-900/30 text-amber-300" : "bg-orange-50 text-slate-500"
-                                )}>
-                                    * 모든 상담 및 치료는 100% 예약제로 운영됩니다.<br />
-                                    * 방문 전 반드시 예약 부탁드립니다.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Inquiry Form Section */}
-                        <div className={cn(
-                            "p-6 sm:p-8 lg:p-10 rounded-[40px] border shadow-xl transition-colors",
-                            isDark
-                                ? "bg-slate-900 border-slate-800"
-                                : "bg-white border-slate-200 shadow-indigo-600/5"
+                <div className="container mx-auto px-6 relative z-10 text-center">
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                    >
+                        <span
+                            className="inline-block px-5 py-2 rounded-full text-[10px] font-black tracking-[0.3em] uppercase mb-8 border"
+                            style={{ backgroundColor: brandColor + '15', color: brandColor, borderColor: brandColor + '30' }}
+                        >
+                            Get In Touch
+                        </span>
+                        <h1 className={cn(
+                            "text-4xl md:text-6xl font-black tracking-tighter mb-8 leading-tight",
+                            isDark ? "text-white" : "text-slate-900"
                         )}>
-                            <h2 className={cn(
-                                "text-2xl font-black mb-8 flex items-center gap-3",
-                                isDark ? "text-white" : "text-slate-900"
-                            )}>
-                                <div className={cn(
-                                    "p-3 rounded-2xl",
-                                    isDark ? "bg-indigo-900 text-indigo-400" : "bg-indigo-50 text-indigo-600"
-                                )}>
-                                    {Icons.calendar("w-6 h-6")}
-                                </div>
-                                상담 예약 신청
-                            </h2>
-                            <ConsultationSurveyForm centerId={branding?.id} />
-                        </div>
-                    </div>
+                            문의 및 오시는 길
+                        </h1>
+                        <p className={cn(
+                            "mx-auto max-w-2xl text-lg md:text-xl font-medium leading-relaxed opacity-60",
+                            isDark ? "text-slate-300" : "text-slate-600"
+                        )}>
+                            아이의 밝은 내일을 위한 첫 걸음,<br />
+                            자라다가 가장 따뜻한 목소리로 답하겠습니다.
+                        </p>
+                    </motion.div>
                 </div>
             </section>
-        </>
+
+            <section className="container mx-auto px-6 pb-32">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+
+                    {/* 📍 Info Column (Left) */}
+                    <div className="lg:col-span-5 space-y-8">
+
+                        {/* Center Info Card */}
+                        <motion.div
+                            className={cn(
+                                "p-10 rounded-[50px] border shadow-2xl relative overflow-hidden group",
+                                isDark ? "bg-[#141620] border-white/5" : "bg-white border-slate-100 shadow-slate-200/50"
+                            )}
+                            initial={{ opacity: 0, x: -50 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                        >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+
+                            <h2 className={cn("text-2xl font-black mb-10 flex items-center gap-3", isDark ? "text-white" : "text-slate-900")}>
+                                <div className="p-3 rounded-2xl bg-white/5 border border-white/10" style={{ color: brandColor }}>
+                                    {Icons.mapPin("w-6 h-6")}
+                                </div>
+                                센터 정보
+                            </h2>
+
+                            <div className="space-y-8">
+                                {[
+                                    { label: '주소', value: branding?.address || '정보를 불러오는 중...', icon: Icons.mapPin },
+                                    { label: '전화', value: branding?.phone || '정보를 불러오는 중...', icon: null, large: true },
+                                    { label: '이메일', value: branding?.email || '정보를 불러오는 중...', icon: null }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="flex flex-col gap-2">
+                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{item.label}</span>
+                                        <span className={cn(
+                                            "font-bold leading-relaxed",
+                                            item.large ? "text-2xl md:text-3xl tracking-tighter" : "text-lg",
+                                            isDark ? "text-white" : "text-slate-900"
+                                        )} style={item.large ? { color: brandColor } : {}}>
+                                            {item.value}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+
+                        {/* Hours Card */}
+                        <motion.div
+                            className={cn(
+                                "p-10 rounded-[50px] border shadow-2xl relative overflow-hidden",
+                                isDark ? "bg-[#141620] border-white/5" : "bg-white border-slate-100 shadow-slate-200/50"
+                            )}
+                            initial={{ opacity: 0, x: -50 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            <h2 className={cn("text-2xl font-black mb-10 flex items-center gap-3", isDark ? "text-white" : "text-slate-900")}>
+                                <div className="p-3 rounded-2xl bg-white/5 border border-white/10" style={{ color: brandColor }}>
+                                    {Icons.clock("w-6 h-6")}
+                                </div>
+                                운영 시간
+                            </h2>
+
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center py-4 border-b border-white/5">
+                                    <span className="font-bold opacity-60">평일 (월-금)</span>
+                                    <span className="text-xl font-black tracking-tight" style={{ color: brandColor }}>{weekdayHours}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-4 border-b border-white/5">
+                                    <span className="font-bold opacity-60">토요일</span>
+                                    <span className="text-xl font-black tracking-tight">{saturdayHours}</span>
+                                </div>
+                                <div className="flex justify-between items-center py-4">
+                                    <span className="font-bold text-rose-500">일요일/공휴일</span>
+                                    <span className="font-black text-rose-500">{holidayText}</span>
+                                </div>
+                            </div>
+
+                            <div
+                                className="mt-10 p-5 rounded-[30px] border border-dashed text-xs font-bold leading-relaxed opacity-80"
+                                style={{ backgroundColor: brandColor + '05', borderColor: brandColor + '30', color: brandColor }}
+                            >
+                                * 모든 상담 및 치료는 100% 예약제로 운영됩니다.<br />
+                                * 방문 전 반드시 예약 부탁드립니다.
+                            </div>
+                        </motion.div>
+                    </div>
+
+                    {/* 📝 Request Form Column (Right) */}
+                    <motion.div
+                        className="lg:col-span-7"
+                        initial={{ opacity: 0, y: 50 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className={cn(
+                            "p-10 md:p-14 rounded-[60px] border shadow-[0_40px_100px_rgba(0,0,0,0.1)] relative overflow-hidden",
+                            isDark ? "bg-[#141620] border-white/5" : "bg-white border-slate-200"
+                        )}>
+                            {/* Decorative background gradient for form */}
+                            <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-[100px] opacity-10 pointer-events-none" style={{ backgroundColor: brandColor }}></div>
+
+                            <div className="relative z-10">
+                                <h2 className={cn("text-3xl font-black mb-10 tracking-tight", isDark ? "text-white" : "text-slate-900")}>
+                                    상담 예약 신청
+                                </h2>
+                                <p className="mb-12 text-sm font-bold opacity-50 leading-relaxed">
+                                    아래 양식을 작성해 주시면 확인 후 전문 치료사가 직접 연락드려<br />
+                                    아이에게 가장 필요한 상담 일정을 잡아드리겠습니다.
+                                </p>
+
+                                <ConsultationSurveyForm centerId={branding?.id} />
+                            </div>
+                        </div>
+                    </motion.div>
+
+                </div>
+            </section>
+        </div>
     );
 }
