@@ -751,14 +751,11 @@ function HeroPreview({ title, subtitle, bgUrl }) {
                 </div>
             </div>
 
-            {/* 3. Browser Context Header UI */}
-            <div className="absolute top-0 left-0 right-0 h-10 bg-black/10 backdrop-blur-md border-b border-white/5 z-30 flex items-center px-6">
-                <div className="flex gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-rose-500/60" />
-                    <div className="w-2 h-2 rounded-full bg-amber-500/60" />
-                    <div className="w-2 h-2 rounded-full bg-emerald-500/60" />
-                </div>
-                <div className="flex-1 max-w-[120px] h-3.5 bg-white/5 rounded-full mx-auto" />
+            {/* 3. Minimal dots (non-blocking) */}
+            <div className="absolute top-3 left-6 z-30 flex gap-1.5 opacity-50">
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             </div>
         </div>
     );
