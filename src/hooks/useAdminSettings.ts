@@ -140,8 +140,8 @@ export const useAdminSettings = () => {
             // Optimistic update
             setSettings(prev => {
                 const updated = { ...prev, [key]: value };
-                // ✨ 브랜드 정보 캐시 업데이트
-                if (key === 'center_logo' || key === 'center_name') {
+                // ✨ 브랜드 정보 캐시 업데이트 (브랜드 컬러 포함)
+                if (key === 'center_logo' || key === 'center_name' || key === 'brand_color') {
                     setCachedBrand(center.id, updated);
                 }
                 return updated;

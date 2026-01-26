@@ -99,10 +99,12 @@ export function useCenterBranding() {
         fetchCenterData();
     }, [center]);
 
-    // ✨ [Optimization] derives final branding directly to prevent flicker (no useEffect sync)
-    const finalBranding = (!adminLoading && adminSettings && center?.id) ? {
+    // ✨ [Optimization] derives final branding directly to prevent flicker (no !adminLoading check)
+    // We use adminSettings immediately since it's initialized from cache in useAdminSettings
+    const finalBranding = (center?.id && adminSettings) ? {
         ...branding,
-        name: adminSettings.center_name || branding.name,
+        // Priority: DB Name (branding.name) > Admin Settings (adminSettings.center_name)
+        name: branding.name || adminSettings.center_name || DEFAULT_BRANDING.name,
         phone: adminSettings.center_phone || branding.phone,
         address: adminSettings.center_address || branding.address,
         email: adminSettings.center_email || branding.email,
@@ -111,8 +113,9 @@ export function useCenterBranding() {
         weekday_hours: adminSettings.center_weekday_hours || branding.weekday_hours,
         saturday_hours: adminSettings.center_saturday_hours || branding.saturday_hours,
         holiday_text: adminSettings.center_holiday_text || branding.holiday_text,
-        brand_color: adminSettings.brand_color || '#4f46e5', // ✨ New (Default indigo-600)
+        brand_color: adminSettings.brand_color || branding.brand_color || '#4f46e5',
         settings: {
+            ...adminSettings, // Pass all settings for helper lookups
             sns_instagram: adminSettings.sns_instagram,
             sns_facebook: adminSettings.sns_facebook,
             sns_youtube: adminSettings.sns_youtube,
