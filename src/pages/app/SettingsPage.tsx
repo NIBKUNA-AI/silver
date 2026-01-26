@@ -608,11 +608,14 @@ function HomeSettingsTab({ getSetting, handleSave, saving }) {
                         </div>
                         <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">21:9 WIDE</span>
                     </div>
-                    <HeroPreview
-                        title={pTitle}
-                        subtitle={pSubtitle}
-                        bgUrl={getSetting('main_banner_url')}
-                    />
+                    <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[40px] blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                        <HeroPreview
+                            title={pTitle}
+                            subtitle={pSubtitle}
+                            bgUrl={getSetting('main_banner_url')}
+                        />
+                    </div>
                     <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-700">
                         <p className="text-xs text-slate-500 font-bold leading-relaxed">
                             💡 **팁**: 실제 홈페이지의 히어로 섹션과 동일한 비율(21:9)입니다.
@@ -694,33 +697,33 @@ function SaveableTextArea({ label, initialValue, onSave, saving, placeholder, ro
 
 function HeroPreview({ title, subtitle, bgUrl }) {
     return (
-        <div className="relative w-full aspect-[21/9] min-h-[280px] rounded-[32px] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 bg-slate-100">
+        <div className="relative w-full aspect-[16/9] rounded-[38px] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 bg-slate-900 group">
             {/* 1. Background Layer */}
             <div className="absolute inset-0 z-0">
                 {bgUrl ? (
-                    <img src={bgUrl} className="w-full h-full object-cover" alt="Preview Background" />
+                    <img src={bgUrl} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105" alt="Preview Background" />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300" />
+                    <div className="w-full h-full bg-gradient-to-br from-indigo-900 to-slate-900" />
                 )}
                 {/* Real Site Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
             </div>
 
             {/* 2. Content Layer (Left Aligned) */}
-            <div className="absolute inset-0 z-10 flex flex-col justify-center px-10 md:px-14 text-left">
-                <div className="max-w-[80%] space-y-4">
+            <div className="absolute inset-0 z-10 flex flex-col justify-center px-[8%] md:px-[10%] text-left">
+                <div className="max-w-[85%] space-y-[4%] text-left">
                     {/* Badge */}
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full border border-white/20 mb-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                        <div className="w-16 h-1.5 bg-white/40 rounded-full" />
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                        <div className="w-14 h-1.5 bg-white/30 rounded-full" />
                     </div>
 
                     {/* Title */}
                     <h1
-                        className="text-white font-black leading-[1.1] tracking-tighter whitespace-pre-line"
+                        className="text-white font-black leading-[1.05] tracking-tighter whitespace-pre-line text-left"
                         style={{
-                            fontSize: 'clamp(1rem, 3.2vw, 2.6rem)',
-                            textShadow: '0 4px 24px rgba(0,0,0,0.5)',
+                            fontSize: 'clamp(0.8rem, 4.2vw, 3.2rem)',
+                            textShadow: '0 4px 30px rgba(0,0,0,0.5)',
                             wordBreak: 'keep-all'
                         }}
                     >
@@ -729,18 +732,18 @@ function HeroPreview({ title, subtitle, bgUrl }) {
 
                     {/* Description */}
                     <p
-                        className="text-white/80 font-medium leading-relaxed whitespace-pre-line max-w-sm"
-                        style={{ fontSize: 'clamp(0.6rem, 1.1vw, 0.85rem)' }}
+                        className="text-white/80 font-bold leading-relaxed whitespace-pre-line max-w-[75%] text-left"
+                        style={{ fontSize: 'clamp(0.5rem, 1.4vw, 1rem)' }}
                     >
-                        {subtitle || "여기에 상세 설명 문구가 들어갑니다.\n실제 홈페이지의 폰트 비율과 동일합니다."}
+                        {subtitle || "여기에 상세 설명 문구가 들어갑니다.\n실제 홈페이지의 웅장한 비율을 그대로 구현했습니다."}
                     </p>
 
                     {/* Button Mockup */}
-                    <div className="pt-4">
-                        <div className="inline-flex items-center gap-4 px-6 py-2.5 bg-white text-slate-900 rounded-full shadow-xl">
-                            <div className="w-16 h-2 bg-slate-900/10 rounded-full" />
-                            <div className="w-5 h-5 bg-slate-900 rounded-full flex items-center justify-center">
-                                <ChevronRight className="w-3 h-3 text-white" />
+                    <div className="pt-[2%]">
+                        <div className="inline-flex items-center gap-4 px-5 py-2 bg-white text-slate-900 rounded-full shadow-2xl">
+                            <div className="w-12 h-1.5 bg-slate-900/10 rounded-full" />
+                            <div className="w-6 h-6 bg-slate-900 rounded-full flex items-center justify-center">
+                                <ChevronRight className="w-3.5 h-3.5 text-white" />
                             </div>
                         </div>
                     </div>

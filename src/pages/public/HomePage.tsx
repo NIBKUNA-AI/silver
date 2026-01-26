@@ -115,7 +115,7 @@ export function HomePage() {
                 <HeroBackground bgImage={bgImage} />
 
                 <div className="container relative z-10 mx-auto px-6 md:px-12">
-                    <div className="max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+                    <div className="max-w-5xl space-y-8 animate-in fade-in slide-in-from-bottom-10 duration-1000">
                         {/* Premium Tag */}
                         <motion.div
                             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-sm"
