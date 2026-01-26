@@ -160,61 +160,13 @@ export function SettingsPage() {
             </div>
 
             <div className="space-y-10 pt-4 text-left">
-                {activeTab === 'home' && (() => {
-                    const [pTitle, setPTitle] = useState(getSetting('home_title') || '');
-                    const [pSubtitle, setPSubtitle] = useState(getSetting('home_subtitle') || '');
-
-                    return (
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="space-y-10">
-                                <SectionCard icon={<LayoutTemplate className="text-indigo-500" />} title="홈페이지 메인 문구">
-                                    <div className="space-y-8">
-                                        <SaveableTextArea
-                                            label="메인 타이틀 (강조 문구)"
-                                            initialValue={getSetting('home_title')}
-                                            placeholder="줄바꿈을 사용하여 문구를 배치해보세요."
-                                            onSave={(v) => handleSave('home_title', v)}
-                                            onChange={(v) => setPTitle(v)}
-                                            saving={saving}
-                                            rows={2}
-                                        />
-                                        <SaveableTextArea
-                                            label="서브 타이틀 (상세 설명)"
-                                            initialValue={getSetting('home_subtitle')}
-                                            placeholder="예: 언어치료, 감각통합 전문 기관..."
-                                            onSave={(v) => handleSave('home_subtitle', v)}
-                                            onChange={(v) => setPSubtitle(v)}
-                                            saving={saving}
-                                            rows={2}
-                                        />
-                                    </div>
-                                </SectionCard>
-                                <SectionCard icon={<Bell className="text-blue-500" />} title="메인 상단 공지">
-                                    <SaveableTextArea label="공지 내용" initialValue={getSetting('notice_text')} onSave={(v) => handleSave('notice_text', v)} saving={saving} />
-                                </SectionCard>
-                            </div>
-
-                            <div className="space-y-6">
-                                <div className="flex items-center justify-between px-4">
-                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">실시간 프리뷰 (Desktop)</h3>
-                                    <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">LIVE</span>
-                                </div>
-                                <div className="sticky top-24">
-                                    <HeroPreview
-                                        title={pTitle}
-                                        subtitle={pSubtitle}
-                                        bgUrl={getSetting('main_banner_url')}
-                                    />
-                                    <div className="mt-8">
-                                        <SectionCard icon={<LayoutTemplate className="text-purple-500" />} title="메인 배너 이미지">
-                                            <ImageUploader bucketName="images" currentImage={getSetting('main_banner_url')} onUploadComplete={(url) => handleSave('main_banner_url', url)} />
-                                        </SectionCard>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })()}
+                {activeTab === 'home' && (
+                    <HomeSettingsTab
+                        getSetting={getSetting}
+                        handleSave={handleSave}
+                        saving={saving}
+                    />
+                )}
 
                 {activeTab === 'about' && (
                     <SectionCard title="센터 소개 편집">
@@ -606,6 +558,62 @@ function SnsLinksSection() {
                 />
             </div>
         </SectionCard>
+    );
+}
+
+function HomeSettingsTab({ getSetting, handleSave, saving }) {
+    const [pTitle, setPTitle] = useState(getSetting('home_title') || '');
+    const [pSubtitle, setPSubtitle] = useState(getSetting('home_subtitle') || '');
+
+    return (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
+            <div className="space-y-10">
+                <SectionCard icon={<LayoutTemplate className="text-indigo-500" />} title="홈페이지 메인 문구">
+                    <div className="space-y-8">
+                        <SaveableTextArea
+                            label="메인 타이틀 (강조 문구)"
+                            initialValue={getSetting('home_title')}
+                            placeholder="여러 줄로 입력하면 실제 화면에서도 줄바꿈이 적용됩니다."
+                            onSave={(v) => handleSave('home_title', v)}
+                            onChange={(v) => setPTitle(v)}
+                            saving={saving}
+                            rows={3}
+                        />
+                        <SaveableTextArea
+                            label="서브 타이틀 (상세 설명)"
+                            initialValue={getSetting('home_subtitle')}
+                            placeholder="예: 우리 아이의 성장을 돕는 치료 프로그램을 확인하세요."
+                            onSave={(v) => handleSave('home_subtitle', v)}
+                            onChange={(v) => setPSubtitle(v)}
+                            saving={saving}
+                            rows={3}
+                        />
+                    </div>
+                </SectionCard>
+                <SectionCard icon={<Bell className="text-blue-500" />} title="메인 상단 공지">
+                    <SaveableTextArea label="공지가 필요한 경우 입력하세요." initialValue={getSetting('notice_text')} onSave={(v) => handleSave('notice_text', v)} saving={saving} rows={2} />
+                </SectionCard>
+            </div>
+
+            <div className="space-y-6">
+                <div className="flex items-center justify-between px-4">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">실시간 프리뷰 (Hero UI)</h3>
+                    <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded animate-pulse">LIVE</span>
+                </div>
+                <div className="sticky top-24">
+                    <HeroPreview
+                        title={pTitle}
+                        subtitle={pSubtitle}
+                        bgUrl={getSetting('main_banner_url')}
+                    />
+                    <div className="mt-8">
+                        <SectionCard icon={<LayoutTemplate className="text-purple-500" />} title="메인 배너 이미지">
+                            <ImageUploader bucketName="images" currentImage={getSetting('main_banner_url')} onUploadComplete={(url) => handleSave('main_banner_url', url)} />
+                        </SectionCard>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }
 
