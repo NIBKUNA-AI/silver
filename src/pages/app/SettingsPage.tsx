@@ -711,7 +711,7 @@ function HeroPreview({ title, subtitle, bgUrl }) {
 
             {/* 2. Content Layer (Left Aligned) */}
             <div className="absolute inset-0 z-10 flex flex-col justify-center px-[8%] md:px-[10%] text-left">
-                <div className="max-w-[85%] space-y-[4%] text-left">
+                <div className="max-w-[92%] space-y-[4%] text-left">
                     {/* Badge */}
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
@@ -722,8 +722,8 @@ function HeroPreview({ title, subtitle, bgUrl }) {
                     <h1
                         className="text-white font-black leading-[1.05] tracking-tighter whitespace-pre-line text-left"
                         style={{
-                            fontSize: 'clamp(0.8rem, 4.2vw, 3.2rem)',
-                            textShadow: '0 4px 30px rgba(0,0,0,0.5)',
+                            fontSize: 'clamp(0.5rem, 2.4vw, 1.8rem)',
+                            textShadow: '0 4px 20px rgba(0,0,0,0.5)',
                             wordBreak: 'keep-all'
                         }}
                     >
@@ -732,8 +732,8 @@ function HeroPreview({ title, subtitle, bgUrl }) {
 
                     {/* Description */}
                     <p
-                        className="text-white/80 font-bold leading-relaxed whitespace-pre-line max-w-[75%] text-left"
-                        style={{ fontSize: 'clamp(0.5rem, 1.4vw, 1rem)' }}
+                        className="text-white/80 font-bold leading-relaxed whitespace-pre-line max-w-[85%] text-left"
+                        style={{ fontSize: 'clamp(0.4rem, 1vw, 0.7rem)' }}
                     >
                         {subtitle || "여기에 상세 설명 문구가 들어갑니다.\n실제 홈페이지의 웅장한 비율을 그대로 구현했습니다."}
                     </p>
