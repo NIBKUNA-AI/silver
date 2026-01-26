@@ -81,15 +81,24 @@ export function SEOHead() {
 
     // 경로별 suffix 설정
     let pageSuffix = "";
-    if (location.pathname.includes('/about')) pageSuffix = " - 소개";
-    else if (location.pathname.includes('/programs')) pageSuffix = " - 프로그램";
-    else if (location.pathname.includes('/contact')) pageSuffix = " - 오시는길";
-    else if (location.pathname.includes('/blog')) pageSuffix = " - 블로그";
-    else if (location.pathname.includes('/parent/home')) pageSuffix = " - 학부모 홈";
-    else if (location.pathname.includes('/app/dashboard')) pageSuffix = " - 대시보드";
-    else if (location.pathname.includes('/login')) pageSuffix = " - 로그인";
+    const isMasterPath = location.pathname.startsWith('/master');
 
-    const displayTitle = `${title}${pageSuffix}`;
+    if (isMasterPath) {
+        // 마스터 페이지는 보조 설명 없이 'Zarada'만 표시하거나 최소한의 정보만 표시
+        if (location.pathname === '/master') pageSuffix = "";
+        else if (location.pathname.includes('/centers')) pageSuffix = " - 전체 센터 관리";
+        else pageSuffix = " - 마스터";
+    } else {
+        if (location.pathname === '/') pageSuffix = ""; // 메인 홈은 'Zarada'만 표시
+        else if (location.pathname.includes('/about')) pageSuffix = " - 소개";
+        else if (location.pathname.includes('/programs')) pageSuffix = " - 프로그램";
+        else if (location.pathname.includes('/contact')) pageSuffix = " - 오시는길";
+        else if (location.pathname.includes('/parent/home')) pageSuffix = " - 학부모 홈";
+        else if (location.pathname.includes('/app/dashboard')) pageSuffix = " - 대시보드";
+        else if (location.pathname.includes('/login')) pageSuffix = " - 로그인";
+    }
+
+    const displayTitle = isMasterPath ? `Zarada${pageSuffix}` : `${title}${pageSuffix}`;
 
     return (
         <Helmet>

@@ -34,6 +34,7 @@ import { Login } from '@/pages/auth/Login';
 import { Register } from '@/pages/auth/Register';
 import { ForgotPassword } from '@/pages/auth/ForgotPassword';
 import { UpdatePassword } from '@/pages/auth/UpdatePassword';
+import { LegalPage } from '@/pages/public/LegalPage';
 // import { BlogPage } from '@/pages/public/BlogPage';
 // import { BlogPostPage } from '@/pages/public/BlogPostPage';
 
@@ -88,8 +89,16 @@ function App() {
   useEffect(() => {
     const SAAS_ENGINE_VER = "1.3.0";
     if (localStorage.getItem('zarada_ver') !== SAAS_ENGINE_VER) {
+      console.log("🔄 [System] New version detected, clearing cache (preserving auth)...");
+      const token = localStorage.getItem('zarada-auth-token');
+      const rememberMe = localStorage.getItem('remember_me');
+
       localStorage.clear();
       sessionStorage.clear();
+
+      if (token) localStorage.setItem('zarada-auth-token', token);
+      if (rememberMe) localStorage.setItem('remember_me', rememberMe);
+
       localStorage.setItem('zarada_ver', SAAS_ENGINE_VER);
       window.location.reload();
     }
@@ -137,6 +146,8 @@ function App() {
         <Routes>
           {/* 1. Global Landing (Center Selector) */}
           <Route path="/" element={<GlobalLanding />} />
+          <Route path="/policy/privacy" element={<LegalPage type="privacy" />} />
+          <Route path="/policy/terms" element={<LegalPage type="terms" />} />
 
           {/* 2. Public Center Pages (/centers/:slug/...) */}
           <Route path="/centers/:slug" element={<CenterGuard><PublicLayout /></CenterGuard>}>

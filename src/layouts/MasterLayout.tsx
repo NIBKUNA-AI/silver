@@ -35,8 +35,8 @@ export function MasterLayout() {
             <aside className="w-64 bg-slate-900 text-white flex flex-col shrink-0 relative overflow-hidden">
                 {/* Brand */}
                 <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800">
-                    <Shield className="w-6 h-6 text-amber-500" />
-                    <span className="font-black text-lg tracking-tight">MASTER <span className="text-slate-500">CONSOLE</span></span>
+                    <Shield className="w-6 h-6 text-indigo-500" />
+                    <span className="font-black text-xl tracking-tighter">Zarada</span>
                 </div>
 
                 {/* Nav */}

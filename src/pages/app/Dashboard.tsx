@@ -618,7 +618,7 @@ export function Dashboard() {
     return (
         <div ref={dashboardRef} className="p-8 max-w-[1600px] mx-auto space-y-8 min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
             <Helmet>
-                <title>지능형 인사이트 허브 - 자라다 Admin</title>
+                <title>인사이트 허브 - Zarada Admin</title>
             </Helmet>
 
             {isSuperAdmin && (

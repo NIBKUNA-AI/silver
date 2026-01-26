@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase, setRememberMe, getRememberMe } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeProvider';
@@ -211,11 +211,6 @@ export function HomeLoginModal({ isOpen, onClose, centerName = "아동발달센�
                                         )}
                                         placeholder="비밀번호"
                                     />
-                                    <div className="flex justify-end mt-1.5">
-                                        <Link to="/auth/forgot-password" className="text-xs font-bold text-indigo-500 hover:text-indigo-600">
-                                            비밀번호 찾기
-                                        </Link>
-                                    </div>
                                 </div>
 
                                 {error && (
@@ -249,13 +244,7 @@ export function HomeLoginModal({ isOpen, onClose, centerName = "아동발달센�
                                     {loading ? '로그인 중...' : '로그인'}
                                 </button>
                             </form>
-
-                            <div className="mt-6 text-center">
-                                <p className={cn("text-xs font-medium", isDark ? "text-slate-500" : "text-slate-400")}>
-                                    계정이 없으신가요?
-                                    <Link to="/register" className="text-indigo-500 font-bold ml-1 hover:underline">회원가입하기</Link>
-                                </p>
-                            </div>
+                            {/* 계정 안내 섹션 제거 */}
                         </motion.div>
                     </div>
                 </>

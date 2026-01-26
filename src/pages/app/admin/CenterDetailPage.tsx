@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Building2, Users, Baby, ArrowLeft, MoreHorizontal, ExternalLink, Pencil, X, Save, ShieldAlert, Trash2 } from 'lucide-react';
@@ -76,27 +76,60 @@ export function CenterDetailPage() {
         e.preventDefault();
         if (!centerId || !centerData) return;
 
+        const { data: authData } = await supabase.auth.getUser();
+        console.log("🔍 [Auth Debug] 현재 로그인 계정:", authData.user?.email);
+
+        // DB에서 실제로 인식하는 권한 체크 트리거 (임시)
+        const { data: rpcCheck } = await (supabase as any).rpc('is_super_admin');
+        console.log("🛡️ [DB Policy Debug] DB가 나를 슈퍼어드민으로 인정하는가?:", rpcCheck);
+
         setSaving(true);
-        try {
-            const { error } = await (supabase as any)
-                .from('centers')
-                .update({
-                    name: editForm.name,
-                    slug: editForm.slug.toLowerCase().trim(),
-                    is_active: editForm.is_active,
-                    address: editForm.address,
-                    phone: editForm.phone,
-                    business_number: editForm.business_number,
-                    email: editForm.email,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', centerId as string);
+        const updateData: any = {
+            updated_at: new Date().toISOString()
+        };
 
-            if (error) throw error;
+        // ✨ [Robust Comparison] 필드별 변경 사항 정밀 체크
+        const hasChanged = (newVal: any, oldVal: any) => {
+            const normalizedNew = newVal === '' ? null : newVal;
+            const normalizedOld = oldVal === '' ? null : oldVal;
+            return normalizedNew !== normalizedOld;
+        };
 
-            alert('✅ 지점 정보가 성공적으로 수정되었습니다.');
+        if (hasChanged(editForm.name, centerData.name)) updateData.name = editForm.name;
+        if (hasChanged(editForm.slug, centerData.slug)) updateData.slug = editForm.slug.toLowerCase().trim();
+        if (editForm.is_active !== centerData.is_active) updateData.is_active = editForm.is_active;
+        if (hasChanged(editForm.address, centerData.address)) updateData.address = editForm.address;
+        if (hasChanged(editForm.phone, centerData.phone)) updateData.phone = editForm.phone;
+        if (hasChanged(editForm.business_number, centerData.business_number)) updateData.business_number = editForm.business_number;
+        if (hasChanged(editForm.email, centerData.email)) updateData.email = editForm.email;
+
+        console.log("🛠️ [Update Debug] 전송 예정 데이터:", updateData);
+
+        // 변경된 사항이 없으면 바로 종료
+        if (Object.keys(updateData).length <= 1) {
+            console.log("ℹ️ 변경된 사항이 없어 업데이트를 건너뜁니다.");
             setIsEditModalOpen(false);
-            fetchCenterDetails();
+            setSaving(false);
+            return;
+        }
+
+        try {
+            const { error, data } = await (supabase as any)
+                .from('centers')
+                .update(updateData)
+                .eq('id', centerId as string)
+                .select();
+
+            if (error) {
+                console.error('❌ Supabase 업데이트 오류:', error);
+                throw error;
+            }
+
+            console.log("✅ [DB Response] 성공!", data);
+
+            // ✨ [Nuclear Option] 성공 시 즉시 새로고침하여 DB 상태 강제 반영
+            alert('✅ 지점 정보가 성공적으로 수정되었습니다. 화면을 갱신합니다.');
+            window.location.reload();
         } catch (error: any) {
             console.error('Update Error:', error);
             alert('❌ 수정 실패: ' + (error.message || '알 수 없는 오류'));

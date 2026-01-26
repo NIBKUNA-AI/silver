@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Building2, Plus, MapPin, Phone, X, Globe, Save, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Helmet } from 'react-helmet-async';
 
 export function CenterList() {
     const [centers, setCenters] = useState([]);
@@ -75,6 +76,9 @@ export function CenterList() {
 
     return (
         <div className="space-y-8 p-8 max-w-7xl mx-auto">
+            <Helmet>
+                <title>Zarada - 전체 센터 관리</title>
+            </Helmet>
             <div className="flex justify-between items-end border-b border-slate-200 pb-8">
                 <div>
                     <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">전체 센터 관리</h1>

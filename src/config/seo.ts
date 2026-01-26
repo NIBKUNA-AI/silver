@@ -1,6 +1,5 @@
-
 export const seoConfig = {
-    title: import.meta.env.VITE_SITE_TITLE || '자라다 아동심리발달센터',
+    title: import.meta.env.VITE_SITE_TITLE || 'Zarada',
     description: import.meta.env.VITE_META_DESCRIPTION || '아이들의 잠재력을 깨우는 최고의 발달 센터입니다.',
     ogImage: import.meta.env.VITE_OG_IMAGE || '/og-default.png',
     keywords: import.meta.env.VITE_META_KEYWORDS || '자라다발달센터, 아동발달센터, 언어치료, 감각통합치료',

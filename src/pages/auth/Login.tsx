@@ -55,7 +55,7 @@ export function Login() {
     const { center } = useCenter(); // ✨ Get Center Context
     const { branding } = useCenterBranding(); // ✨ Get Unified Branding
     const isDark = theme === 'dark';
-    const centerName = branding.name || getSetting('center_name') || '아동발달센터';
+    const centerName = branding.name || getSetting('center_name') || 'Zarada';
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -297,7 +297,7 @@ export function Login() {
                             "text-2xl font-black tracking-tight",
                             isDark ? "text-white" : "text-slate-900"
                         )} style={branding.brand_color ? { color: branding.brand_color } : {}}>
-                            {branding.name || '자라다'}
+                            {branding.name || 'Zarada'}
                         </h2>
                         <h3 className={cn(
                             "text-xl font-bold tracking-tight mt-2",
@@ -346,13 +346,7 @@ export function Login() {
                                     )}>
                                         비밀번호
                                     </label>
-                                    {/* ✨ Forgot Password Link */}
-                                    <Link
-                                        to="/auth/forgot-password"
-                                        className="text-[11px] font-bold text-indigo-500 hover:text-indigo-600"
-                                    >
-                                        비밀번호를 잊으셨나요?
-                                    </Link>
+                                    {/* 비밀번호를 잊으셨나요? 링크 제거 */}
                                 </div>
                                 <input
                                     id="password"
@@ -418,39 +412,7 @@ export function Login() {
                             ) : '이메일로 로그인'}
                         </button>
                     </form>
-                    <div className="text-center space-y-4 mt-8">
-                        <div className={cn(
-                            "text-sm font-medium",
-                            isDark ? "text-slate-400" : "text-slate-500"
-                        )}>
-                            계정이 없으신가요?
-                            <Link
-                                to={center?.slug ? `/centers/${center.slug}/register` : "/register"}
-                                className={cn(
-                                    "ml-1 font-bold hover:underline",
-                                    isDark ? "text-indigo-400" : "text-indigo-600"
-                                )}
-                            >
-                                회원가입
-                            </Link>
-                        </div>
-
-                        {/* ✨ Back to Global Landing Button */}
-                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                            <Link
-                                to="/"
-                                className={cn(
-                                    "text-xs font-bold transition-all flex items-center justify-center gap-1.5",
-                                    isDark ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-indigo-600"
-                                )}
-                            >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                                다른 센터를 찾으시나요?
-                            </Link>
-                        </div>
-                    </div>
+                    {/* 계정 없으신가요? 및 다른 센터 찾기 섹션 제거 */}
                 </div>
             </div>
 

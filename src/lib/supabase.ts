@@ -24,24 +24,24 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // - remember_me === 'false': sessionStorage 사용 (브라우저 종료 시 파기)
 const customStorageAdapter = {
     getItem: (key: string): string | null => {
-        // 먼저 localStorage 확인
         const localValue = localStorage.getItem(key);
-        if (localValue) return localValue;
+        const sessionValue = sessionStorage.getItem(key);
 
-        // 없으면 sessionStorage 확인
-        return sessionStorage.getItem(key);
+        if (localValue) return localValue;
+        if (sessionValue) return sessionValue;
+        return null;
     },
     setItem: (key: string, value: string): void => {
         const rememberMe = localStorage.getItem('remember_me');
 
+        // ✨ [Logic] 'remember_me'가 'false' 일 때만 sessionStorage 사용
         if (rememberMe === 'false') {
-            // 로그인 유지 해제 → sessionStorage에 저장 (브라우저 종료 시 삭제)
             sessionStorage.setItem(key, value);
-            localStorage.removeItem(key); // 기존 localStorage 세션 제거
+            localStorage.removeItem(key);
         } else {
-            // 로그인 유지 체크 (기본값) → localStorage에 저장
+            // 그 외(true 또는 null)는 모두 localStorage 사용 (안정성)
             localStorage.setItem(key, value);
-            sessionStorage.removeItem(key); // 기존 sessionStorage 세션 제거
+            sessionStorage.removeItem(key);
         }
     },
     removeItem: (key: string): void => {
