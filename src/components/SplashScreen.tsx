@@ -25,15 +25,20 @@ interface SplashScreenProps {
 }
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
-    const [centerName, setCenterName] = useState<string>('');
+    // ✨ [Optimization] Initialize based on current URL to prevent flickering of wrong names
+    const [centerName, setCenterName] = useState<string>(() => {
+        const isCenterPath = window.location.pathname.includes('/centers/');
+        return isCenterPath ? '' : '(주)자라다';
+    });
     const [isExiting, setIsExiting] = useState(false);
 
     useEffect(() => {
         const fetchBranding = async () => {
             try {
-                // 마스터 앱(/master)이나 메인 랜딩에 있을 때는 '(주)자라다' 고정
-                const isMasterPath = window.location.pathname.startsWith('/master') || window.location.pathname === '/';
-                if (isMasterPath) {
+                // 특정 지점 주소(/centers/지점명)가 아닐 때는 무조건 '(주)자라다' 표시
+                const isCenterPath = window.location.pathname.includes('/centers/');
+
+                if (!isCenterPath) {
                     setCenterName('(주)자라다');
                     return;
                 }
@@ -70,6 +75,12 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         };
     }, [onComplete]);
 
+    // ✨ [Optimization] Determine display name based on current path
+    const isCenterPath = window.location.pathname.includes('/centers/');
+    const displayName = isCenterPath
+        ? (centerName || import.meta.env.VITE_CENTER_NAME || '(주)자라다')
+        : '(주)자라다';
+
     return (
         <AnimatePresence>
             {!isExiting && (
@@ -91,8 +102,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
                             <span className="text-indigo-600">Z</span>arada
                         </h1>
                         {/* ✨ Center Name Integration */}
-                        <p className="mt-4 text-sm font-bold text-slate-400 tracking-widest uppercase opacity-80">
-                            {centerName || import.meta.env.VITE_CENTER_NAME || '(주)자라다'}
+                        <p className="mt-4 text-sm font-bold text-slate-400 tracking-widest uppercase opacity-80 text-center">
+                            {displayName}
                         </p>
                     </motion.div>
                 </motion.div>
