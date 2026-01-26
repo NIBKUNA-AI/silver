@@ -36,6 +36,10 @@ export const CenterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   useEffect(() => {
+    // 🚀 [Critical Fix] Set loading to true IMMEDIATELY when effect triggers
+    // This prevents CenterGuard from seeing loading: false + center: null during the micro-task gap
+    setLoading(true);
+
     const fetchCenter = async () => {
       const pathParts = location.pathname.split('/');
 
@@ -104,7 +108,6 @@ export const CenterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
 
-      setLoading(true);
       try {
         const { data, error } = await supabase
           .from('centers')

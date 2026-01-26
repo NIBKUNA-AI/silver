@@ -697,67 +697,68 @@ function SaveableTextArea({ label, initialValue, onSave, saving, placeholder, ro
 
 function HeroPreview({ title, subtitle, bgUrl }) {
     return (
-        <div className="relative w-full aspect-[16/9] rounded-[38px] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 bg-slate-900 group">
-            {/* 1. Background Layer */}
-            <div className="absolute inset-0 z-0">
+        <div className="relative w-full aspect-[21/9] rounded-[40px] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 bg-slate-900 group">
+            {/* 1. Immersive Background Layer */}
+            <div className="absolute inset-0">
                 {bgUrl ? (
-                    <img src={bgUrl} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-105" alt="Preview Background" />
+                    <img src={bgUrl} className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-105" alt="Preview Background" />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-indigo-900 to-slate-900" />
+                    <div className="w-full h-full bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900" />
                 )}
-                {/* Real Site Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+                {/* Precise Gradient Overlay mimicking HomePage.tsx */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent z-10" />
             </div>
 
-            {/* 2. Content Layer (Left Aligned) */}
-            <div className="absolute inset-0 z-10 flex flex-col justify-center px-[8%] md:px-[10%] text-left">
-                <div className="max-w-[92%] space-y-[4%] text-left">
-                    {/* Badge */}
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                        <div className="w-14 h-1.5 bg-white/30 rounded-full" />
+            {/* 2. Content Layer - Meticulously scaled for the preview container */}
+            <div className="absolute inset-0 z-20 flex flex-col justify-center px-[8%] text-left">
+                <div className="max-w-[95%] space-y-[4%] text-left">
+                    {/* Compact Badge */}
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-1">
+                        <div className="w-1 h-1 rounded-full bg-indigo-400" />
+                        <div className="w-12 h-1 bg-white/30 rounded-full" />
                     </div>
 
-                    {/* Title */}
+                    {/* Scaled-down Title - Prevents accidental line breaks in small containers */}
                     <h1
                         className="text-white font-black leading-[1.05] tracking-tighter whitespace-pre-line text-left"
                         style={{
-                            fontSize: 'clamp(0.5rem, 2.4vw, 1.8rem)',
-                            textShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                            wordBreak: 'keep-all'
+                            fontSize: 'clamp(0.4rem, 2.2vw, 1.5rem)',
+                            textShadow: '0 4px 30px rgba(0,0,0,0.6)',
+                            wordBreak: 'keep-all',
+                            maxWidth: '90%'
                         }}
                     >
-                        {title || "여기에 메인 타이틀이\n표시됩니다."}
+                        {title || "꿈과 희망이\n자라나는 공간"}
                     </h1>
 
-                    {/* Description */}
+                    {/* Scaled-down Subtitle */}
                     <p
-                        className="text-white/80 font-bold leading-relaxed whitespace-pre-line max-w-[85%] text-left"
-                        style={{ fontSize: 'clamp(0.4rem, 1vw, 0.7rem)' }}
+                        className="text-white/80 font-bold leading-relaxed whitespace-pre-line max-w-[80%] text-left"
+                        style={{ fontSize: 'clamp(0.35rem, 1vw, 0.7rem)' }}
                     >
-                        {subtitle || "여기에 상세 설명 문구가 들어갑니다.\n실제 홈페이지의 웅장한 비율을 그대로 구현했습니다."}
+                        {subtitle || "실제 사이트의 웅장한 비율을\n그대로 구현한 실시간 프리뷰입니다."}
                     </p>
 
-                    {/* Button Mockup */}
+                    {/* Compact Button Mockup */}
                     <div className="pt-[2%]">
-                        <div className="inline-flex items-center gap-4 px-5 py-2 bg-white text-slate-900 rounded-full shadow-2xl">
-                            <div className="w-12 h-1.5 bg-slate-900/10 rounded-full" />
-                            <div className="w-6 h-6 bg-slate-900 rounded-full flex items-center justify-center">
-                                <ChevronRight className="w-3.5 h-3.5 text-white" />
+                        <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-white text-slate-900 rounded-full shadow-2xl transition-transform active:scale-95 cursor-pointer">
+                            <div className="w-10 h-1 bg-slate-900/10 rounded-full" />
+                            <div className="w-5 h-5 bg-slate-900 rounded-full flex items-center justify-center">
+                                <ChevronRight className="w-3 h-3 text-white" />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* 3. Browser Header UI */}
-            <div className="absolute top-0 left-0 right-0 h-10 bg-black/10 backdrop-blur-md flex items-center px-6 gap-2 border-b border-white/5 z-20">
+            {/* 3. Browser Context Header UI */}
+            <div className="absolute top-0 left-0 right-0 h-10 bg-black/10 backdrop-blur-md border-b border-white/5 z-30 flex items-center px-6">
                 <div className="flex gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-400 opacity-80" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400 opacity-80" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-400 opacity-80" />
+                    <div className="w-2 h-2 rounded-full bg-rose-500/60" />
+                    <div className="w-2 h-2 rounded-full bg-amber-500/60" />
+                    <div className="w-2 h-2 rounded-full bg-emerald-500/60" />
                 </div>
-                <div className="flex-1 max-w-[140px] h-4 bg-white/5 rounded-full mx-auto" />
+                <div className="flex-1 max-w-[120px] h-3.5 bg-white/5 rounded-full mx-auto" />
             </div>
         </div>
     );
