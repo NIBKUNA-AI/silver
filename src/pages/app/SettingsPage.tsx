@@ -686,52 +686,67 @@ function SaveableTextArea({ label, initialValue, onSave, saving, placeholder, ro
 
 function HeroPreview({ title, subtitle, bgUrl }) {
     return (
-        <div className="relative w-full aspect-[16/10] rounded-[40px] overflow-hidden shadow-2xl border-8 border-white dark:border-slate-800 group">
+        <div className="relative w-full aspect-[21/9] min-h-[300px] rounded-[32px] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 group">
+            {/* Background Image Layer */}
             <div className="absolute inset-0">
                 <img
                     src={bgUrl || "https://images.unsplash.com/photo-1502086223501-7ea24ecb4545?auto=format&fit=crop&q=80"}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    className="w-full h-full object-cover"
                     alt="Preview BG"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+                {/* Gradient Overlay for Text Readability */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
             </div>
 
-            <div className="absolute inset-0 flex flex-col justify-center px-12">
-                <div className="space-y-5 max-w-sm">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full border border-white/30">
-                        <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-                        <div className="w-16 h-1 bg-white/40 rounded-full" />
+            {/* Content Mockup - Exactly matching HomePage.tsx layout */}
+            <div className="absolute inset-0 flex flex-col justify-center px-10 md:px-16 text-left">
+                <div className="max-w-[75%] space-y-4">
+                    {/* Top Badge Mockup */}
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full border border-white/30 mb-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                        <div className="w-12 h-2 bg-white/60 rounded-full" />
                     </div>
+
+                    {/* Main Title - Mirroring HomePage font logic */}
                     <h1
-                        className="text-white font-black leading-[1.15] tracking-tighter whitespace-pre-line"
-                        style={{ fontSize: 'min(3.5vw, 2.4rem)', textShadow: '0 4px 15px rgba(0,0,0,0.4)' }}
+                        className="text-white font-black leading-[1.1] tracking-tighter whitespace-pre-line"
+                        style={{
+                            fontSize: 'clamp(1rem, 3.5vw, 2.8rem)',
+                            textShadow: '0 4px 20px rgba(0,0,0,0.4)',
+                            wordBreak: 'keep-all'
+                        }}
                     >
                         {title || "여기에 타이틀이 표시됩니다"}
                     </h1>
+
+                    {/* Subtitle */}
                     <p
-                        className="text-white/80 font-medium leading-relaxed whitespace-pre-line"
-                        style={{ fontSize: 'min(1.5vw, 0.95rem)' }}
+                        className="text-white/90 font-medium leading-relaxed whitespace-pre-line max-w-sm"
+                        style={{ fontSize: 'clamp(0.6rem, 1.2vw, 0.9rem)' }}
                     >
                         {subtitle || "여기에 상세 설명이 들어갑니다."}
                     </p>
-                    <div className="pt-6 flex gap-3">
-                        <div className="w-32 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
-                            <div className="w-16 h-2 bg-slate-200 rounded-full" />
-                        </div>
-                        <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
-                            <div className="w-3 h-3 bg-white/50 rounded-sm rotate-45" />
+
+                    {/* Action Button Mockup */}
+                    <div className="pt-6">
+                        <div className="inline-flex items-center gap-4 px-6 py-2.5 bg-white text-slate-900 rounded-full shadow-xl">
+                            <div className="w-16 h-2 bg-slate-900/20 rounded-full" />
+                            <div className="w-5 h-5 bg-slate-900 rounded-full flex items-center justify-center">
+                                <span className="text-[10px] text-white">→</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="absolute top-0 left-0 right-0 h-10 bg-white/10 backdrop-blur-xl flex items-center px-6 gap-2 border-b border-white/5">
+            {/* Browser Header Mockup */}
+            <div className="absolute top-0 left-0 right-0 h-10 bg-white/10 backdrop-blur-md flex items-center px-6 gap-2 border-b border-white/10 z-20">
                 <div className="flex gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-rose-400/80" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400/80" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/80" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                 </div>
-                <div className="flex-1 max-w-[200px] h-5 bg-black/20 rounded-md mx-auto" />
+                <div className="flex-1 max-w-[120px] h-4 bg-white/10 rounded-full mx-auto" />
             </div>
         </div>
     );
