@@ -49,7 +49,7 @@ serve(async (req: any) => {
         // 2. [Admin] Service Role Client for high-privilege operations
         const supabaseAdmin = createClient(
             Deno.env.get("SUPABASE_URL") ?? "",
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+            Deno.env.get("SB_SERVICE_ROLE_KEY") ?? "",
             { auth: { autoRefreshToken: false, persistSession: false } }
         );
 
@@ -64,9 +64,10 @@ serve(async (req: any) => {
         console.log(`📧 Inviting user: ${email} as ${role} for center: ${targetCenterId}`);
 
         // 3. Send Invitation Email
+        const origin = req.headers.get("origin") || "https://app.myparents.co.kr";
         const { data: authData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
             data: { name, role, full_name: name, center_id: targetCenterId },
-            redirectTo: 'https://zaradacenter.co.kr/auth/update-password',
+            redirectTo: `${origin}/auth/update-password`,
         });
 
         if (inviteError) {

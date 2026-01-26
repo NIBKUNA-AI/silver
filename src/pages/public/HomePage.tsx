@@ -141,25 +141,9 @@ export function HomePage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.2, type: "spring", stiffness: 100 }}
                         >
-                            {DEFAULT_CONTENT.hero.titlePoint}
-                            <span className="text-indigo-300">{DEFAULT_CONTENT.hero.titleLast.split('\n')[0]}</span>
+                            {getSetting('home_title') || DEFAULT_CONTENT.hero.titlePoint}
                         </motion.h1>
-                        <motion.h2
-                            className="text-white tracking-tighter -mt-2"
-                            style={{
-                                fontSize: 'clamp(1.8rem, 7vw, 4rem)',
-                                fontWeight: 900,
-                                lineHeight: 1.1,
-                                textShadow: '0 4px 20px rgba(0,0,0,0.3)',
-                                whiteSpace: 'nowrap',
-                                wordBreak: 'keep-all'
-                            }}
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.3, type: "spring", stiffness: 100 }}
-                        >
-                            {DEFAULT_CONTENT.hero.titleLast.split('\n')[1]}
-                        </motion.h2>
+                        {/* Remove separate h2 subtitle if title is custom or keep it as optional */}
 
                         <motion.p
                             className="text-white/90 font-medium leading-relaxed max-w-lg whitespace-pre-line text-lg md:text-xl drop-shadow-md"
@@ -167,7 +151,7 @@ export function HomePage() {
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.8, delay: 0.5 }}
                         >
-                            {DEFAULT_CONTENT.hero.description}
+                            {getSetting('home_subtitle') || DEFAULT_CONTENT.hero.description}
                         </motion.p>
 
                         <div className="flex gap-4 pt-4">

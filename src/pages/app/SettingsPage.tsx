@@ -162,13 +162,16 @@ export function SettingsPage() {
             <div className="space-y-10 pt-4 text-left">
                 {activeTab === 'home' && (
                     <>
-                        <SectionCard icon={<MessageCircle className="text-yellow-500" />} title="카카오톡 상담 링크">
-                            <SaveableInput label="URL 주소" initialValue={getSetting('kakao_url')} onSave={(v) => handleSave('kakao_url', v)} saving={saving} />
+                        <SectionCard icon={<LayoutTemplate className="text-indigo-500" />} title="홈페이지 메인 문구">
+                            <div className="space-y-6">
+                                <SaveableInput label="메인 타이틀 (강조 문구)" initialValue={getSetting('home_title')} placeholder="예: 아이의 행복이 자라나는 특별한 공간" onSave={(v) => handleSave('home_title', v)} saving={saving} />
+                                <SaveableTextArea label="서브 타이틀 (상세 설명)" initialValue={getSetting('home_subtitle')} placeholder="예: 언어치료, 감각통합 전문 기관..." onSave={(v) => handleSave('home_subtitle', v)} saving={saving} rows={2} />
+                            </div>
                         </SectionCard>
                         <SectionCard icon={<Bell className="text-blue-500" />} title="메인 상단 공지">
                             <SaveableTextArea label="공지 내용" initialValue={getSetting('notice_text')} onSave={(v) => handleSave('notice_text', v)} saving={saving} />
                         </SectionCard>
-                        <SectionCard icon={<LayoutTemplate className="text-purple-500" />} title="배너 이미지">
+                        <SectionCard icon={<LayoutTemplate className="text-purple-500" />} title="메인 배너 이미지">
                             <ImageUploader bucketName="images" currentImage={getSetting('main_banner_url')} onUploadComplete={(url) => handleSave('main_banner_url', url)} />
                         </SectionCard>
                     </>
@@ -527,6 +530,13 @@ function SnsLinksSection() {
         <SectionCard title="SNS 링크 (푸터 아이콘 연동)" icon={<Share2 className="text-pink-500" />}>
             <p className="text-xs text-slate-400 dark:text-slate-500 mb-6">입력한 URL이 있는 SNS만 푸터에 아이콘이 표시됩니다.</p>
             <div className="space-y-6">
+                <SaveableInput
+                    label="카카오톡 상담 URL"
+                    initialValue={getSetting('kakao_url')}
+                    placeholder="https://pf.kakao.com/_xxxx"
+                    onSave={(v) => handleSave('kakao_url', v)}
+                    saving={saving}
+                />
                 <SaveableInput
                     label="인스타그램 URL"
                     initialValue={getSetting('sns_instagram')}

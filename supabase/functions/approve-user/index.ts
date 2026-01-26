@@ -30,7 +30,7 @@ serve(async (req) => {
         // 하지만 확실하게 하기 위해 Service Role 클라이언트를 따로 만듦
         const supabaseAdmin = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+            Deno.env.get('SB_SERVICE_ROLE_KEY') ?? ''
         )
 
         const { data: adminProfile } = await supabaseAdmin

@@ -84,16 +84,19 @@ export function Footer() {
                         {/* SNS Icons */}
                         {hasSnsLinks && (
                             <div className="flex gap-3 pt-2">
-                                <SnsIcon href={settings.sns_instagram} label="Instagram">
+                                <SnsIcon href={settings?.kakao_url} label="KakaoTalk">
+                                    <KakaoIcon />
+                                </SnsIcon>
+                                <SnsIcon href={settings?.sns_instagram} label="Instagram">
                                     <InstagramIcon />
                                 </SnsIcon>
-                                <SnsIcon href={settings.sns_facebook} label="Facebook">
+                                <SnsIcon href={settings?.sns_facebook} label="Facebook">
                                     <FacebookIcon />
                                 </SnsIcon>
-                                <SnsIcon href={settings.sns_youtube} label="YouTube">
+                                <SnsIcon href={settings?.sns_youtube} label="YouTube">
                                     <YouTubeIcon />
                                 </SnsIcon>
-                                <SnsIcon href={settings.sns_blog} label="Blog">
+                                <SnsIcon href={settings?.sns_blog} label="Blog">
                                     <BlogIcon />
                                 </SnsIcon>
                             </div>
@@ -199,6 +202,14 @@ function BlogIcon({ size = 20 }: { size?: number }) {
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+        </svg>
+    );
+}
+
+function KakaoIcon({ size = 20 }: { size?: number }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3c-4.97 0-9 3.185-9 7.115 0 2.558 1.707 4.8 4.27 6.054-.188.702-.68 2.531-.777 2.89-.118.438.158.432.333.315.137-.092 2.183-1.482 3.059-2.077.36.05.73.078 1.115.078 4.97 0 9-3.185 9-7.115S16.97 3 12 3z" />
         </svg>
     );
 }
