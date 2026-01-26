@@ -160,22 +160,61 @@ export function SettingsPage() {
             </div>
 
             <div className="space-y-10 pt-4 text-left">
-                {activeTab === 'home' && (
-                    <>
-                        <SectionCard icon={<LayoutTemplate className="text-indigo-500" />} title="홈페이지 메인 문구">
-                            <div className="space-y-6">
-                                <SaveableInput label="메인 타이틀 (강조 문구)" initialValue={getSetting('home_title')} placeholder="예: 아이의 행복이 자라나는 특별한 공간" onSave={(v) => handleSave('home_title', v)} saving={saving} />
-                                <SaveableTextArea label="서브 타이틀 (상세 설명)" initialValue={getSetting('home_subtitle')} placeholder="예: 언어치료, 감각통합 전문 기관..." onSave={(v) => handleSave('home_subtitle', v)} saving={saving} rows={2} />
+                {activeTab === 'home' && (() => {
+                    const [pTitle, setPTitle] = useState(getSetting('home_title') || '');
+                    const [pSubtitle, setPSubtitle] = useState(getSetting('home_subtitle') || '');
+
+                    return (
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="space-y-10">
+                                <SectionCard icon={<LayoutTemplate className="text-indigo-500" />} title="홈페이지 메인 문구">
+                                    <div className="space-y-8">
+                                        <SaveableTextArea
+                                            label="메인 타이틀 (강조 문구)"
+                                            initialValue={getSetting('home_title')}
+                                            placeholder="줄바꿈을 사용하여 문구를 배치해보세요."
+                                            onSave={(v) => handleSave('home_title', v)}
+                                            onChange={(v) => setPTitle(v)}
+                                            saving={saving}
+                                            rows={2}
+                                        />
+                                        <SaveableTextArea
+                                            label="서브 타이틀 (상세 설명)"
+                                            initialValue={getSetting('home_subtitle')}
+                                            placeholder="예: 언어치료, 감각통합 전문 기관..."
+                                            onSave={(v) => handleSave('home_subtitle', v)}
+                                            onChange={(v) => setPSubtitle(v)}
+                                            saving={saving}
+                                            rows={2}
+                                        />
+                                    </div>
+                                </SectionCard>
+                                <SectionCard icon={<Bell className="text-blue-500" />} title="메인 상단 공지">
+                                    <SaveableTextArea label="공지 내용" initialValue={getSetting('notice_text')} onSave={(v) => handleSave('notice_text', v)} saving={saving} />
+                                </SectionCard>
                             </div>
-                        </SectionCard>
-                        <SectionCard icon={<Bell className="text-blue-500" />} title="메인 상단 공지">
-                            <SaveableTextArea label="공지 내용" initialValue={getSetting('notice_text')} onSave={(v) => handleSave('notice_text', v)} saving={saving} />
-                        </SectionCard>
-                        <SectionCard icon={<LayoutTemplate className="text-purple-500" />} title="메인 배너 이미지">
-                            <ImageUploader bucketName="images" currentImage={getSetting('main_banner_url')} onUploadComplete={(url) => handleSave('main_banner_url', url)} />
-                        </SectionCard>
-                    </>
-                )}
+
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between px-4">
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">실시간 프리뷰 (Desktop)</h3>
+                                    <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">LIVE</span>
+                                </div>
+                                <div className="sticky top-24">
+                                    <HeroPreview
+                                        title={pTitle}
+                                        subtitle={pSubtitle}
+                                        bgUrl={getSetting('main_banner_url')}
+                                    />
+                                    <div className="mt-8">
+                                        <SectionCard icon={<LayoutTemplate className="text-purple-500" />} title="메인 배너 이미지">
+                                            <ImageUploader bucketName="images" currentImage={getSetting('main_banner_url')} onUploadComplete={(url) => handleSave('main_banner_url', url)} />
+                                        </SectionCard>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 {activeTab === 'about' && (
                     <SectionCard title="센터 소개 편집">
@@ -587,15 +626,22 @@ function SectionCard({ icon, title, children }) {
     );
 }
 
-function SaveableInput({ label, initialValue, onSave, saving, placeholder }) {
+function SaveableInput({ label, initialValue, onSave, saving, placeholder, onChange }) {
     const [value, setValue] = useState(initialValue || '');
     useEffect(() => { setValue(initialValue || ''); }, [initialValue]);
     const isChanged = value !== (initialValue || '');
+
+    const handleChange = (e) => {
+        const newVal = e.target.value;
+        setValue(newVal);
+        if (onChange) onChange(newVal);
+    };
+
     return (
         <div className="w-full text-left">
             <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 ml-1 text-left">{label}</label>
             <div className="flex gap-3">
-                <input type="text" value={value} onChange={e => setValue(e.target.value)} placeholder={placeholder} className="flex-1 p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/20 outline-none font-bold text-slate-700 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 transition-all" />
+                <input type="text" value={value} onChange={handleChange} placeholder={placeholder} className="flex-1 p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/20 outline-none font-bold text-slate-700 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 transition-all" />
                 <button onClick={() => onSave(value)} disabled={!isChanged || saving} className="px-8 py-4 bg-slate-900 dark:bg-indigo-600 text-white rounded-2xl font-black text-sm disabled:opacity-20 flex items-center gap-2 active:scale-95 transition-all shadow-lg dark:shadow-indigo-500/20">
                     {saving ? <Loader2 className="animate-spin w-4 h-4" /> : '저장'}
                 </button>
@@ -604,20 +650,80 @@ function SaveableInput({ label, initialValue, onSave, saving, placeholder }) {
     );
 }
 
-function SaveableTextArea({ label, initialValue, onSave, saving, placeholder, rows = 3 }) {
+function SaveableTextArea({ label, initialValue, onSave, saving, placeholder, rows = 3, onChange }) {
     const [value, setValue] = useState(initialValue || '');
     useEffect(() => { setValue(initialValue || ''); }, [initialValue]);
     const isChanged = value !== (initialValue || '');
+
+    const handleChange = (e) => {
+        const newVal = e.target.value;
+        setValue(newVal);
+        if (onChange) onChange(newVal);
+    };
+
     return (
         <div className="w-full text-left">
             <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 ml-1 text-left">{label}</label>
             <div className="space-y-4 text-left">
-                <textarea value={value} onChange={e => setValue(e.target.value)} rows={rows} placeholder={placeholder} className="w-full p-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[28px] focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/20 outline-none font-bold text-slate-700 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 transition-all resize-none" />
+                <textarea value={value} onChange={handleChange} rows={rows} placeholder={placeholder} className="w-full p-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[28px] focus:ring-4 focus:ring-blue-50 dark:focus:ring-blue-900/20 outline-none font-bold text-slate-700 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 transition-all resize-none" />
                 <div className="flex justify-end mt-4">
                     <button onClick={() => onSave(value)} disabled={!isChanged || saving} className="px-10 py-3.5 bg-slate-900 dark:bg-indigo-600 text-white rounded-2xl font-black text-sm disabled:opacity-20 flex items-center gap-2 active:scale-95 transition-all shadow-lg dark:shadow-indigo-500/20">
                         {saving ? <Loader2 className="animate-spin w-4 h-4" /> : '변경사항 저장'}
                     </button>
                 </div>
+            </div>
+        </div>
+    );
+}
+
+function HeroPreview({ title, subtitle, bgUrl }) {
+    return (
+        <div className="relative w-full aspect-[16/10] rounded-[40px] overflow-hidden shadow-2xl border-8 border-white dark:border-slate-800 group">
+            <div className="absolute inset-0">
+                <img
+                    src={bgUrl || "https://images.unsplash.com/photo-1502086223501-7ea24ecb4545?auto=format&fit=crop&q=80"}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    alt="Preview BG"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+            </div>
+
+            <div className="absolute inset-0 flex flex-col justify-center px-12">
+                <div className="space-y-5 max-w-sm">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full border border-white/30">
+                        <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+                        <div className="w-16 h-1 bg-white/40 rounded-full" />
+                    </div>
+                    <h1
+                        className="text-white font-black leading-[1.15] tracking-tighter whitespace-pre-line"
+                        style={{ fontSize: 'min(3.5vw, 2.4rem)', textShadow: '0 4px 15px rgba(0,0,0,0.4)' }}
+                    >
+                        {title || "여기에 타이틀이 표시됩니다"}
+                    </h1>
+                    <p
+                        className="text-white/80 font-medium leading-relaxed whitespace-pre-line"
+                        style={{ fontSize: 'min(1.5vw, 0.95rem)' }}
+                    >
+                        {subtitle || "여기에 상세 설명이 들어갑니다."}
+                    </p>
+                    <div className="pt-6 flex gap-3">
+                        <div className="w-32 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                            <div className="w-16 h-2 bg-slate-200 rounded-full" />
+                        </div>
+                        <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
+                            <div className="w-3 h-3 bg-white/50 rounded-sm rotate-45" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="absolute top-0 left-0 right-0 h-10 bg-white/10 backdrop-blur-xl flex items-center px-6 gap-2 border-b border-white/5">
+                <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-rose-400/80" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400/80" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/80" />
+                </div>
+                <div className="flex-1 max-w-[200px] h-5 bg-black/20 rounded-md mx-auto" />
             </div>
         </div>
     );

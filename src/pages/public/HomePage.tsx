@@ -134,7 +134,7 @@ export function HomePage() {
                                 fontWeight: 900,
                                 lineHeight: 1.1,
                                 textShadow: '0 4px 20px rgba(0,0,0,0.3)',
-                                whiteSpace: 'nowrap',
+                                whiteSpace: 'pre-line',
                                 wordBreak: 'keep-all'
                             }}
                             initial={{ opacity: 0, y: 40 }}
