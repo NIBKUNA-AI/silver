@@ -105,7 +105,13 @@ function App() {
   }, []);
 
   const [showSplash, setShowSplash] = useState(() => {
-    // Only show splash once per session
+    // ✨ [Optimization] Splash logic:
+    // 1. Only show on the main portal ('/') or Master Console ('/master')
+    // 2. Do NOT show on specific center landing pages to speed up marketing conversions
+    const isMasterOrRoot = window.location.pathname === '/' || window.location.pathname.startsWith('/master');
+    if (!isMasterOrRoot) return false;
+
+    // 3. Only show once per session
     const hasSeenSplash = sessionStorage.getItem('splash_shown');
     return !hasSeenSplash;
   });

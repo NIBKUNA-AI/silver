@@ -87,8 +87,8 @@ export function HomePage() {
     const noticeText = getSetting('notice_text');
     const bgImage = bannerUrl || DEFAULT_CONTENT.hero.defaultBgImage;
 
-    const brandName = getSetting('center_name') || centerInfo?.name || DEFAULT_CONTENT.brandName;
-    const canonicalUrl = `https://jarada-erp.com/centers/${centerInfo?.id || 'main'}`;
+    const brandName = centerInfo?.name || getSetting('center_name') || DEFAULT_CONTENT.brandName;
+    const canonicalUrl = `${window.location.origin}/centers/${centerInfo?.slug || centerInfo?.id || 'main'}`;
 
     return (
         <div className={`min-h-screen font-sans overflow-x-hidden transition-colors ${isDark ? 'bg-slate-950 text-white' : 'bg-white text-slate-900'}`}>
