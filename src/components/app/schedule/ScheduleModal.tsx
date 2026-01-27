@@ -415,6 +415,13 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
         const p = programsList.find(x => x.id === pid);
         setFormData(prev => ({ ...prev, program_id: pid, end_time: p ? calculateEndTime(prev.start_time, p.duration) : prev.end_time }));
     };
+
+    const handleStartTimeChange = (sTime) => {
+        const p = programsList.find(x => x.id === formData.program_id);
+        const eTime = p ? calculateEndTime(sTime, p.duration) : formData.end_time;
+        setFormData(prev => ({ ...prev, start_time: sTime, end_time: eTime }));
+    };
+
     const getStatusStyle = (s) => {
         if (s === 'completed') return { icon: <CheckCircle2 className="w-4" />, label: '완료', activeClass: 'bg-emerald-50 text-emerald-600 border-emerald-200' };
         if (s === 'cancelled') return { icon: <XCircle className="w-4" />, label: '취소', activeClass: 'bg-rose-50 text-rose-600 border-rose-200' };
@@ -463,7 +470,7 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400">일시</label>
                             <input type="date" required className="w-full p-3 border dark:border-slate-700 rounded-xl font-bold mb-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none dark:[color-scheme:dark]" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
                             <div className="flex gap-2 mb-3">
-                                <input type="time" required className="flex-1 p-3 border dark:border-slate-700 rounded-xl font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none dark:[color-scheme:dark]" value={formData.start_time} onChange={e => setFormData({ ...formData, start_time: e.target.value })} />
+                                <input type="time" required className="flex-1 p-3 border dark:border-slate-700 rounded-xl font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none dark:[color-scheme:dark]" value={formData.start_time} onChange={e => handleStartTimeChange(e.target.value)} />
                                 <span className="self-center text-slate-400">~</span>
                                 <input type="time" required className="flex-1 p-3 border dark:border-slate-700 rounded-xl font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none dark:[color-scheme:dark]" value={formData.end_time} onChange={e => setFormData({ ...formData, end_time: e.target.value })} />
                             </div>
