@@ -127,10 +127,12 @@ export function TherapistList() {
                 alert(`✅ [초대 발송 성공] ${formData.name}님에게 이메일이 발송되었습니다.`);
             } else {
                 // ✨ [Edit Mode] Direct Update (As Admin)
-                // 1. Update Therapists Table (Detail info like Color, Account)
+                // 1. Upsert Therapists Table (Detail info like Color, Account)
+                // We use upsert with email to ensure even users without therapist rows get one.
                 const { error: therapistError } = await supabase
                     .from('therapists')
-                    .update({
+                    .upsert({
+                        email: formData.email,
                         name: formData.name,
                         hire_type: formData.hire_type,
                         color: formData.color,
@@ -138,8 +140,9 @@ export function TherapistList() {
                         account_number: formData.account_number,
                         account_holder: formData.account_holder,
                         system_role: formData.system_role,
-                    })
-                    .eq('email', formData.email); // ID 대신 이메일로 매칭하는 것이 더 안전함
+                        system_status: 'active', // Ensure they are active
+                        center_id: centerId,
+                    }, { onConflict: 'email' });
 
                 if (therapistError) throw therapistError;
 
@@ -154,11 +157,10 @@ export function TherapistList() {
 
                 if (profileError) throw profileError;
 
-                alert(`✅ [수정 완료] 정보가 업데이트되었습니다.`);
+                alert(`✅ [수정 완료] ${formData.name}님의 정보가 업데이트되었습니다.`);
+                fetchStaffs(); // Refresh UI
+                setIsModalOpen(false);
             }
-
-            fetchStaffs();
-            setIsModalOpen(false);
 
         } catch (error) {
             console.error(error);
