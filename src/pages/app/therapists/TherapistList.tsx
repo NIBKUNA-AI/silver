@@ -48,36 +48,41 @@ export function TherapistList() {
     const fetchStaffs = async () => {
         setLoading(true);
         try {
-            // 🛡️ [SAAS] Filter by Center ID and exclude super admins
             const superAdminList = `("${SUPER_ADMIN_EMAILS.join('","')}")`;
-            const { data: therapistData } = await supabase
-                .from('therapists')
-                .select('*')
-                .filter('email', 'not.in', superAdminList)
-                .eq('center_id', centerId)
-                .order('created_at', { ascending: false });
 
+            // 1. [Profiles First] 이 센터 소속의 모든 유저 프로필 조회
             const { data: profileData } = await supabase
                 .from('user_profiles')
-                .select('id, role, email, status')
+                .select('*')
                 .eq('center_id', centerId)
                 .filter('email', 'not.in', superAdminList);
 
-            const mergedData = therapistData?.map(t => {
-                const profile = profileData?.find(p => p.email === t.email);
-                // ✨ [Priority Logic] 1. Profile (Real User) -> 2. Therapists Table (Pending/Fallback)
-                let dbRole = profile?.role || t.system_role || 'therapist';
-                let dbStatus = profile?.status || t.system_status || 'invited';
+            // 2. [Therapists Second] 상세 정보(은행, 연락처 등) 조회
+            const { data: therapistData } = await supabase
+                .from('therapists')
+                .select('*')
+                .eq('center_id', centerId);
+
+            // 3. [Merge] 프로필 기준으로 합치기 (치료사 정보가 없어도 프로필이 있으면 노출)
+            const mergedData = profileData?.map(p => {
+                const detail = therapistData?.find(t => t.email === p.email);
 
                 return {
-                    ...t,
-                    userId: profile?.id, // Important for reset
-                    system_role: dbRole,
-                    system_status: dbStatus
+                    ...detail, // 상세 정보 (없을 수 있음)
+                    id: detail?.id || p.id, // ID 우선순위
+                    userId: p.id,
+                    name: p.name || detail?.name,
+                    email: p.email,
+                    system_role: p.role,
+                    system_status: p.status,
+                    center_id: p.center_id,
+                    hire_type: detail?.hire_type || (p.role === 'admin' ? 'fulltime' : 'freelancer')
                 };
-            }).filter(u => !isSuperAdmin(u.email));
+            }).filter(u => u.system_role !== 'parent' && !isSuperAdmin(u.email));
 
+            console.log("✅ Merged Staff Data:", mergedData);
             setStaffs(mergedData || []);
+
         } catch (error) {
             console.error("데이터 로딩 실패:", error);
         } finally {
