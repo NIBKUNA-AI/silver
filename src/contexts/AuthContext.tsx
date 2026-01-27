@@ -305,6 +305,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (e) {
             console.warn('Supabase signout request failed (possibly already expired):', e);
         } finally {
+            // ✨ [Snapshot] 로그아웃 전 현재 센터 정보 백업 (이게 지워져서 튕기는 것)
+            const savedSlug = localStorage.getItem('zarada_center_slug');
+
             // ✨ [Security Nuclear Option] 서버 결과와 관계없이 모든 로컬 데이터 파괴
             localStorage.clear();
             sessionStorage.clear();
@@ -328,10 +331,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setCenterId(null);
             initialLoadComplete.current = false;
 
-            // 깔끔한 상태를 위해 홈으로 이동 (필요 시 reload)
-            const currentSlug = localStorage.getItem('zarada_center_slug');
-            if (currentSlug) {
-                window.location.href = `/centers/${currentSlug}/login`;
+            // ✨ [Redirect Logic] 백업해둔 센터 정보로 정확하게 이동
+            if (savedSlug) {
+                // 재로그인 시 편의를 위해 슬러그 복원
+                localStorage.setItem('zarada_center_slug', savedSlug);
+                window.location.href = `/centers/${savedSlug}/login`;
             } else {
                 window.location.href = '/';
             }
