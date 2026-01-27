@@ -10,7 +10,7 @@
  * 이 파일의 UI/UX 설계 및 데이터 연동 로직은 독자적인 기술과
  * 예술적 영감을 바탕으로 구축되었습니다.
  */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useTrafficSource } from '@/hooks/useTrafficSource';
 import { useTheme } from '@/contexts/ThemeProvider';
@@ -111,6 +111,12 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
 
     const [currentStep, setCurrentStep] = useState(1);
     const totalSteps = 3;
+    const formContainerRef = useRef<HTMLDivElement>(null);
+
+    const scrollToFormTop = () => {
+        // ✨ [UX Fix] 웹 상단이 아닌, 폼 상단으로만 살짝 스크롤
+        formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
 
     const nextStep = () => {
         if (currentStep === 1) {
@@ -126,12 +132,12 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
             }
         }
         setCurrentStep(prev => Math.min(prev + 1, totalSteps));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollToFormTop();
     };
 
     const prevStep = () => {
         setCurrentStep(prev => Math.max(prev - 1, 1));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollToFormTop();
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -234,7 +240,7 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
     }
 
     return (
-        <div className="space-y-12">
+        <div ref={formContainerRef} className="space-y-12 scroll-mt-24">
             {/* ✨ Step Progress Bar */}
             <div className="flex items-center justify-between max-w-xs mx-auto mb-16">
                 {[1, 2, 3].map((step) => (
