@@ -21,20 +21,6 @@ export const GlobalLanding = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // ✨ [Auto-Redirect] 이미 로그인된 경우 각자의 홈으로 자동 이동
-    useEffect(() => {
-        if (role && !isInitialLoading) {
-            console.log("🚀 [Auto-Redirect] Logged in user detected on Portal, redirecting...");
-            if (role === 'super_admin') {
-                navigate('/master/centers');
-            } else if (['admin', 'manager', 'staff', 'employee', 'therapist'].includes(role)) {
-                navigate('/app/schedule');
-            } else if (role === 'parent') {
-                navigate('/parent/home');
-            }
-        }
-    }, [role, isInitialLoading, navigate]);
-
     // ✨ [Hook] Handle scroll for header appearance
     useEffect(() => {
         const handleScroll = () => {

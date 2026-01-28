@@ -238,7 +238,7 @@ export function Header() {
                                                                 <p className="text-[11px] text-slate-600 dark:text-slate-300 font-bold truncate">{user.email}</p>
                                                             </div>
                                                             <Link
-                                                                to="/"
+                                                                to={basePath || "/"}
                                                                 className={cn(
                                                                     "w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] font-bold transition-colors",
                                                                     isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600 hover:bg-slate-50"

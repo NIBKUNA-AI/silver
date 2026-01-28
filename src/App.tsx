@@ -70,7 +70,13 @@ import { SplashScreen } from '@/components/SplashScreen';
 import { useState, useEffect } from 'react';
 
 function AppHomeRedirect() {
-  const { role } = useAuth();
+  const { role, loading } = useAuth();
+
+  if (loading) return null; // 로딩 중에는 아무것도 렌더링하지 않아 플래시 방지
+
+  if (!role) {
+    return <GlobalLanding />;
+  }
 
   if (role === 'super_admin') {
     // 👑 [Sovereign Rule] If a specific center is selected, go to dashboard.
@@ -153,8 +159,8 @@ function App() {
         <SplashScreen onComplete={handleSplashComplete} />
       ) : (
         <Routes>
-          {/* 1. Global Landing (Center Selector) */}
-          <Route path="/" element={<GlobalLanding />} />
+          {/* 1. Global Home Logic (Redirection or Portal) */}
+          <Route path="/" element={<AppHomeRedirect />} />
           <Route path="/policy/privacy" element={<LegalPage type="privacy" />} />
           <Route path="/policy/terms" element={<LegalPage type="terms" />} />
 

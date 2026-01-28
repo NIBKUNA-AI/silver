@@ -40,6 +40,7 @@ import { ConsultationSurveyModal } from '@/components/public/ConsultationSurveyM
 import { InvitationCodeModal } from '@/components/InvitationCodeModal';
 import { DynamicHomeCareTips } from '@/components/public/DynamicHomeCareTips';
 import { Skeleton } from '@/components/common/Skeleton';
+import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 
 // 🎨 Brand Colors for Chart
 const CHART_COLORS = [
@@ -55,6 +56,7 @@ export function ParentHomePage() {
     const { user } = useAuth();
     const { getSetting } = useAdminSettings();
     const { theme } = useTheme();
+    const { center } = useCenter(); // ✨ Fetch Center Context
     const isDark = theme === 'dark';
     const dateInputRef = useRef(null);
 
@@ -340,7 +342,12 @@ export function ParentHomePage() {
                 "sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b shadow-sm",
                 isDark ? "bg-slate-900/90 border-slate-800" : "bg-white/90 backdrop-blur-sm border-slate-100"
             )}>
-                <button onClick={() => navigate('/')} className={cn("flex items-center gap-2 font-bold text-xs", isDark ? "text-slate-300" : "text-slate-900")}><Home className="w-4 h-4" /> 홈으로</button>
+                <button
+                    onClick={() => navigate(center?.slug ? `/centers/${center.slug}` : '/')}
+                    className={cn("flex items-center gap-2 font-bold text-xs", isDark ? "text-slate-300" : "text-slate-900")}
+                >
+                    <Home className="w-4 h-4" /> 홈으로
+                </button>
                 <div className={cn("px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase italic", isDark ? "bg-indigo-900 text-indigo-300" : "bg-primary/10 text-primary")}>Parent Mode</div>
             </nav>
 
