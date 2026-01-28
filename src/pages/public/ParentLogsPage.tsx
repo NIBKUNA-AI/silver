@@ -18,7 +18,6 @@ export function ParentLogsPage() {
     const [loading, setLoading] = useState(true);
     const [parentObservations, setParentObservations] = useState<any[]>([]);
     const [selectedLog, setSelectedLog] = useState<any>(null);
-    const [parentChecks, setParentChecks] = useState<Record<string, string[]>>({});
 
     useEffect(() => {
         fetchLogs();
@@ -74,7 +73,9 @@ export function ParentLogsPage() {
                     therapists:therapist_id (name, id),
                     children!inner (id, name, center_id)
                 `)
+            query = query
                 .eq('child_id', targetChildId)
+                .not('summary', 'eq', '부모님 자가진단 기록') // ✨ [User Request] 치료사가 작성한 것만 노출
                 .order('evaluation_date', { ascending: false });
 
             if ((profile as any)?.role === 'admin' || (profile as any)?.role === 'super_admin') {
@@ -111,15 +112,6 @@ export function ParentLogsPage() {
         }
     };
 
-    const toggleParentCheck = (assessmentId: string, itemId: string) => {
-        setParentChecks(prev => {
-            const current = prev[assessmentId] || [];
-            const next = current.includes(itemId)
-                ? current.filter(id => id !== itemId)
-                : [...current, itemId];
-            return { ...prev, [assessmentId]: next };
-        });
-    };
 
     // 월별 그룹화
     const groupedLogs = logs.reduce((acc: any, log) => {
@@ -251,82 +243,6 @@ export function ParentLogsPage() {
                                 <div className="bg-primary/5 p-8 rounded-[40px] border border-primary/10">
                                     <p className="text-slate-800 font-bold leading-relaxed text-[17px] whitespace-pre-wrap tracking-tight">
                                         {selectedLog.content || '작성된 내용이 없습니다.'}
-                                    </p>
-                                </div>
-                            </section>
-
-                            {/* 2. 발달 체크리스트 (Parent Interactive) */}
-                            <section className="space-y-8 pt-8 border-t border-slate-100">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 text-indigo-400 font-black text-[11px] uppercase tracking-[0.2em]">
-                                        <Activity className="w-4 h-4" /> 상담 준비 체크리스트
-                                    </div>
-                                    <div className="px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black rounded-full italic">
-                                        💡 상담 시 궁금한 점을 터치하세요
-                                    </div>
-                                </div>
-
-                                {/* 발달 점수 그래프 */}
-                                <div className="bg-slate-50 rounded-[40px] p-8">
-                                    <div style={{ width: '100%', height: 260 }}>
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart
-                                                layout="vertical"
-                                                data={[
-                                                    { name: '의사소통', value: selectedLog.score_communication || 0 },
-                                                    { name: '사회성', value: selectedLog.score_social || 0 },
-                                                    { name: '인지', value: selectedLog.score_cognitive || 0 },
-                                                    { name: '운동', value: selectedLog.score_motor || 0 },
-                                                    { name: '적응', value: selectedLog.score_adaptive || 0 }
-                                                ].map((d, i) => ({ ...d, fill: ['#6366f1', '#ec4899', '#8b5cf6', '#f59e0b', '#10b981'][i] }))}
-                                                margin={{ right: 40, left: 10 }}
-                                            >
-                                                <XAxis type="number" domain={[0, 100]} hide />
-                                                <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fontWeight: 800, fill: '#64748b' }} axisLine={false} tickLine={false} width={65} />
-                                                <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={26}>
-                                                    <LabelList dataKey="value" position="right" formatter={(v) => `${v}%`} style={{ fontSize: 11, fontWeight: 900, fill: '#1e293b' }} />
-                                                </Bar>
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
-
-                                {/* 인터랙티브 항목들 */}
-                                <div className="space-y-4">
-                                    {selectedLog.assessment_details &&
-                                        Object.entries(selectedLog.assessment_details).map(([domain, items]: [string, any]) => (
-                                            items.length > 0 && (
-                                                <div key={domain} className="space-y-3">
-                                                    <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">{domain}</h5>
-                                                    <div className="grid grid-cols-1 gap-3">
-                                                        {items.map((item: string, idx: number) => {
-                                                            const itemId = `${domain}-${idx}`;
-                                                            const isChecked = parentChecks[selectedLog.id]?.includes(itemId);
-                                                            return (
-                                                                <button
-                                                                    key={itemId}
-                                                                    onClick={() => toggleParentCheck(selectedLog.id, itemId)}
-                                                                    className={`flex items-center gap-4 p-5 rounded-[28px] border transition-all duration-300 text-left ${isChecked
-                                                                        ? 'bg-primary/5 border-primary ring-4 ring-primary/5'
-                                                                        : 'bg-white border-slate-100'
-                                                                        }`}
-                                                                >
-                                                                    <div className={`w-8 h-8 rounded-2xl flex items-center justify-center transition-all ${isChecked ? 'bg-primary text-white rotate-[360deg]' : 'bg-slate-50 text-slate-300'}`}>
-                                                                        {isChecked ? <Activity className="w-4 h-4" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />}
-                                                                    </div>
-                                                                    <span className={`text-[14px] font-bold ${isChecked ? 'text-primary' : 'text-slate-700'}`}>{item}</span>
-                                                                </button>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            )
-                                        ))}
-                                </div>
-
-                                <div className="bg-indigo-50/50 p-6 rounded-[32px] border border-indigo-100/20 italic">
-                                    <p className="text-[11px] text-slate-500 font-bold leading-relaxed text-center">
-                                        체크하신 항목들은 대면 상담 시 선생님께 질문하실 리스트가 됩니다.
                                     </p>
                                 </div>
                             </section>

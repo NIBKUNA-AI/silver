@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useCenter } from '@/contexts/CenterContext';
-import { X, Save, Loader2, MessageCircle } from 'lucide-react';
+import { X, Save, Loader2, MessageCircle, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AssessmentFormModalProps {
@@ -38,12 +38,22 @@ export function AssessmentFormModal({
     const [currentLogId, setCurrentLogId] = useState<string | null>(null);
     const [originalTherapistId, setOriginalTherapistId] = useState<string | null>(null);
 
+    // ✨ [User Request] 성장 일지(발달 지표) 통합
+    const [scores, setScores] = useState({
+        communication: 0,
+        social: 0,
+        cognitive: 0,
+        motor: 0,
+        adaptive: 0
+    });
+
     useEffect(() => {
         if (isOpen && assessmentId) {
             loadExistingData();
         } else {
             setSummary('');
             setTherapistNotes('');
+            setScores({ communication: 0, social: 0, cognitive: 0, motor: 0, adaptive: 0 });
             setCurrentLogId(logId || null);
             setOriginalTherapistId(null);
             setIsEditMode(false);
@@ -62,6 +72,13 @@ export function AssessmentFormModal({
             if (data) {
                 setSummary(data.summary || '');
                 setTherapistNotes(data.therapist_notes || '');
+                setScores({
+                    communication: data.score_communication || 0,
+                    social: data.score_social || 0,
+                    cognitive: data.score_cognitive || 0,
+                    motor: data.score_motor || 0,
+                    adaptive: data.score_adaptive || 0
+                });
                 setCurrentLogId(data.log_id || null);
                 setOriginalTherapistId(data.therapist_id || null);
                 setIsEditMode(true);
@@ -102,13 +119,11 @@ export function AssessmentFormModal({
                 evaluation_date: sessionDate || new Date().toISOString().split('T')[0],
                 summary: summary,
                 therapist_notes: therapistNotes,
-                // Checklist scores are now optional or managed by parents. 
-                // We keep 0/null to avoid breaking the schema if it requires them.
-                score_communication: 0,
-                score_social: 0,
-                score_cognitive: 0,
-                score_motor: 0,
-                score_adaptive: 0,
+                score_communication: scores.communication,
+                score_social: scores.social,
+                score_cognitive: scores.cognitive,
+                score_motor: scores.motor,
+                score_adaptive: scores.adaptive,
                 assessment_details: {}
             };
 
@@ -195,6 +210,56 @@ export function AssessmentFormModal({
                             placeholder="오늘 진행된 상담/평가 내용과 회기 기록을 상세히 입력해주세요. 발달 체크리스트는 이제 부모님이 직접 앱에서 체크하시게 됩니다."
                             className="w-full h-80 p-8 rounded-[32px] border border-slate-200 bg-slate-50 text-slate-800 text-sm font-medium focus:border-indigo-300 focus:bg-white outline-none resize-none transition-all placeholder:text-slate-300"
                         />
+                    </div>
+
+                    {/* ✨ [User Request] 2. 발달 영역별 점수 (Therapist Input) */}
+                    <div className="space-y-6 pt-6 border-t border-slate-100">
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm font-black text-slate-700 flex items-center gap-2">
+                                <Activity className="w-5 h-5 text-indigo-500" />
+                                발달 영역별 평가 (0~5점)
+                            </label>
+                            <span className="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-bold">성장 그래프 반영</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 bg-slate-50 p-6 rounded-[32px] border border-slate-200">
+                            {[
+                                { key: 'communication', label: '언어/의사소통' },
+                                { key: 'social', label: '사회/정서' },
+                                { key: 'cognitive', label: '인지/학습' },
+                                { key: 'motor', label: '대근육/소근육' },
+                                { key: 'adaptive', label: '자조/적응' }
+                            ].map((domain) => (
+                                <div key={domain.key} className="space-y-3">
+                                    <div className="flex justify-between items-center px-1">
+                                        <span className="text-xs font-bold text-slate-500">{domain.label}</span>
+                                        <span className={cn(
+                                            "text-sm font-black w-6 h-6 flex items-center justify-center rounded-full transition-all",
+                                            scores[domain.key] > 0 ? "bg-indigo-600 text-white" : "bg-slate-200 text-slate-400"
+                                        )}>
+                                            {scores[domain.key]}
+                                        </span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="5"
+                                        step="1"
+                                        value={scores[domain.key]}
+                                        onChange={(e) => setScores(prev => ({ ...prev, [domain.key]: parseInt(e.target.value) }))}
+                                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                    />
+                                    <div className="flex justify-between px-1 text-[10px] font-medium text-slate-300">
+                                        <span>0</span>
+                                        <span>1</span>
+                                        <span>2</span>
+                                        <span>3</span>
+                                        <span>4</span>
+                                        <span>5</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     {/* ✨ [치료사 전용] 비공개 메모 - 부모에게 안보임 */}
