@@ -130,18 +130,23 @@ export function ParentHomePage() {
                         therapists (name, color)
                     `)
                     .eq('child_id', child.id)
-                    .neq('status', 'cancelled')
+                    // .neq('status', 'cancelled') // ✨ [User Request] 취소된 일정도 표시 (상태 구분)
                     .order('date', { ascending: true });
 
                 if (schedules) {
                     const events = schedules.map(s => ({
                         id: s.id,
-                        title: `${s.programs?.name || '수업'} (${s.therapists?.name})`,
+                        title: s.programs?.name || '수업',
                         start: s.start_time,
                         end: s.end_time,
-                        backgroundColor: s.therapists?.color || '#3b82f6',
-                        borderColor: s.therapists?.color || '#3b82f6',
-                        textColor: '#ffffff',
+                        backgroundColor: 'transparent',
+                        borderColor: 'transparent',
+                        textColor: '#1e293b',
+                        extendedProps: {
+                            therapistColor: s.therapists?.color || '#3b82f6',
+                            therapistName: s.therapists?.name,
+                            status: s.status // ✨ Pass status
+                        }
                     }));
                     setCalendarEvents(events);
 
@@ -509,17 +514,51 @@ export function ParentHomePage() {
                             moreLinkClick="popover"
                             editable={false}
                             selectable={false}
-                            eventContent={(eventInfo) => (
-                                <div className="flex flex-col py-1 px-1.5 bg-transparent overflow-hidden">
-                                    <div className="flex items-center gap-1 mb-0.5">
-                                        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: eventInfo.backgroundColor }} />
-                                        <span className="text-[10px] font-black text-slate-500 leading-none">{childInfo?.name}</span>
+                            eventContent={(eventInfo) => {
+                                const { therapistColor, status } = eventInfo.event.extendedProps;
+
+                                // ✨ 상태별 스타일링 정의
+                                let containerClass = "flex flex-col py-1.5 px-2 rounded-lg border-l-[3px] shadow-sm mb-1 overflow-hidden transition-all";
+                                let bgStyle = {};
+                                let titleClass = "text-[11px] font-black leading-tight truncate";
+                                let statusBadge = null;
+
+                                if (status === 'cancelled') {
+                                    bgStyle = { backgroundColor: '#f1f5f9', borderColor: '#cbd5e1' }; // Gray
+                                    titleClass += " text-slate-400 line-through decoration-slate-400";
+                                    statusBadge = <span className="text-[9px] text-rose-500 font-black ml-1">(취소)</span>;
+                                } else if (status === 'completed') {
+                                    bgStyle = { backgroundColor: `${therapistColor}25`, borderColor: therapistColor }; // Slightly darker pastel
+                                    titleClass += " text-slate-700 opacity-80";
+                                    statusBadge = <span className="text-[9px] text-indigo-600 font-black ml-1">(완료)</span>;
+                                } else {
+                                    // Scheduled (Default)
+                                    bgStyle = { backgroundColor: `${therapistColor}15`, borderColor: therapistColor };
+                                    titleClass += " text-slate-900";
+                                }
+
+                                return (
+                                    <div
+                                        className={containerClass}
+                                        style={bgStyle}
+                                    >
+                                        <div className="flex items-center gap-1.5 mb-0.5">
+                                            <span className={cn(
+                                                "text-[10px] font-black leading-none",
+                                                status === 'cancelled' ? "text-slate-400" : "text-slate-600 opacity-80"
+                                            )}>
+                                                {childInfo?.name}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <span className={titleClass}>
+                                                {eventInfo.event.title}
+                                            </span>
+                                            {statusBadge}
+                                        </div>
                                     </div>
-                                    <span className="text-[11px] font-bold text-slate-800 break-keep leading-tight">
-                                        {eventInfo.event.title}
-                                    </span>
-                                </div>
-                            )}
+                                );
+                            }}
                             eventClick={(info) => alert(`${childInfo?.name} 아동\n${info.event.title}\n시간: ${info.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`)}
                             noEventsContent="예정된 수업이 없습니다."
                         />
