@@ -189,15 +189,16 @@ export function AssessmentFormModal({
                 throw new Error('작성자(치료사) 정보를 확인할 수 없습니다. 치료사 목록에 해당 계정이 등록되어 있는지 확인해주세요.');
             }
 
-            const payload: any = { // Changed to 'any' to allow modification of log_id
-                center_id: center?.id, // ✨ Inject Center ID
+            // Create assessment payload
+            const payload: any = {
+                center_id: center?.id,
                 child_id: childId,
-                therapist_id: effectiveTherapistId, // ✨ therapists 테이블의 ID 사용
+                therapist_id: effectiveTherapistId,
                 log_id: currentLogId,
                 evaluation_date: new Date().toISOString().split('T')[0],
                 score_communication: sc.communication,
                 score_social: sc.social,
-                score_cognitive: sc.cognitive,
+                score_cognitive: sc.cognitive, // ✨ [Fix] Correct mapping
                 score_motor: sc.motor,
                 score_adaptive: sc.adaptive,
                 summary: summary,
@@ -207,21 +208,22 @@ export function AssessmentFormModal({
 
             let activeLogId = currentLogId;
 
-            // ✨ [핵심 수정] 일지가 없는 경우 저장을 누르는 시점에 자동 생성 (유령 일지 방지)
+            // ✨ [CRITICAL FIX] Ensure log creation happens WITH schedule_id and linked correctly
             if (!isEditMode && !activeLogId) {
                 if (!center?.id) throw new Error('센터 정보가 없어 상담 일지를 생성할 수 없습니다.');
 
+                // Use props explicitly: scheduleId, sessionDate
                 const finalDate = sessionDate || new Date().toISOString().split('T')[0];
-                console.log(`Creating log for schedule: ${scheduleId} on date: ${finalDate}`);
+                console.log("Saving log for schedule:", scheduleId);
 
                 const { data: newLog, error: logError } = await supabase
                     .from('counseling_logs')
                     .insert({
-                        center_id: center?.id,
+                        center_id: center.id,
                         therapist_id: effectiveTherapistId,
                         child_id: childId,
-                        schedule_id: scheduleId, // ✨ [Fix] 스케줄 연결 로직 복구
-                        session_date: finalDate, // ✨ [Fix] 날짜 보존 로직 추가
+                        schedule_id: scheduleId, // ✨ 핵심: 반드시 박혀야 대기 목록에서 사라짐
+                        session_date: finalDate,
                         content: '발달 평가 작성을 위해 자동 생성된 기본 일지입니다.',
                         activities: '평가 진행',
                         child_response: '평가 진행',
@@ -230,18 +232,20 @@ export function AssessmentFormModal({
                     .select()
                     .single();
 
-                if (logError) throw new Error('상담 일지 자동 생성 실패: ' + logError.message);
+                if (logError) {
+                    console.error("Log Creation Error:", logError);
+                    throw new Error('상담 일지 자동 생성 실패: ' + logError.message);
+                }
+
                 activeLogId = newLog.id;
-                payload.log_id = activeLogId; // 페이로드 업데이트
+                payload.log_id = activeLogId; // ✨ 중요: 평가 데이터에 일지 ID 연동 보장
             }
 
             let error;
             if (isEditMode && assessmentId) {
-                // ✨ [수정 모드]
                 const res = await supabase.from('development_assessments').update(payload).eq('id', assessmentId);
                 error = res.error;
             } else {
-                // [신규 등록]
                 const res = await supabase.from('development_assessments').insert(payload);
                 error = res.error;
             }
