@@ -94,39 +94,37 @@ serve(async (req: Request) => {
 
         console.log(`📧 Inviting: ${email} | Role: ${role} | Center: ${targetCenterId}`);
 
-        // 5. [Find or Create User]
+        // 5. [Send Invitation]
+        console.log(`🔎 Attempting to invite user: ${email}...`);
+
         let finalUserId: string | null = null;
-        console.log(`🔎 Checking if user ${email} already exists...`);
 
-        const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-        if (listError) console.warn("⚠️ listUsers warning:", listError.message);
+        // 🚀 Always call inviteUserByEmail to trigger the actual invitation flow
+        const { data: authData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+            data: { name, role, full_name: name, center_id: targetCenterId },
+            redirectTo: finalRedirectTo,
+        });
 
-        const existingUser = listData?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+        if (inviteError) {
+            // If already registered, we don't treat it as a terminal error for the edge function
+            // but we need to find the existing User ID to sync the profile.
+            if (inviteError.message.toLowerCase().includes("already")) {
+                console.log(`ℹ️ User ${email} already exists in Auth. Syncing profile only...`);
 
-        if (existingUser) {
-            finalUserId = existingUser.id;
-            console.log(`ℹ️ User found (ID: ${finalUserId}). Proceeding to update/sync...`);
-        } else {
-            console.log(`🆕 User not found. Sending invitation email...`);
-            const { data: authData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-                data: { name, role, full_name: name, center_id: targetCenterId },
-                redirectTo: finalRedirectTo,
-            });
-
-            if (inviteError) {
-                // Secondary check for race conditions
-                if (inviteError.message.toLowerCase().includes("already")) {
-                    const { data: retryList } = await supabaseAdmin.auth.admin.listUsers();
-                    finalUserId = retryList?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())?.id || null;
-                }
+                const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+                finalUserId = listData?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())?.id || null;
 
                 if (!finalUserId) {
-                    console.error("❌ Invite Error:", inviteError.message);
-                    throw inviteError;
+                    console.error("❌ Failed to find existing user ID after 422 error.");
+                    throw new Error("User exists but could not be resolved.");
                 }
             } else {
-                finalUserId = authData?.user?.id;
+                console.error("❌ Supabase Auth Invitation Error:", inviteError.message);
+                throw inviteError;
             }
+        } else {
+            console.log(`📧 Invitation email triggered successfully for: ${email}`);
+            finalUserId = authData?.user?.id;
         }
 
         if (!finalUserId) throw new Error("Could not resolve target User ID.");
