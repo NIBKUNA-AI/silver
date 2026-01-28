@@ -9,9 +9,11 @@ import { cn } from '@/lib/utils';
 interface AssessmentFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    childId: string | null;
-    childName?: string;
+    childId: string;
+    childName: string;
     logId?: string | null;
+    scheduleId?: string | null;  // ✨ [추가] 대기 목록 삭제를 위해 필요
+    sessionDate?: string | null; // ✨ [추가] 과거 날짜 보존을 위해 필요
     therapistId?: string | null;  // ✨ [담당 치료사 ID] 어드민이 대신 입력시 사용
     assessmentId?: string | null;  // ✨ [수정 모드용] 기존 평가 ID
     onSuccess: () => void;
@@ -205,14 +207,18 @@ export function AssessmentFormModal({ isOpen, onClose, childId, childName, logId
             // ✨ [핵심 수정] 일지가 없는 경우 저장을 누르는 시점에 자동 생성 (유령 일지 방지)
             if (!isEditMode && !activeLogId) {
                 if (!center?.id) throw new Error('센터 정보가 없어 상담 일지를 생성할 수 없습니다.');
-                console.log('No log ID found, creating an automatic log for this assessment...');
+
+                const finalDate = sessionDate || new Date().toISOString().split('T')[0];
+                console.log(`Creating log for schedule: ${scheduleId} on date: ${finalDate}`);
+
                 const { data: newLog, error: logError } = await supabase
                     .from('counseling_logs')
                     .insert({
                         center_id: center?.id,
                         therapist_id: effectiveTherapistId,
                         child_id: childId,
-                        session_date: new Date().toISOString().split('T')[0],
+                        schedule_id: scheduleId, // ✨ [Fix] 스케줄 연결 로직 복구
+                        session_date: finalDate, // ✨ [Fix] 날짜 보존 로직 추가
                         content: '발달 평가 작성을 위해 자동 생성된 기본 일지입니다.',
                         activities: '평가 진행',
                         child_response: '평가 진행',

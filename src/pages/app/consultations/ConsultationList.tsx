@@ -336,7 +336,9 @@ export function ConsultationList() {
                     childId={selectedSession.children.id}
                     childName={selectedSession.children.name}
                     logId={selectedSession.realLogId || null}
-                    therapistId={selectedSession.therapist_id || null} // ✨ [Fix] 담당 치료사 ID 전달
+                    scheduleId={selectedSession.id || null} // ✨ [Add]
+                    sessionDate={selectedSession.start_time?.split('T')[0] || null} // ✨ [Add]
+                    therapistId={selectedSession.therapist_id || null}
                     assessmentId={editingAssessmentId}
                     onSuccess={handleAssessmentSuccess}
                 />
