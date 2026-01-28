@@ -145,7 +145,6 @@ export function Register() {
             let finalStatus = 'active';
 
             // ✨ [Security] 하이재킹 방지 및 권한 자동 할당
-            // therapists 테이블에 이미 등록된 직원이면 'therapist' 권한 부여
             const { data: preRegistered } = await supabase
                 .from('therapists')
                 .select('system_role')
@@ -153,13 +152,15 @@ export function Register() {
                 .maybeSingle();
 
             if (preRegistered) {
-                console.log("🛠️ Pre-registered staff detected. Assigning proper role.");
                 finalRole = preRegistered.system_role || 'therapist';
-                finalStatus = 'active'; // 이미 관리자가 등록했으므로 즉시 활성
+                finalStatus = 'active';
             } else if (isSuperAdmin(email)) {
                 finalRole = 'super_admin';
             }
 
+            // 🚀 [Updated] Metadata-First Registration
+            // We do NOT manually insert into user_profiles here anymore.
+            // The Backend Trigger 'handle_new_user' does it for us safely.
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email,
                 password,
@@ -167,8 +168,9 @@ export function Register() {
                     data: {
                         full_name: name,
                         role: finalRole,
-                        // ✨ [ROBUST] Use resolved JIT ID
-                        center_id: effectiveCenterId
+                        center_id: effectiveCenterId,
+                        // ✨ Pass phone if you have a phone field input, otherwise trigger defaults it
+                        phone: '010-0000-0000'
                     }
                 },
             });
@@ -176,18 +178,17 @@ export function Register() {
             if (authError) throw authError;
 
             if (authData.user) {
-                // ✨ [Correction] Double-check explicit insert
-                await supabase.from('user_profiles').upsert({
-                    id: authData.user.id,
-                    email: email,
-                    name: name,
-                    role: finalRole,
-                    center_id: effectiveCenterId, // Robust JIT ID
-                    status: finalStatus,
-                }, { onConflict: 'id' });
+                // ⏳ Wait a moment for the Trigger to finish creating the profile
+                // This prevents "Profile not found" on the immediate next page load
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
                 alert('회원가입이 완료되었습니다!\n환영합니다.');
-                await supabase.auth.signInWithPassword({ email, password }); // 자동 로그인 시도
+
+                // Auto-login check
+                if (!authData.session) {
+                    await supabase.auth.signInWithPassword({ email, password });
+                }
+
                 navigate('/parent/home');
             }
         } catch (err: any) {
