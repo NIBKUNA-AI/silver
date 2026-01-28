@@ -111,18 +111,8 @@ export function ParentLogsPage() {
             if (fetchError) throw fetchError;
             setLogs(data || []);
 
-            // ✨ 최신 평가의 종합 소견 가져오기
+            // ✨ 부모 관찰 일기 가져오기
             if (targetChildId) {
-                const { data: latestAssessment } = await supabase
-                    .from('development_assessments')
-                    .select('summary')
-                    .eq('child_id', targetChildId)
-                    .order('created_at', { ascending: false })
-                    .limit(1)
-                    .maybeSingle();
-                setLatestSummary(latestAssessment?.summary || null);
-
-                // ✨ 부모 관찰 일기 가져오기
                 const { data: observations } = await supabase
                     .from('parent_observations')
                     .select('*')
@@ -219,15 +209,15 @@ export function ParentLogsPage() {
                                     )}
 
                                     {/* ✨ 선생님 소견 및 향후 계획 (통합) */}
-                                    {(log.next_plan || log.development_assessments?.[0]?.summary || latestSummary) && (
+                                    {(log.next_plan || log.development_assessments?.[0]?.summary) && (
                                         <div className="relative pt-4 border-t border-slate-100">
                                             <h4 className="font-bold text-primary text-xs uppercase tracking-widest mb-3 flex items-center gap-2">
                                                 <ChevronRight className="w-4 h-4" /> 선생님 소견 및 향후 계획
                                             </h4>
-                                            {/* ✨ [복구] 연결된 평가가 있으면 그것을, 없으면 최신 평가를 폴백으로 보여줌 */}
-                                            {(log.development_assessments?.[0]?.summary || latestSummary) && (
+                                            {/* ✨ [정밀 연동] 해당 상담일지와 연결된 발달 평가 소견만 정확히 표시 */}
+                                            {log.development_assessments?.[0]?.summary && (
                                                 <p className="text-slate-700 font-medium leading-relaxed whitespace-pre-wrap pl-1 mb-3 italic bg-indigo-50/50 p-3 rounded-xl">
-                                                    "📝 {log.development_assessments?.[0]?.summary || latestSummary}"
+                                                    "📝 {log.development_assessments[0].summary}"
                                                 </p>
                                             )}
                                             {log.next_plan && (
