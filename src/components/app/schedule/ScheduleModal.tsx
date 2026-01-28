@@ -408,7 +408,6 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
                     await supabase.from('consultations').delete().in('schedule_id', ids);
                     await supabase.from('payment_items').delete().in('schedule_id', ids);
                     await supabase.from('counseling_logs').delete().in('schedule_id', ids);
-                    await supabase.from('daily_notes').delete().in('schedule_id', ids); // ✨ daily_notes 누락분 추가
 
                     // 본 일정 일괄 삭제
                     const { error } = await supabase.from('schedules').delete().in('id', ids);
@@ -432,7 +431,6 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
                 await supabase.from('consultations').delete().eq('schedule_id', scheduleId);
                 await supabase.from('payment_items').delete().eq('schedule_id', scheduleId);
                 await supabase.from('counseling_logs').delete().eq('schedule_id', scheduleId);
-                await supabase.from('daily_notes').delete().eq('schedule_id', scheduleId); // ✨ daily_notes 누락분 추가
 
                 // 2. 본 일정 삭제
                 const { error } = await supabase.from('schedules').delete().eq('id', scheduleId);
