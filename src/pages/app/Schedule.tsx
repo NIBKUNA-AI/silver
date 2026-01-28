@@ -3,12 +3,11 @@
 /**
  * 🎨 Project: Zarada ERP - The Sovereign Canvas
  * 🛠️ Created by: 안욱빈 (An Uk-bin)
- * 📅 Date: 2026-01-10
+ * 📅 Date: 2026-01-11
  * 🖋️ Description: "코드와 데이터로 세상을 채색하다."
  * ⚠️ Copyright (c) 2026 안욱빈. All rights reserved.
  * -----------------------------------------------------------
- * 이 파일의 UI/UX 설계 및 데이터 연동 로직은 독자적인 기술과
- * 예술적 영감을 바탕으로 구축되었습니다.
+ * 상담일지 및 발달 관리 - AssessmentFormModal 통합
  */
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -154,7 +153,7 @@ export function Schedule() {
                             programName: schedule.programs?.name || '프로그램 미정',
                             therapistName: therapistName,
                             color: eventColor,
-                            hasNote: hasAssessment || !!schedule.session_note  // ✨ 평가 OR 일지 있으면 표시
+                            hasNote: hasAssessment || !!schedule.notes  // ✨ schedule.notes로 수정 (데이터 스키마 일치)
                         }
                     };
                 });
