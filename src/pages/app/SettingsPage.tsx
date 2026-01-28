@@ -268,20 +268,39 @@ export function SettingsPage() {
                                     </div>
                                 </div>
 
-                                <div className="h-px bg-slate-100 dark:bg-slate-800" />
+                            </div>
 
-                                {/* 🖼️ Logo Selection */}
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">센터 공식 로고</label>
-                                        <p className="text-xs text-slate-400 font-medium ml-1">상단 헤더와 플랫폼 내부 곳곳에 사용됩니다. (권장: 배경이 없는 PNG/WebP)</p>
-                                    </div>
-                                    <ImageUploader
-                                        bucketName="logos"
-                                        currentImage={getSetting('center_logo')}
-                                        onUploadComplete={(url) => handleSave('center_logo', url)}
-                                    />
+                            <div className="h-px bg-slate-100 dark:bg-slate-800" />
+
+                            {/* 🔍 SEO Keywords */}
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">SEO 키워드 (검색 최적화)</label>
+                                    <p className="text-xs text-slate-400 font-medium ml-1">네이버, 구글 검색 시 노출될 주요 키워드를 쉼표(,)로 구분하여 입력하세요.</p>
                                 </div>
+                                <SaveableTextArea
+                                    label="주요 키워드"
+                                    placeholder="예: 송파, 위례, 감각통합, 언어치료, 아동발달센터"
+                                    initialValue={getSetting('seo_keywords')}
+                                    onSave={(v) => handleSave('seo_keywords', v)}
+                                    saving={saving}
+                                    rows={2}
+                                />
+                            </div>
+
+                            <div className="h-px bg-slate-100 dark:bg-slate-800" />
+
+                            {/* 🖼️ Logo Selection */}
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">센터 공식 로고</label>
+                                    <p className="text-xs text-slate-400 font-medium ml-1">상단 헤더와 플랫폼 내부 곳곳에 사용됩니다. (권장: 배경이 없는 PNG/WebP)</p>
+                                </div>
+                                <ImageUploader
+                                    bucketName="logos"
+                                    currentImage={getSetting('center_logo')}
+                                    onUploadComplete={(url) => handleSave('center_logo', url)}
+                                />
                             </div>
                         </SectionCard>
 
@@ -324,7 +343,8 @@ export function SettingsPage() {
                             </div>
                         </div>
                     </div>
-                )}
+                )
+                }
 
                 {/* ✨ 정보/운영 탭 통합 섹션 - 원본 UI 보존 및 필드 추가 */}
                 {activeTab === 'center_info' && <CenterInfoSection />}
@@ -332,47 +352,49 @@ export function SettingsPage() {
 
 
                 {/* ✨ 계정 관리 탭 */}
-                {activeTab === 'account' && (
-                    <>
-                        <SectionCard title="계정 정보" icon={<UserX className="text-rose-500" />}>
-                            <div className="space-y-4">
-                                <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
-                                    <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">로그인 이메일</p>
-                                    <p className="font-bold text-slate-900 dark:text-white">{user?.email}</p>
+                {
+                    activeTab === 'account' && (
+                        <>
+                            <SectionCard title="계정 정보" icon={<UserX className="text-rose-500" />}>
+                                <div className="space-y-4">
+                                    <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700">
+                                        <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">로그인 이메일</p>
+                                        <p className="font-bold text-slate-900 dark:text-white">{user?.email}</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </SectionCard>
+                            </SectionCard>
 
-                        <SectionCard title="회원 탈퇴" icon={<UserX className="text-rose-500" />}>
-                            <div className="space-y-4">
-                                <div className="bg-rose-50 dark:bg-rose-900/20 p-6 rounded-2xl border border-rose-100 dark:border-rose-900/50">
-                                    <p className="text-sm font-bold text-rose-700 dark:text-rose-400 mb-2">⚠️ 주의: 회원 탈퇴 시 모든 데이터가 삭제됩니다.</p>
-                                    <ul className="text-xs text-rose-600 dark:text-rose-400/80 space-y-1 list-disc list-inside">
-                                        <li>개인정보 및 계정 정보가 삭제됩니다.</li>
-                                        <li>연결된 자녀 정보와의 연결이 해제됩니다.</li>
-                                        <li>이 작업은 되돌릴 수 없습니다.</li>
-                                    </ul>
+                            <SectionCard title="회원 탈퇴" icon={<UserX className="text-rose-500" />}>
+                                <div className="space-y-4">
+                                    <div className="bg-rose-50 dark:bg-rose-900/20 p-6 rounded-2xl border border-rose-100 dark:border-rose-900/50">
+                                        <p className="text-sm font-bold text-rose-700 dark:text-rose-400 mb-2">⚠️ 주의: 회원 탈퇴 시 모든 데이터가 삭제됩니다.</p>
+                                        <ul className="text-xs text-rose-600 dark:text-rose-400/80 space-y-1 list-disc list-inside">
+                                            <li>개인정보 및 계정 정보가 삭제됩니다.</li>
+                                            <li>연결된 자녀 정보와의 연결이 해제됩니다.</li>
+                                            <li>이 작업은 되돌릴 수 없습니다.</li>
+                                        </ul>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowDeleteModal(true)}
+                                        className="w-full py-4 bg-rose-600 text-white rounded-2xl font-black hover:bg-rose-700 transition-colors"
+                                    >
+                                        회원 탈퇴 신청
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => setShowDeleteModal(true)}
-                                    className="w-full py-4 bg-rose-600 text-white rounded-2xl font-black hover:bg-rose-700 transition-colors"
-                                >
-                                    회원 탈퇴 신청
-                                </button>
-                            </div>
-                        </SectionCard>
+                            </SectionCard>
 
-                        {/* 회원 탈퇴 모달 */}
-                        <AccountDeletionModal
-                            isOpen={showDeleteModal}
-                            onClose={() => setShowDeleteModal(false)}
-                            userId={user?.id || ''}
-                            userEmail={user?.email || ''}
-                        />
-                    </>
-                )}
-            </div>
-        </div>
+                            {/* 회원 탈퇴 모달 */}
+                            <AccountDeletionModal
+                                isOpen={showDeleteModal}
+                                onClose={() => setShowDeleteModal(false)}
+                                userId={user?.id || ''}
+                                userEmail={user?.email || ''}
+                            />
+                        </>
+                    )
+                }
+            </div >
+        </div >
     );
 }
 

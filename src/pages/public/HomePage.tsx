@@ -101,6 +101,7 @@ export function HomePage() {
                 <meta property="og:title" content={brandName} />
                 <meta property="og:description" content={centerInfo?.description || DEFAULT_CONTENT.hero.description} />
                 <meta property="og:image" content={bgImage} />
+                {getSetting('seo_keywords') && <meta name="keywords" content={getSetting('seo_keywords')} />}
             </Helmet>
 
             {!loading && noticeText && (

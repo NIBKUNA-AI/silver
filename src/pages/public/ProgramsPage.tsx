@@ -64,6 +64,38 @@ export function ProgramsPage() {
         <div className={cn("min-h-screen transition-colors", isDark ? "bg-[#0a0c10]" : "bg-[#f8fafc]")}>
             <Helmet>
                 <title>치료 프로그램 - {centerName}</title>
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "MedicalBusiness",
+                        "name": centerName,
+                        "description": introText,
+                        "url": window.location.href,
+                        "hasOfferCatalog": {
+                            "@type": "OfferCatalog",
+                            "name": "발달 치료 프로그램",
+                            "itemListElement": programs.map((program: any) => {
+                                // ✨ SEO Magic: Combine Region Keyword with Program Title
+                                const seoKeywords = branding.settings?.seo_keywords || getSetting('seo_keywords') || '';
+                                const mainRegion = seoKeywords.split(',')[0].trim();
+                                const optimizedName = mainRegion ? `${mainRegion} ${program.title}` : program.title;
+
+                                return {
+                                    "@type": "Offer",
+                                    "itemOffered": {
+                                        "@type": "Service",
+                                        "name": optimizedName, // e.g. "송파 언어치료"
+                                        "description": program.desc || program.description,
+                                        "audience": {
+                                            "@type": "PeopleAudience",
+                                            "audienceType": (program.targets || []).join(', ')
+                                        }
+                                    }
+                                };
+                            })
+                        }
+                    })}
+                </script>
             </Helmet>
 
             {/* ✨ Premium Hero Section (Uniform Branding) */}

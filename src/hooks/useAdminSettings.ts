@@ -34,6 +34,7 @@ export type AdminSettingKey =
     | 'ai_posting_time'
     | 'ai_next_topic'
     | 'brand_color'
+    | 'seo_keywords'
     | 'openai_api_key';
 
 export interface ProgramItem {
