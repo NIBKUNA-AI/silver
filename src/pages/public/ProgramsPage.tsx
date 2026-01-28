@@ -74,24 +74,41 @@ export function ProgramsPage() {
                         "hasOfferCatalog": {
                             "@type": "OfferCatalog",
                             "name": "발달 치료 프로그램",
-                            "itemListElement": programs.map((program: any) => {
-                                // ✨ SEO Magic: Combine Region Keyword with Program Title
+                            "itemListElement": programs.flatMap((program: any) => {
+                                // ✨ SEO Magic: Multi-Region Targeting
+                                // Take top 3 keywords as 'Regions' to create multiple service offers
                                 const seoKeywords = branding.settings?.seo_keywords || getSetting('seo_keywords') || '';
-                                const mainRegion = seoKeywords.split(',')[0].trim();
-                                const optimizedName = mainRegion ? `${mainRegion} ${program.title}` : program.title;
+                                const regions = seoKeywords.split(',').map(s => s.trim()).filter(Boolean).slice(0, 3);
 
-                                return {
+                                // If no keywords, return just the original program
+                                if (regions.length === 0) {
+                                    return [{
+                                        "@type": "Offer",
+                                        "itemOffered": {
+                                            "@type": "Service",
+                                            "name": program.title,
+                                            "description": program.desc || program.description,
+                                            "audience": {
+                                                "@type": "PeopleAudience",
+                                                "audienceType": (program.targets || []).join(', ')
+                                            }
+                                        }
+                                    }];
+                                }
+
+                                // Create an offer for each region
+                                return regions.map(region => ({
                                     "@type": "Offer",
                                     "itemOffered": {
                                         "@type": "Service",
-                                        "name": optimizedName, // e.g. "송파 언어치료"
+                                        "name": `${region} ${program.title}`, // e.g. "송파 언어치료", "위례 언어치료"
                                         "description": program.desc || program.description,
                                         "audience": {
                                             "@type": "PeopleAudience",
                                             "audienceType": (program.targets || []).join(', ')
                                         }
                                     }
-                                };
+                                }));
                             })
                         }
                     })}

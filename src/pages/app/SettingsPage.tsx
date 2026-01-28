@@ -141,9 +141,7 @@ export function SettingsPage() {
                     { id: 'home', label: '홈', icon: <LayoutTemplate className="w-4 h-4" /> },
                     { id: 'about', label: '소개', icon: <Info className="w-4 h-4" /> },
                     { id: 'programs', label: '프로그램', icon: <BookOpen className="w-4 h-4" /> },
-                    { id: 'therapists', label: '치료사 소개', icon: <Heart className="w-4 h-4" /> },
-                    { id: 'branding', label: '로고', icon: <Palette className="w-4 h-4" /> },
-                    { id: 'center_info', label: '정보/운영', icon: <Info className="w-4 h-4" /> },
+                    { id: 'branding', label: '브랜드/SEO', icon: <Palette className="w-4 h-4" /> },
                     { id: 'account', label: '계정', icon: <UserX className="w-4 h-4" /> },
                 ].map((tab) => (
                     <button
@@ -268,39 +266,38 @@ export function SettingsPage() {
                                     </div>
                                 </div>
 
-                            </div>
+                                <div className="h-px bg-slate-100 dark:bg-slate-800" />
 
-                            <div className="h-px bg-slate-100 dark:bg-slate-800" />
-
-                            {/* 🔍 SEO Keywords */}
-                            <div className="space-y-6">
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">SEO 키워드 (검색 최적화)</label>
-                                    <p className="text-xs text-slate-400 font-medium ml-1">네이버, 구글 검색 시 노출될 주요 키워드를 쉼표(,)로 구분하여 입력하세요.</p>
+                                {/* 🔍 SEO Keywords */}
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">SEO 키워드 (검색 최적화)</label>
+                                        <p className="text-xs text-slate-400 font-medium ml-1">네이버, 구글 검색 시 노출될 주요 키워드를 쉼표(,)로 구분하여 입력하세요.</p>
+                                    </div>
+                                    <SaveableTextArea
+                                        label="주요 키워드"
+                                        placeholder="예: 송파, 위례, 감각통합, 언어치료, 아동발달센터"
+                                        initialValue={getSetting('seo_keywords')}
+                                        onSave={(v) => handleSave('seo_keywords', v)}
+                                        saving={saving}
+                                        rows={2}
+                                    />
                                 </div>
-                                <SaveableTextArea
-                                    label="주요 키워드"
-                                    placeholder="예: 송파, 위례, 감각통합, 언어치료, 아동발달센터"
-                                    initialValue={getSetting('seo_keywords')}
-                                    onSave={(v) => handleSave('seo_keywords', v)}
-                                    saving={saving}
-                                    rows={2}
-                                />
-                            </div>
 
-                            <div className="h-px bg-slate-100 dark:bg-slate-800" />
+                                <div className="h-px bg-slate-100 dark:bg-slate-800" />
 
-                            {/* 🖼️ Logo Selection */}
-                            <div className="space-y-6">
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">센터 공식 로고</label>
-                                    <p className="text-xs text-slate-400 font-medium ml-1">상단 헤더와 플랫폼 내부 곳곳에 사용됩니다. (권장: 배경이 없는 PNG/WebP)</p>
+                                {/* 🖼️ Logo Selection */}
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 ml-1">센터 공식 로고</label>
+                                        <p className="text-xs text-slate-400 font-medium ml-1">상단 헤더와 플랫폼 내부 곳곳에 사용됩니다. (권장: 배경이 없는 PNG/WebP)</p>
+                                    </div>
+                                    <ImageUploader
+                                        bucketName="logos"
+                                        currentImage={getSetting('center_logo')}
+                                        onUploadComplete={(url) => handleSave('center_logo', url)}
+                                    />
                                 </div>
-                                <ImageUploader
-                                    bucketName="logos"
-                                    currentImage={getSetting('center_logo')}
-                                    onUploadComplete={(url) => handleSave('center_logo', url)}
-                                />
                             </div>
                         </SectionCard>
 
