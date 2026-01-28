@@ -40,7 +40,7 @@ export function TherapistList() {
         name: '', contact: '', email: '', hire_type: 'freelancer',
         system_role: 'therapist', remarks: '', color: '#3b82f6',
         bank_name: '', account_number: '', account_holder: '',
-        bio: '', career: '', specialties: '', profile_image: '', website_visible: true
+        base_salary: 0, required_sessions: 0, session_price_weekday: 0, session_price_weekend: 0, incentive_price: 24000, evaluation_price: 50000
     });
 
     // ✨ [New] Success Modal State
@@ -142,11 +142,7 @@ export function TherapistList() {
                         system_role: formData.system_role,
                         system_status: 'active', // Ensure they are active
                         center_id: centerId,
-                        bio: formData.bio,
-                        career: formData.career,
-                        specialties: formData.specialties,
-                        profile_image: formData.profile_image,
-                        website_visible: formData.website_visible
+                        center_id: centerId
                     }, { onConflict: 'email' });
 
                 if (therapistError) throw therapistError;
@@ -299,11 +295,12 @@ export function TherapistList() {
             session_price_weekend: staff.session_price_weekend || 0,
             incentive_price: staff.incentive_price || 24000,
             evaluation_price: staff.evaluation_price || 50000,
-            bio: staff.bio || '',
-            career: staff.career || '',
-            specialties: staff.specialties || '',
-            profile_image: staff.profile_image || '',
-            website_visible: staff.website_visible !== false // Default true for active
+            base_salary: staff.base_salary || 0,
+            required_sessions: staff.required_sessions || 0,
+            session_price_weekday: staff.session_price_weekday || 0,
+            session_price_weekend: staff.session_price_weekend || 0,
+            incentive_price: staff.incentive_price || 24000,
+            evaluation_price: staff.evaluation_price || 50000
         });
         setIsModalOpen(true);
     };
@@ -598,110 +595,15 @@ export function TherapistList() {
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* ✨ Public Profile Section */}
-                                <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-3xl p-6 border border-indigo-100 dark:border-indigo-900/50 space-y-6">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
-                                                <span className="text-lg">🌍</span>
-                                            </div>
-                                            <h3 className="text-sm font-black text-indigo-700 dark:text-indigo-400">웹사이트 프로필 설정</h3>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">홈페이지 노출</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, website_visible: !formData.website_visible })}
-                                                className={cn(
-                                                    "w-10 h-5 rounded-full transition-all relative",
-                                                    formData.website_visible ? "bg-indigo-500" : "bg-slate-300 dark:bg-slate-700"
-                                                )}
-                                            >
-                                                <div className={cn(
-                                                    "absolute top-1 w-3 h-3 bg-white rounded-full transition-all",
-                                                    formData.website_visible ? "left-6" : "left-1"
-                                                )} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div className="flex gap-4 items-start">
-                                            <div className="shrink-0">
-                                                <div className="w-20 h-28 bg-white dark:bg-slate-800 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 relative shadow-sm group">
-                                                    {formData.profile_image ? (
-                                                        <img src={formData.profile_image} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center">
-                                                            <Plus className="w-6 h-6 text-slate-300" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="flex-1 space-y-3">
-                                                <div className="space-y-1">
-                                                    <label className="text-[11px] font-bold text-slate-400 ml-1">한줄 프로필 (Bio)</label>
-                                                    <input
-                                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm outline-none focus:border-indigo-500 transition-all text-slate-900 dark:text-white placeholder:text-slate-400"
-                                                        placeholder="예: 아이들의 꿈을 디자인합니다."
-                                                        value={formData.bio || ''}
-                                                        onChange={e => setFormData({ ...formData, bio: e.target.value })}
-                                                    />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <label className="text-[11px] font-bold text-slate-400 ml-1">전문 분야 (Specialties)</label>
-                                                    <input
-                                                        className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm outline-none focus:border-indigo-500 transition-all text-slate-900 dark:text-white placeholder:text-slate-400"
-                                                        placeholder="예: 언어치료, 인지치료"
-                                                        value={formData.specialties || ''}
-                                                        onChange={e => setFormData({ ...formData, specialties: e.target.value })}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <label className="text-[11px] font-bold text-slate-400 ml-1">상세 약력 (Career)</label>
-                                            <textarea
-                                                className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-sm outline-none focus:border-indigo-500 transition-all text-slate-900 dark:text-white min-h-[100px] placeholder:text-slate-400"
-                                                placeholder="한 줄에 하나씩 입력해주세요.&#10;- OO대학교 언어치료 전공&#10;- OO센터 수석 연구원"
-                                                value={formData.career || ''}
-                                                onChange={e => setFormData({ ...formData, career: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <label className="text-[11px] font-bold text-slate-400 ml-1">프로필 이미지 URL</label>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-xs outline-none focus:border-indigo-500 transition-all text-slate-500 dark:text-slate-400"
-                                                    placeholder="https://..."
-                                                    value={formData.profile_image || ''}
-                                                    onChange={e => setFormData({ ...formData, profile_image: e.target.value })}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={async () => {
-                                                        const url = prompt('이미지 URL을 입력하시거나, 이미지를 업로드 후 URL을 붙여넣어주세요.');
-                                                        if (url) setFormData({ ...formData, profile_image: url });
-                                                    }}
-                                                    className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-xl text-[10px] font-bold"
-                                                >
-                                                    URL 입력
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
+
 
                             <button type="submit" className="w-full py-5 bg-slate-900 dark:bg-indigo-600 text-white rounded-[24px] font-black text-lg shadow-xl hover:scale-[1.02] transition-all mt-4">
                                 {editingId ? '변경사항 저장하기' : '직원 등록 완료'}
                             </button>
                         </form>
-                    </div>
-                </div>
+                    </div >
+                </div >
             )}
 
             {/* ✨ Success Modal */}
@@ -750,6 +652,6 @@ export function TherapistList() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 }

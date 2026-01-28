@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
 import { AccountDeletionModal } from '@/components/AccountDeletionModal';
+import { Plus, Trash2, Edit2, Globe, Eye, EyeOff } from 'lucide-react'; // ✨ Added Icons
 
 // --- ❌ 원본 로직 절대 보존 ---
 const AI_GENERATING_KEY = 'ai_blog_generating';
@@ -197,11 +198,9 @@ export function SettingsPage() {
                     <SectionCard title="치료사 소개 관리" icon={<Heart className="text-rose-500" />}>
                         <SaveableTextArea label="페이지 인트로 문구" initialValue={getSetting('therapists_intro_text')} onSave={(v) => handleSave('therapists_intro_text', v)} saving={saving} rows={2} />
                         <div className="pt-6 border-t mt-6 space-y-4">
-                            <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700">
-                                <h3 className="text-sm font-black text-slate-700 dark:text-slate-300 mb-2">💡 관리 팁</h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                                    치료사 개별 프로필(사진, 약력 등)은 <span className="text-indigo-600 font-black">앱 상단 [직원 관리]</span> 메뉴에서 각 직원의 정보를 수정하여 홈페이지에 노출하거나 숨길 수 있습니다.
-                                </p>
+                            <div className="pt-6 border-t mt-6 space-y-8">
+                                {/* ✨ Direct Profile Management Manager */}
+                                <TherapistProfilesManager centerId={centerId} />
                             </div>
                         </div>
                     </SectionCard>
@@ -866,6 +865,275 @@ function HeroPreview({ title, subtitle, bgUrl }) {
                 <div className="w-[1cqw] h-[1cqw] rounded-full bg-amber-500" />
                 <div className="w-[1cqw] h-[1cqw] rounded-full bg-emerald-500" />
             </div>
+        </div>
+    );
+}
+// --- ✨ [New] Therapist Public Profile Manager ---
+function TherapistProfilesManager({ centerId }: { centerId: string }) {
+    const [profiles, setProfiles] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingProfile, setEditingProfile] = useState<any>(null);
+
+    // Form State
+    const [formData, setFormData] = useState({
+        name: '',
+        bio: '',
+        specialties: '',
+        career: '',
+        profile_image: '',
+        website_visible: true
+    });
+
+    const fetchProfiles = async () => {
+        setLoading(true);
+        const { data } = await supabase
+            .from('therapists')
+            .select('*')
+            .eq('center_id', centerId)
+            // .eq('system_status', 'active') // Show all for management, but visually distinguish
+            .order('created_at', { ascending: true });
+        setProfiles(data || []);
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        if (centerId) fetchProfiles();
+    }, [centerId]);
+
+    const handleOpenModal = (profile: any = null) => {
+        if (profile) {
+            setEditingProfile(profile);
+            setFormData({
+                name: profile.name,
+                bio: profile.bio || '',
+                specialties: profile.specialties || '',
+                career: profile.career || '',
+                profile_image: profile.profile_image || '',
+                website_visible: profile.website_visible
+            });
+        } else {
+            setEditingProfile(null);
+            setFormData({
+                name: '',
+                bio: '',
+                specialties: '',
+                career: '',
+                profile_image: '',
+                website_visible: true
+            });
+        }
+        setIsModalOpen(true);
+    };
+
+    const handleSave = async () => {
+        if (!formData.name) return alert('이름을 입력해주세요.');
+
+        try {
+            const payload: any = {
+                name: formData.name,
+                bio: formData.bio,
+                specialties: formData.specialties,
+                career: formData.career,
+                profile_image: formData.profile_image,
+                website_visible: formData.website_visible,
+                center_id: centerId,
+                // Ensure defaults for required fields if new
+                system_status: 'active',
+                hire_type: 'freelancer', // Default for display profiles
+                system_role: 'therapist'
+            };
+
+            if (editingProfile) {
+                // Update
+                const { error } = await supabase
+                    .from('therapists')
+                    .update(payload)
+                    .eq('id', editingProfile.id);
+                if (error) throw error;
+            } else {
+                // Insert New
+                // ✨ Generate a placeholder email for "Display Only" profiles to satisfy unique constraints & separate from auth
+                // Format: display+[random]@[center_slug].local
+                const randomId = Math.random().toString(36).substring(2, 10);
+                payload.email = `display+${randomId}@zarada.local`;
+
+                const { error } = await supabase
+                    .from('therapists')
+                    .insert(payload);
+
+                if (error) throw error;
+            }
+
+            setIsModalOpen(false);
+            fetchProfiles();
+            // ✨ [Sync] Notify visual components
+            window.dispatchEvent(new Event('settings-updated'));
+        } catch (error: any) {
+            console.error(error);
+            alert('저장 실패: ' + error.message);
+        }
+    };
+
+    const handleDelete = async (id: string, isRealUser: boolean) => {
+        if (!confirm(isRealUser
+            ? '⚠️ 이 프로필은 실제 직원 계정과 연결되어 있을 수 있습니다.\n삭제 시 급여/일정 데이터에 영향이 갈 수 있습니다.\n정말 삭제하시겠습니까? (권장: "숨김" 처리)'
+            : '정말 삭제하시겠습니까?')) return;
+
+        try {
+            const { error } = await supabase.from('therapists').delete().eq('id', id);
+            if (error) throw error;
+            fetchProfiles();
+        } catch (error) {
+            alert('삭제 실패. 데이터가 연결되어 있을 수 있습니다. 대신 숨김 처리를 권장합니다.');
+        }
+    };
+
+    const toggleVisibility = async (profile: any) => {
+        const newValue = !profile.website_visible;
+        try {
+            await supabase.from('therapists').update({ website_visible: newValue }).eq('id', profile.id);
+            // Optimistic update
+            setProfiles(prev => prev.map(p => p.id === profile.id ? { ...p, website_visible: newValue } : p));
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    if (loading) return <div className="text-center py-10"><Loader2 className="animate-spin inline text-slate-300" /></div>;
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h3 className="text-lg font-black text-slate-800 dark:text-white">프로필 목록</h3>
+                    <p className="text-xs text-slate-500 font-medium">홈페이지 '치료사 소개' 란에 표시될 프로필을 관리합니다.</p>
+                </div>
+                <button
+                    onClick={() => handleOpenModal()}
+                    className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
+                >
+                    <Plus className="w-4 h-4" /> 프로필 추가
+                </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {profiles.map(profile => {
+                    const isDisplayOnly = profile.email?.includes('@zarada.local');
+                    return (
+                        <div key={profile.id} className={cn(
+                            "flex gap-4 p-4 rounded-3xl border transition-all group relative overflow-hidden",
+                            profile.website_visible
+                                ? "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 shadow-sm"
+                                : "bg-slate-50 dark:bg-slate-900 border-slate-100 opacity-60"
+                        )}>
+                            <div className="w-20 h-24 shrink-0 bg-slate-100 rounded-2xl overflow-hidden relative">
+                                {profile.profile_image ? (
+                                    <img src={profile.profile_image} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-slate-300"><Globe className="w-8 h-8" /></div>
+                                )}
+                            </div>
+                            <div className="flex flex-col flex-1 min-w-0">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h4 className="font-black text-slate-900 dark:text-white truncate">{profile.name}</h4>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">
+                                            {isDisplayOnly ? 'Display Profile' : 'System User'}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => toggleVisibility(profile)}
+                                        className={cn("p-1.5 rounded-lg transition-colors", profile.website_visible ? "bg-emerald-50 text-emerald-600" : "bg-slate-200 text-slate-500")}
+                                        title="홈페이지 노출 여부"
+                                    >
+                                        {profile.website_visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                                    </button>
+                                </div>
+                                <div className="mt-auto flex gap-2">
+                                    <button onClick={() => handleOpenModal(profile)} className="flex-1 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-600">수정</button>
+                                    <button onClick={() => handleDelete(profile.id, !isDisplayOnly)} className="px-3 py-1.5 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-lg hover:bg-rose-100">
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {isModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-lg p-8 rounded-[40px] shadow-2xl relative">
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-6">
+                            {editingProfile ? '프로필 수정' : '새 프로필 등록'}
+                        </h2>
+
+                        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+                            <SaveableInput
+                                label="이름"
+                                initialValue={formData.name}
+                                onChange={v => setFormData({ ...formData, name: v })}
+                                placeholder="표시될 이름"
+                            />
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase ml-1">프로필 이미지</label>
+                                <div className="flex gap-2">
+                                    <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden shrink-0">
+                                        {formData.profile_image && <img src={formData.profile_image} className="w-full h-full object-cover" />}
+                                    </div>
+                                    <div className="flex-1">
+                                        <ImageUploader
+                                            bucketName="profiles"
+                                            currentImage={formData.profile_image}
+                                            onUploadComplete={url => setFormData({ ...formData, profile_image: url })}
+                                            label=""
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <SaveableInput
+                                label="한줄 소개 (Bio)"
+                                initialValue={formData.bio}
+                                onChange={v => setFormData({ ...formData, bio: v })}
+                                placeholder="예: 아이들의 꿈을 응원합니다."
+                            />
+
+                            <SaveableInput
+                                label="전문 분야 (쉼표로 구분)"
+                                initialValue={formData.specialties}
+                                onChange={v => setFormData({ ...formData, specialties: v })}
+                                placeholder="언어치료, 인지치료"
+                            />
+
+                            <SaveableTextArea
+                                label="상세 약력 (줄바꿈 구분)"
+                                initialValue={formData.career}
+                                onChange={v => setFormData({ ...formData, career: v })}
+                                rows={4}
+                                placeholder="- OO대학교 졸업&#13;&#10;- OO센터 근무"
+                            />
+
+                            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                                <span className="font-bold text-sm text-slate-700 dark:text-slate-300">홈페이지 노출</span>
+                                <button
+                                    onClick={() => setFormData({ ...formData, website_visible: !formData.website_visible })}
+                                    className={cn("w-12 h-6 rounded-full transition-colors relative", formData.website_visible ? "bg-indigo-500" : "bg-slate-300")}
+                                >
+                                    <div className={cn("absolute top-1 w-4 h-4 bg-white rounded-full transition-all", formData.website_visible ? "left-7" : "left-1")} />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 flex gap-3">
+                            <button onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold rounded-2xl hover:bg-slate-200">취소</button>
+                            <button onClick={handleSave} className="flex-1 py-4 bg-slate-900 dark:bg-indigo-600 text-white font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">저장하기</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
