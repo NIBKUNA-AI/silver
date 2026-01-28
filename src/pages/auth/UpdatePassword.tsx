@@ -32,9 +32,11 @@ export function UpdatePassword() {
         try {
             const { error } = await supabase.auth.updateUser({ password });
             if (error) throw error;
-            alert('비밀번호가 변경되었습니다. 새 비밀번호로 로그인해주세요.');
-            await supabase.auth.signOut();
-            navigate('/login');
+            alert('비밀번호가 성공적으로 설정되었습니다. 환영합니다!');
+
+            // 🔥 [Fix] 강제 로그아웃 대신 즉시 대시보드로 이동
+            // AuthContext가 알아서 상태를 업데이트하고 AppHomeRedirect가 길을 안내합니다.
+            navigate('/app');
         } catch (err: any) {
             setError(err.message || '비밀번호 변경 실패');
         } finally {

@@ -14,6 +14,7 @@ export const CenterGuard: React.FC<CenterGuardProps> = ({ children }) => {
     const { slug: urlSlug } = useParams();
 
     const isPublicPath = location.pathname.startsWith('/centers');
+    const isAppPath = location.pathname.startsWith('/app');
     const isAdminPath = location.pathname.startsWith('/app/admin') || location.pathname.startsWith('/master');
     const isSuperAdmin = role === 'super_admin';
 
@@ -47,8 +48,8 @@ export const CenterGuard: React.FC<CenterGuardProps> = ({ children }) => {
     }
 
     // 2. 권한 유효성 검사 및 리다이렉트
-    // 센터가 선택되지 않았고, 관련 경로도 아니며, 슈퍼 어드민도 아닐 때만 리다이렉트
-    if (!center && !isAdminPath && !isSuperAdmin) {
+    // 센터가 선택되지 않았고, 관련 경로(Admin/App/Master)도 아니며, 슈퍼 어드민도 아닐 때만 리다이렉트
+    if (!center && !isAdminPath && !isAppPath && !isSuperAdmin) {
         if (location.pathname === '/' || location.pathname === '') return <Outlet />;
 
         console.log("🛡️ [CenterGuard] No center selected, redirecting to portal...");
