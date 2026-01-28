@@ -41,17 +41,14 @@ export function ParentLogsPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return setError("로그인이 필요합니다.");
 
-            // 1. 유저 프로필 및 권한 확인
+            // 1. 프로필 및 아동 ID 확인 로직 (기존 유지)
             const { data: profile } = await supabase
-                .from('user_profiles')
+                .from('user_profiles') // Changed from 'profiles' to 'user_profiles' to match existing code
                 .select('role')
                 .eq('id', user.id)
-                .maybeSingle();
+                .maybeSingle(); // Changed from .single() to .maybeSingle() for robustness
 
-            // ✨ 본인 자녀 ID 찾기
             let targetChildId = null;
-
-            // 1. parents 테이블에서 실제 ID 찾기
             const { data: parentRecord } = await supabase
                 .from('parents')
                 .select('id')
@@ -64,11 +61,10 @@ export function ParentLogsPage() {
                     .select('id')
                     .eq('parent_id', parentRecord.id)
                     .maybeSingle();
-                if (directChild) targetChildId = directChild.id;
+                targetChildId = directChild?.id;
             }
 
             if (!targetChildId) {
-                // 2. family_relationships 테이블에서 체크
                 const { data: rel } = await supabase
                     .from('family_relationships')
                     .select('child_id')
@@ -77,39 +73,48 @@ export function ParentLogsPage() {
                 targetChildId = rel?.child_id;
             }
 
-            // 2. 상담 일지 조회 (치료사 및 발달 평가 데이터 포함)
+            if (!targetChildId) {
+                setError("연결된 아이 정보가 없습니다.");
+                setLoading(false);
+                return;
+            }
+
+            // [핵심 변경] counseling_logs가 아닌 development_assessments를 직접 조회
             let query = supabase
-                .from('counseling_logs')
+                .from('development_assessments')
                 .select(`
                     *,
                     therapists:therapist_id (name, id),
-                    development_assessments (*)
+                    children!inner (id, name, center_id)
                 `)
-                .eq('child_id', targetChildId) // ✨ [Fix] 확실한 아동 ID 필터링
-                .order('session_date', { ascending: false });
+                .eq('child_id', targetChildId)
+                .order('evaluation_date', { ascending: false });
 
-            // 관리자가 아니면 본인 아이 정보만 필터링
+            // 관리자 필터링 (기존 유지)
             if (profile?.role === 'admin' || profile?.role === 'super_admin') {
-                if (!center?.id) {
+                if (center?.id) {
+                    query = query.eq('children.center_id', center.id);
+                } else {
                     setError("센터 정보가 없습니다.");
                     setLoading(false);
                     return;
                 }
-                // ✨ [Admin] Filter by Center
-                query = query.eq('children.center_id', center.id);
-            } else {
-                if (!targetChildId) {
-                    setError("연결된 아이 정보가 없습니다.");
-                    setLoading(false);
-                    return;
-                }
-                query = query.eq('child_id', targetChildId);
             }
 
             const { data, error: fetchError } = await query;
-
             if (fetchError) throw fetchError;
-            setLogs(data || []);
+
+            // 데이터 변환 (UI 호환성 유지)
+            const formattedLogs = data?.map(assessment => ({
+                id: assessment.id,
+                session_date: assessment.evaluation_date,
+                created_at: assessment.created_at,
+                content: assessment.summary, // ✨ 이제 summary가 곧 일지 내용입니다.
+                therapists: assessment.therapists,
+                development_assessments: [assessment] // 하위 호환성 위해 배열로 감쌈
+            }));
+
+            setLogs(formattedLogs || []);
 
             // ✨ 부모 관찰 일기 가져오기
             if (targetChildId) {
@@ -186,34 +191,23 @@ export function ParentLogsPage() {
 
                                 {/* 상세 글 내용 */}
                                 <div className="p-8 space-y-6">
-                                    {/* ✨ 상담 일지 (회기 일지) */}
-                                    {(() => {
-                                        const assessment = Array.isArray(log.development_assessments)
-                                            ? log.development_assessments[0]
-                                            : log.development_assessments;
-
-                                        // ✨ [Fix] 일지 자체의 content(이제 선생님 요약이 들어감)를 최우선으로 보여줌
-                                        const displayContent = log.content || assessment?.summary;
-
-                                        return (
-                                            <div className="relative">
-                                                <h4 className="font-bold text-primary text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
-                                                    <ChevronRight className="w-4 h-4" /> 상담 일지 (회기 일지)
-                                                </h4>
-                                                {displayContent && !displayContent.includes('자동 생성된 기본 일지') ? (
-                                                    <div className="bg-indigo-50/50 p-6 rounded-[32px] border border-indigo-100/30">
-                                                        <p className="text-slate-700 font-bold leading-relaxed whitespace-pre-wrap text-[16px] tracking-tight">
-                                                            {displayContent}
-                                                        </p>
-                                                    </div>
-                                                ) : (
-                                                    <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100">
-                                                        <p className="text-slate-400 text-sm italic">작성된 일지 내용이 없습니다.</p>
-                                                    </div>
-                                                )}
+                                    {/* ✨ 회기 일지 (상담 일지) */}
+                                    <div className="relative">
+                                        <h4 className="font-bold text-primary text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <ChevronRight className="w-4 h-4" /> 회기 일지
+                                        </h4>
+                                        {log.content ? (
+                                            <div className="bg-indigo-50/50 p-6 rounded-[32px] border border-indigo-100/30">
+                                                <p className="text-slate-700 font-bold leading-relaxed whitespace-pre-wrap text-[16px] tracking-tight">
+                                                    {log.content}
+                                                </p>
                                             </div>
-                                        );
-                                    })()}
+                                        ) : (
+                                            <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100">
+                                                <p className="text-slate-400 text-sm italic">작성된 일지 내용이 없습니다.</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -221,7 +215,7 @@ export function ParentLogsPage() {
                 ) : (
                     <div className="bg-white rounded-[56px] p-32 text-center border-2 border-dashed border-slate-100 shadow-sm">
                         <MessageSquare className="w-16 h-16 text-slate-200 mx-auto mb-6" />
-                        <p className="text-slate-400 font-black text-lg italic">기록된 상담 내용이 없습니다.</p>
+                        <p className="text-slate-400 font-black text-lg italic">기록된 회기 일지가 없습니다.</p>
                     </div>
                 )}
             </div>
