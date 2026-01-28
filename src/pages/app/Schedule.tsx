@@ -427,9 +427,9 @@ export function Schedule() {
                                     ? events
                                     : events.filter(e => selectedTherapistIds.has(e.extendedProps.therapist_id))}
                                 height="100%"
-                                dayMaxEvents={3}
-                                eventDisplay="block" // ✨ [UI] 점(dot) 대신 꽉 찬 블록으로 표시
-                                eventClassNames="cursor-pointer hover:brightness-95 transition-all border-0 font-bold text-xs p-0 rounded-lg shadow-md overflow-hidden"
+                                dayMaxEvents={5} // ✨ 인원 많아져도 볼 수 있게 최대 표시 개수 상향
+                                eventDisplay="block"
+                                eventClassNames="cursor-pointer hover:bg-slate-50 transition-all border-0 font-medium text-[11px] p-0 rounded-md overflow-hidden bg-transparent"
                                 eventClick={handleEventClick}
                                 dateClick={handleDateClick}
                                 eventMouseEnter={handleEventMouseEnter}
@@ -442,30 +442,14 @@ export function Schedule() {
                                     const color = arg.event.extendedProps.color;
 
                                     return (
-                                        <div
-                                            className={cn(
-                                                "flex items-center h-full w-full px-2.5 py-1.5 gap-2 border-l-[3px] transition-all",
-                                                isCancelled && "opacity-60 grayscale"
-                                            )}
-                                            style={{
-                                                backgroundColor: isDark ? `${color}25` : `${color}15`,
-                                                borderLeftColor: color
-                                            }}
-                                        >
-                                            <div className="flex flex-col min-w-0 flex-1">
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className={cn("text-[12px] font-black truncate", isDark ? "text-white" : "text-slate-900")}>
-                                                        {arg.event.extendedProps.childName}
-                                                    </span>
-                                                    {isCancelled && <span className="text-[10px] font-black text-rose-500">[취소]</span>}
-                                                </div>
-                                                <div className="flex items-center gap-1 opacity-80 mt-0.5">
-                                                    <span className={cn("text-[11px] font-bold truncate", isDark ? "text-slate-300" : "text-slate-600")}>
-                                                        {arg.event.extendedProps.programName}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            {arg.event.extendedProps.hasNote && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shrink-0" />}
+                                        <div className={cn("flex items-center gap-1.5 py-0.5 px-1 truncate", isCancelled && "opacity-40 line-through")}>
+                                            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                                            <span className={cn("truncate font-bold", isDark ? "text-slate-200" : "text-slate-700")}>
+                                                {arg.event.extendedProps.childName}
+                                            </span>
+                                            <span className={cn("truncate opacity-60 text-[10px]", isDark ? "text-slate-400" : "text-slate-500")}>
+                                                ({arg.event.extendedProps.programName})
+                                            </span>
                                         </div>
                                     );
                                 }}
@@ -482,14 +466,10 @@ export function Schedule() {
                                 <div className="w-3 h-3 rounded-full shadow-[0_0_8px]" style={{ backgroundColor: tooltipInfo.event.extendedProps.color }}></div>
                                 <span className="font-black text-lg tracking-tight">{tooltipInfo.event.title}</span>
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2 mb-3">
                                 <div className="flex items-center gap-2.5 text-slate-300">
                                     <User className="w-4 h-4 text-slate-400" />
                                     <span className="font-medium">{tooltipInfo.event.extendedProps.therapistName} 선생님</span>
-                                </div>
-                                <div className="flex items-center gap-2.5 text-slate-300">
-                                    <Calendar className="w-4 h-4 text-slate-400" />
-                                    <span className="font-bold text-white">{tooltipInfo.event.extendedProps.programName}</span>
                                 </div>
                                 <div className="flex items-center gap-2.5 text-slate-300">
                                     <Clock className="w-4 h-4 text-slate-400" />
@@ -497,16 +477,16 @@ export function Schedule() {
                                         {new Date(tooltipInfo.event.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(tooltipInfo.event.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
-                                <div className="mt-2 pt-1 flex items-center justify-between">
-                                    <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${getStatusBadge(tooltipInfo.event.extendedProps.status).class}`}>
-                                        {getStatusBadge(tooltipInfo.event.extendedProps.status).text}
-                                    </span>
-                                    {tooltipInfo.event.extendedProps.hasNote && (
-                                        <div className="flex items-center gap-1 text-xs text-yellow-400 font-bold bg-yellow-400/10 px-2 py-1 rounded-md border border-yellow-400/20">
-                                            <FileText className="w-3 h-3" /> 일지 작성됨
-                                        </div>
-                                    )}
-                                </div>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 pt-1">
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${getStatusBadge(tooltipInfo.event.extendedProps.status).class}`}>
+                                    {getStatusBadge(tooltipInfo.event.extendedProps.status).text}
+                                </span>
+                                {tooltipInfo.event.extendedProps.hasNote && (
+                                    <div className="flex items-center gap-1 text-[10px] text-yellow-400 font-bold bg-yellow-400/10 px-2 py-0.5 rounded-full border border-yellow-400/20">
+                                        일지 작성됨
+                                    </div>
+                                )}
                             </div>
                             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rotate-45 w-3 h-3 bg-slate-900/95"></div>
                         </>
@@ -521,8 +501,9 @@ export function Schedule() {
                         initialDate={clickedDate}
                         onSuccess={() => handleModalClose(true)}
                     />
-                )}
-            </div>
+                )
+                }
+            </div >
         </>
     );
 }

@@ -504,15 +504,16 @@ export function ParentHomePage() {
                             events={calendarEvents}
                             height="auto"
                             contentHeight="auto"
-                            dayMaxEvents={true}
-                            eventDisplay="block" // ✨ [UI] 부모용 캘린더도 블록 스타일로 변경
+                            dayMaxEvents={3}
+                            eventDisplay="block"
                             moreLinkClick="popover"
                             editable={false}
                             selectable={false}
                             eventContent={(eventInfo) => (
-                                <div className="flex flex-col h-auto px-2 py-1 rounded-md border-l-4" style={{ backgroundColor: eventInfo.backgroundColor + '20', borderLeftColor: eventInfo.borderColor }}>
+                                <div className="flex items-center gap-1.5 py-1 px-1.5 truncate bg-transparent">
+                                    <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: eventInfo.backgroundColor }} />
                                     <span className="text-[11px] font-black text-slate-800 truncate">{eventInfo.event.title.split(' (')[0]}</span>
-                                    <span className="text-[10px] font-bold text-slate-500 truncate">{eventInfo.event.title.split(' (')[1]?.replace(')', '')}</span>
+                                    <span className="text-[10px] font-bold text-slate-400 truncate">({eventInfo.event.title.split(' (')[1]?.replace(')', '')})</span>
                                 </div>
                             )}
                             eventClick={(info) => alert(`${info.event.title}\n시간: ${info.event.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`)}
