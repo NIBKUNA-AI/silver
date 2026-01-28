@@ -157,6 +157,7 @@ export function ConsultationList() {
                 const { data: newLog, error } = await supabase
                     .from('counseling_logs')
                     .insert({
+                        center_id: centerId, // ✨ [FIX] RLS Violation 해결을 위해 center_id 필수 추가
                         schedule_id: session.id,
                         therapist_id: session.therapist_id,
                         child_id: session.child_id,
