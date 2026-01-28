@@ -100,10 +100,17 @@ export function ConsultationList() {
             // ✨ [FIX] 상태 조건 완화 - 완료됐거나 OR 상담 당일이 지난 일정 모두 포함
             const today = new Date().toISOString().split('T')[0];
 
+            // ✨ [Optimization] Performance Guard: Limit to last 60 days
+            // Prevents fetching thousands of old sessions for long-running centers
+            const limitDate = new Date();
+            limitDate.setDate(limitDate.getDate() - 60);
+            const minDate = limitDate.toISOString().split('T')[0];
+
             let sessionQuery = supabase
                 .from('schedules')
                 .select(`id, child_id, status, therapist_id, start_time, service_type, children!inner (id, name, center_id)`)
                 .eq('children.center_id', centerId)
+                .gte('start_time', minDate) // 🛡️ Performance Filter
                 .or(`status.eq.completed,start_time.lt.${today}T23:59:59`);
 
             // ✨ [FIX] therapist 테이블의 ID로 필터 (user.id가 아님!)

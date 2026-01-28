@@ -13,6 +13,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database.types';
+import { ExcelExportButton } from '@/components/common/ExcelExportButton';
 import { Loader2, Phone, Trash2, Search, Filter } from 'lucide-react';
 
 type Lead = Database['public']['Tables']['leads']['Row'];
@@ -95,6 +96,23 @@ export function LeadList() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    {/* ✨ [Export] Excel Download Button */}
+                    <ExcelExportButton
+                        data={filteredLeads}
+                        fileName="마케팅_리드_목록"
+                        headers={['created_at', 'parent_name', 'phone', 'child_name', 'child_birth_year', 'source', 'preferred_service', 'concern', 'status']}
+                        headerLabels={{
+                            created_at: '신청일',
+                            parent_name: '보호자명',
+                            phone: '연락처',
+                            child_name: '아동명',
+                            child_birth_year: '아동 출생년도',
+                            source: '유입 경로(UTM)',
+                            preferred_service: '선호 서비스',
+                            concern: '고민 사항',
+                            status: '상태'
+                        }}
+                    />
                     <div className="relative">
                         <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                         <input
