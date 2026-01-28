@@ -63,12 +63,11 @@ export function TherapistList() {
                 .select('*')
                 .eq('center_id', centerId);
 
-            // 2. [Profiles Second] 이 센터 소속의 유저 프로필 조회 (이메일 기준 매칭용)
+            // 2. [Profiles Second] 이 센터 소속의 유저 프로필 조회
             const { data: profileData } = await supabase
                 .from('user_profiles')
                 .select('*')
-                .eq('center_id', centerId)
-                .filter('email', 'not.in', superAdminList);
+                .eq('center_id', centerId);
 
             // 3. [Merge] 정산 정보(Therapists)를 기준으로 계정(Profile) 정보를 붙이기
             // 이제 계정(user_profile)이 아직 없어도 직원 목록에 정상적으로 뜹니다.
@@ -87,7 +86,7 @@ export function TherapistList() {
                     center_id: t.center_id,
                     hire_type: t.hire_type || (profile?.role === 'admin' ? 'fulltime' : 'freelancer')
                 };
-            }).filter(u => u.system_role !== 'parent' && !isSuperAdmin(u.email));
+            }).filter(u => u.system_role !== 'parent' && u.system_role !== 'super');
 
             setStaffs(mergedData || []);
 
