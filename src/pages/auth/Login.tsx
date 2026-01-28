@@ -456,14 +456,12 @@ export function Login() {
                             회원가입하고 시작하기
                         </Link>
 
-                        {!slug && (
-                            <Link
-                                to="/"
-                                className="inline-block text-[11px] font-black uppercase tracking-widest text-indigo-500/50 hover:text-indigo-500 transition-colors"
-                            >
-                                통합 센터 검색으로 돌아가기
-                            </Link>
-                        )}
+                        <Link
+                            to={slug ? `/centers/${slug}` : "/"}
+                            className="inline-block text-[11px] font-black uppercase tracking-widest text-indigo-500/50 hover:text-indigo-500 transition-colors"
+                        >
+                            {slug ? '← 센터 홈으로 돌아가기' : '통합 센터 검색으로 돌아가기'}
+                        </Link>
                     </div>
                 </div>
             </div>

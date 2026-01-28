@@ -61,6 +61,13 @@ export const CenterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       const isGlobalRoute = ['/', '/login', '/register', '/auth/forgot-password'].includes(location.pathname);
 
+      // ✨ [Fix] If we are on a center specific route, we are definitively NOT global
+      if (location.pathname.startsWith('/centers/')) {
+        // Force slug extraction logic to take precedence
+      } else if (isGlobalRoute) {
+        // Only treat as global if NOT under /centers/
+      }
+
       if (slug) {
         localStorage.setItem('zarada_center_slug', slug);
       } else if (!isGlobalRoute) {

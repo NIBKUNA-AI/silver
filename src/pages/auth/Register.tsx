@@ -165,13 +165,13 @@ export function Register() {
             if (authError) throw authError;
 
             if (authData.user) {
-                // ✨ user_profiles에 직접 저장
+                // ✨ [Correction] Double-check explicit insert
                 await supabase.from('user_profiles').upsert({
                     id: authData.user.id,
                     email: email,
                     name: name,
                     role: finalRole,
-                    center_id: centerId,
+                    center_id: centerId || null, // Robust null
                     status: finalStatus,
                 }, { onConflict: 'id' });
 
