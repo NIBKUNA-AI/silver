@@ -41,9 +41,9 @@ function SearchableSelect({ label, placeholder, options, value, onChange, requir
                     {selectedOption ? (
                         <>
                             {selectedOption.color && (
-                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: selectedOption.color }} />
+                                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: selectedOption.color }} />
                             )}
-                            <span>{selectedOption.name}</span>
+                            <span className="text-slate-900 dark:text-white">{selectedOption.name}</span>
                         </>
                     ) : (
                         <span className="text-slate-400 font-medium">{placeholder}</span>
@@ -103,13 +103,6 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
     const { center } = useCenter();
     const centerId = center?.id;
 
-    // 🕵️ DEBUG: Log centerId to see why it's empty in Supabase requests
-    useEffect(() => {
-        if (isOpen) {
-            console.log("🎨 [ScheduleModal] Current Center ID:", centerId, "Type:", typeof centerId, "Length:", centerId?.length);
-        }
-    }, [isOpen, centerId]);
-
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
 
@@ -132,9 +125,10 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
         service_type: 'therapy'
     });
 
+    // ✨ [ScheduleModal] Initialization
     useEffect(() => {
         if (isOpen && centerId && centerId.length >= 32) {
-            loadInitialData(centerId); // ✨ Pass ID directly as argument
+            loadInitialData(centerId);
             setIsRecurring(false);
             setRepeatWeeks(4);
         }

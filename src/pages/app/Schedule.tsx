@@ -428,7 +428,8 @@ export function Schedule() {
                                     : events.filter(e => selectedTherapistIds.has(e.extendedProps.therapist_id))}
                                 height="100%"
                                 dayMaxEvents={3}
-                                eventClassNames="cursor-pointer hover:brightness-95 transition-all border-0 font-bold text-xs p-0 rounded-lg shadow-sm overflow-hidden"
+                                eventDisplay="block" // ✨ [UI] 점(dot) 대신 꽉 찬 블록으로 표시
+                                eventClassNames="cursor-pointer hover:brightness-95 transition-all border-0 font-bold text-xs p-0 rounded-lg shadow-md overflow-hidden"
                                 eventClick={handleEventClick}
                                 dateClick={handleDateClick}
                                 eventMouseEnter={handleEventMouseEnter}
@@ -443,28 +444,28 @@ export function Schedule() {
                                     return (
                                         <div
                                             className={cn(
-                                                "flex items-center h-full w-full px-2 py-1 gap-2 border-l-4",
+                                                "flex items-center h-full w-full px-2.5 py-1.5 gap-2 border-l-[3px] transition-all",
                                                 isCancelled && "opacity-60 grayscale"
                                             )}
                                             style={{
-                                                backgroundColor: isDark ? `${color}15` : `${color}10`,
+                                                backgroundColor: isDark ? `${color}25` : `${color}15`,
                                                 borderLeftColor: color
                                             }}
                                         >
                                             <div className="flex flex-col min-w-0 flex-1">
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className={cn("text-[11px] font-black truncate", isDark ? "text-white" : "text-slate-800")}>
+                                                    <span className={cn("text-[12px] font-black truncate", isDark ? "text-white" : "text-slate-900")}>
                                                         {arg.event.extendedProps.childName}
                                                     </span>
-                                                    {isCancelled && <span className="text-[9px] font-black text-rose-500">[취소]</span>}
+                                                    {isCancelled && <span className="text-[10px] font-black text-rose-500">[취소]</span>}
                                                 </div>
-                                                <div className="flex items-center gap-1 opacity-70">
-                                                    <span className="text-[10px] font-bold truncate">
+                                                <div className="flex items-center gap-1 opacity-80 mt-0.5">
+                                                    <span className={cn("text-[11px] font-bold truncate", isDark ? "text-slate-300" : "text-slate-600")}>
                                                         {arg.event.extendedProps.programName}
                                                     </span>
                                                 </div>
                                             </div>
-                                            {arg.event.extendedProps.hasNote && <FileText className="w-3 h-3 text-indigo-500 shrink-0" />}
+                                            {arg.event.extendedProps.hasNote && <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shrink-0" />}
                                         </div>
                                     );
                                 }}
