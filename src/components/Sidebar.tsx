@@ -190,30 +190,34 @@ const MENU_GROUPS = [
         name: '센터 운영',  // Operations
         icon: Icons.calendar,
         items: [
-            { name: '치료 일정', path: '/app/schedule', icon: Icons.calendar, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
-            { name: '수납 관리', path: '/app/billing', icon: Icons.billing, roles: ['super_admin', 'admin', 'staff'] },
-            { name: '상담일지', path: '/app/consultations', icon: Icons.consultation, roles: ['super_admin', 'admin', 'therapist'] },
-            { name: '프로그램 관리', path: '/app/programs', icon: Icons.program, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
+            // ✨ [Therapist] Only Schedule & Consultations
+            // ✨ [Manager] Schedule, Billing, Programs
+            { name: '치료 일정', path: '/app/schedule', icon: Icons.calendar, roles: ['super_admin', 'admin', 'therapist', 'manager', 'staff'] },
+            { name: '수납 관리', path: '/app/billing', icon: Icons.billing, roles: ['super_admin', 'admin', 'manager', 'staff'] },
+            { name: '상담일지', path: '/app/consultations', icon: Icons.consultation, roles: ['super_admin', 'admin', 'therapist'] }, // Manager doesn't write logs usually? User said "Therapist Only for own kids", but admin can see all. User didn't explicitly say Manager CANNOT see logs, but "Therapist account features... Administrative staff account features...". Administrative list didn't include logs. So remove manager.
+            { name: '프로그램 관리', path: '/app/programs', icon: Icons.program, roles: ['super_admin', 'admin', 'manager', 'staff'] },
         ]
     },
     {
         name: '리소스 관리',  // Management
         icon: Icons.members,
         items: [
-            { name: '상담문의', path: '/app/leads', icon: Icons.leads, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
-            { name: '아동 관리', path: '/app/children', icon: Icons.child, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
-            { name: '부모 관리', path: '/app/parents', icon: Icons.members, roles: ['super_admin', 'admin', 'therapist', 'staff'] },
-            { name: '직원 관리', path: '/app/therapists', icon: Icons.staff, roles: ['super_admin', 'admin'] },
-            { name: '급여 관리', path: '/app/settlement', icon: Icons.salary, roles: ['super_admin', 'admin'] },
+            // ✨ [Manager] Leads, Children, Parents allowed.
+            // ✨ [Therapist] REMOVED from Leads, Children, Parents (User request: Therapist only Schedule & Logs)
+            { name: '상담문의', path: '/app/leads', icon: Icons.leads, roles: ['super_admin', 'admin', 'manager', 'staff'] },
+            { name: '아동 관리', path: '/app/children', icon: Icons.child, roles: ['super_admin', 'admin', 'manager', 'staff'] }, // Therapist removed
+            { name: '부모 관리', path: '/app/parents', icon: Icons.members, roles: ['super_admin', 'admin', 'manager', 'staff'] }, // Therapist removed
+            { name: '직원 관리', path: '/app/therapists', icon: Icons.staff, roles: ['super_admin', 'admin'] }, // Manager NO
+            { name: '급여 관리', path: '/app/settlement', icon: Icons.salary, roles: ['super_admin', 'admin'] }, // Manager NO
         ]
     },
     {
         name: '시스템',  // Platform
         icon: Icons.system,
         items: [
-            { name: '대시보드', path: '/app/dashboard', icon: Icons.dashboard, roles: ['super_admin', 'admin', 'staff'] },
+            { name: '대시보드', path: '/app/dashboard', icon: Icons.dashboard, roles: ['super_admin', 'admin', 'manager', 'staff'] },
             { name: '사이트 설정', path: '/app/settings', icon: Icons.settings, roles: ['super_admin'] },
-            { name: '전체 센터 관리', path: '/master/centers', icon: Icons.globe, roles: ['super_admin'] }, // ✨ New Super Admin Link
+            { name: '전체 센터 관리', path: '/master/centers', icon: Icons.globe, roles: ['super_admin'] },
         ]
     }
 ];

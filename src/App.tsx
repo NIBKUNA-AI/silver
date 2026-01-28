@@ -204,7 +204,7 @@ function App() {
             path="/app"
             element={
               <CenterGuard>
-                <ProtectedRoute allowedRoles={['admin', 'staff', 'employee', 'therapist']}>
+                <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff', 'employee', 'therapist']}>
                   <AppLayout />
                 </ProtectedRoute>
               </CenterGuard>
@@ -213,51 +213,72 @@ function App() {
             <Route index element={<AppHomeRedirect />} />
 
             <Route path="dashboard" element={
-              <ProtectedRoute allowedRoles={['admin', 'staff', 'employee', 'therapist']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff']}>
                 <Dashboard />
               </ProtectedRoute>
             } />
 
             <Route path="leads" element={
-              <ProtectedRoute allowedRoles={['admin', 'staff', 'employee']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff']}>
                 <ConsultationInquiryList />
               </ProtectedRoute>
             } />
 
-            <Route path="schedule" element={<Schedule />} />
+            <Route path="schedule" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff', 'therapist']}>
+                <Schedule />
+              </ProtectedRoute>
+            } />
 
-            <Route path="children" element={<ChildList />} />
-            <Route path="parents" element={<ParentList />} />
-            <Route path="programs" element={<Programs />} />
+            <Route path="children" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff']}>
+                <ChildList />
+              </ProtectedRoute>
+            } />
+
+            <Route path="parents" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff']}>
+                <ParentList />
+              </ProtectedRoute>
+            } />
+
+            <Route path="programs" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff']}>
+                <Programs />
+              </ProtectedRoute>
+            } />
 
             <Route path="therapists" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
                 <TherapistList />
               </ProtectedRoute>
             } />
 
+            {/* ✨ Sessions are usually linked from Schedule, access control handled by logic or same as Schedule */}
             <Route path="sessions" element={<SessionList />} />
             <Route path="sessions/:scheduleId/note" element={<SessionNote />} />
 
             <Route path="billing" element={
-              <ProtectedRoute allowedRoles={['admin', 'staff', 'employee']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff']}>
                 <Billing />
               </ProtectedRoute>
             } />
 
             <Route path="settlement" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
                 <Settlement />
               </ProtectedRoute>
             } />
 
-            <Route path="consultations" element={<ConsultationList />} />
+            <Route path="consultations" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'therapist']}>
+                <ConsultationList />
+              </ProtectedRoute>
+            } />
 
-            {/* 블로그 관리 메뉴 삭제됨 */}
-
-            {/* 사이트 관리 */}
+            {/* 사이트 관리 - Admin Only */}
             <Route path="settings" element={
-              <ProtectedRoute allowedRoles={['admin', 'manager']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
                 <SettingsPage />
               </ProtectedRoute>
             } />

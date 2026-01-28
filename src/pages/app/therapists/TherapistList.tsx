@@ -57,33 +57,35 @@ export function TherapistList() {
         try {
             const superAdminList = `("${SUPER_ADMIN_EMAILS.join('","')}")`;
 
-            // 1. [Profiles First] 이 센터 소속의 모든 유저 프로필 조회
+            // 1. [Therapists First] 상세 정보(은행, 연락처 등) 조회 (정산의 기준이 되는 테이블)
+            const { data: therapistData } = await supabase
+                .from('therapists')
+                .select('*')
+                .eq('center_id', centerId);
+
+            // 2. [Profiles Second] 이 센터 소속의 유저 프로필 조회 (이메일 기준 매칭용)
             const { data: profileData } = await supabase
                 .from('user_profiles')
                 .select('*')
                 .eq('center_id', centerId)
                 .filter('email', 'not.in', superAdminList);
 
-            // 2. [Therapists Second] 상세 정보(은행, 연락처 등) 조회
-            const { data: therapistData } = await supabase
-                .from('therapists')
-                .select('*')
-                .eq('center_id', centerId);
-
-            // 3. [Merge] 프로필 기준으로 합치기 (치료사 정보가 없어도 프로필이 있으면 노출)
-            const mergedData = profileData?.map(p => {
-                const detail = therapistData?.find(t => t.email === p.email);
+            // 3. [Merge] 정산 정보(Therapists)를 기준으로 계정(Profile) 정보를 붙이기
+            // 이제 계정(user_profile)이 아직 없어도 직원 목록에 정상적으로 뜹니다.
+            const mergedData = therapistData?.map(t => {
+                const profile = profileData?.find(p => p.email === t.email);
 
                 return {
-                    userId: p.id,
-                    id: detail?.id || p.id,
-                    email: p.email,
-                    ...detail, // 최신 상세 정보(색상 등)를 뒤에 배치하여 덮어씌우기
-                    name: p.name || detail?.name, // 프로필 이름 우선
-                    system_role: p.role,
-                    system_status: p.status,
-                    center_id: p.center_id,
-                    hire_type: detail?.hire_type || (p.role === 'admin' ? 'fulltime' : 'freelancer')
+                    id: t.id,
+                    userId: profile?.id || null, // 계정 정보가 없을 수 있음
+                    email: t.email,
+                    ...t,
+                    name: t.name,
+                    system_role: t.system_role || profile?.role || 'therapist',
+                    // ✨ [Fix] UI상 상태는 고용 정보(Therapist)의 상태를 마스터로 사용
+                    system_status: t.system_status || 'active',
+                    center_id: t.center_id,
+                    hire_type: t.hire_type || (profile?.role === 'admin' ? 'fulltime' : 'freelancer')
                 };
             }).filter(u => u.system_role !== 'parent' && !isSuperAdmin(u.email));
 
@@ -181,60 +183,89 @@ export function TherapistList() {
     const handleToggleStatus = async (staff: any) => {
         const isRetired = staff.system_status === 'retired';
         const newStatus = isRetired ? 'active' : 'retired';
+
+        // ✨ [핵심 수정] 사용자 요청: "퇴사 시 계정(Auth)은 확실히 날리되, 일지 정보는 보관"
         const message = isRetired
-            ? `${staff.name}님을 다시 근무중으로 복귀시키겠습니까?`
-            : `${staff.name}님을 퇴사 처리하시겠습니까? (계정은 유지되며 보관됩니다)`;
+            ? `${staff.name}님을 다시 근무중으로 복귀시키겠습니까?\n(계정이 삭제된 경우 관리자가 다시 초대해야 합니다)`
+            : `${staff.name}님을 퇴사 처리하시겠습니까?\n(로그인 권한 및 계정 정보가 즉시 삭제되지만, 기존 일지/기록 데이터는 보존됩니다)`;
 
         if (!confirm(message)) return;
 
         try {
-            const { error: profileError } = await supabase
-                .from('user_profiles')
-                .update({ status: newStatus })
-                .eq('email', staff.email);
+            setLoading(true);
 
-            await supabase
-                .from('therapists')
-                .update({ system_status: newStatus })
-                .eq('email', staff.email);
+            if (!isRetired) {
+                // [퇴사 처리: Clean Account Removal]
+                // 1. Therapists 마스터 상태를 'retired'로 변경 (일지 보존을 위해 레코드는 유지)
+                const { error: therapistError } = await supabase
+                    .from('therapists')
+                    .update({ system_status: 'retired' })
+                    .eq('id', staff.id);
 
-            if (profileError && !staff.userId) {
-                // Ignore profile error if user doesn't exist yet
-            } else if (profileError) {
-                throw profileError;
+                if (therapistError) throw therapistError;
+
+                // 2. Auth 계정 및 프로필 삭제 (보안 및 DB 정리)
+                if (staff.userId) {
+                    // ※ 중요: DB에서 therapists.profile_id 가 'ON DELETE SET NULL'로 설정되어 있어야 함
+                    const { error } = await supabase.rpc('admin_delete_user', { target_user_id: staff.userId });
+                    if (error) console.warn('Account removal note:', error.message);
+                }
+
+                alert('퇴사 처리가 완료되었습니다. 직원의 로그인 계정은 삭제되었으며 정보는 보관함으로 이동했습니다.');
+            } else {
+                // [복귀 처리]
+                const { error: therapistError } = await supabase
+                    .from('therapists')
+                    .update({ system_status: 'active' })
+                    .eq('id', staff.id);
+
+                if (therapistError) throw therapistError;
+
+                alert('근무 중으로 복귀되었습니다. 로그인이 필요한 경우 다시 초대해 주세요.');
             }
 
-            alert('상태가 변경되었습니다.');
             fetchStaffs();
         } catch (error) {
             console.error(error);
-            alert('상태 변경 실패');
+            alert('처리 실패: ' + (error.message || '알 수 없는 오류'));
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleHardReset = async (staff: any) => {
-        const confirmMsg = `[⚠️ 중대 경고]\n\n${staff.name} 치료사 정보를 완전히 영구 삭제하시겠습니까?\n이 작업은 되돌릴 수 없으며, 모든 급여 기록 및 배정된 일정이 사라질 수 있습니다.`;
+        const confirmMsg = `[🚨 FINAL WARNING]\n\n${staff.name}님의 정보를 DB에서 "영구 삭제" 하시겠습니까?\n\n이 작업은 퇴사가 아닌 '데이터 말소'입니다. 이 직원이 배정된 일지나 정산 기록에 문제가 생길 수 있습니다.`;
         if (!confirm(confirmMsg)) return;
 
-        const doubleCheck = prompt(`삭제를 원하시면 다음 문구를 똑같이 입력하세요:\n\n${staff.email}`);
+        const doubleCheck = prompt(`삭제를 원하시면 해당 직원의 이메일을 입력하세요:\n${staff.email}`);
         if (doubleCheck !== staff.email) {
-            alert('이메일이 일치하지 않아 취소합니다.');
+            alert('이메일 불일치로 중단합니다.');
             return;
         }
 
         try {
+            setLoading(true);
+
+            // 1. 계정 삭제 (있는 경우)
             if (staff.userId) {
-                const { error } = await supabase.rpc('admin_delete_user', { target_user_id: staff.userId });
-                if (error) throw error;
-            } else {
-                await supabase.from('therapists').delete().eq('id', staff.id);
+                await supabase.rpc('admin_delete_user', { target_user_id: staff.userId });
             }
 
-            alert('영구 삭제되었습니다.');
+            // 2. 치료사 정보 완전 삭제 (DB에서 제거)
+            const { error: deleteError } = await supabase
+                .from('therapists')
+                .delete()
+                .eq('id', staff.id);
+
+            if (deleteError) throw deleteError;
+
+            alert('DB에서 해당 직원의 모든 정보가 완전히 삭제되었습니다.');
             fetchStaffs();
         } catch (error) {
             console.error(error);
-            alert('삭제 실패: ' + (error as any).message);
+            alert('영구 삭제 실패: ' + (error.message || '오류 발생'));
+        } finally {
+            setLoading(false);
         }
     };
 
