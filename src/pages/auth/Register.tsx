@@ -303,16 +303,37 @@ export function Register() {
                                 <div className="flex flex-col gap-2 items-center">
                                     <span className="text-sm font-bold">🚫 이미 등록된 사용자입니다!</span>
                                     <span className="text-[11px] text-slate-500 text-center leading-relaxed">
-                                        센터 관리자가 이미 계정을 생성했거나,<br />
-                                        이전에 가입하신 이력이 있습니다.<br />
-                                        <span className="font-bold text-indigo-500">비밀번호 찾기</span> 또는 바로 로그인을 진행해주세요.
+                                        센터 관리자가 이미 계정을 생성했거나, 이전 가입 이력이 있습니다.<br />
+                                        만약 가입한 적이 없는데 이 메시지가 뜬다면 아래 버튼을 눌러주세요.
                                     </span>
-                                    <Link
-                                        to="/login"
-                                        className="py-2.5 px-6 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-md mt-1"
-                                    >
-                                        로그인 페이지로 이동
-                                    </Link>
+                                    <div className="flex gap-2 mt-2 w-full">
+                                        <Link
+                                            to="/login"
+                                            className="flex-1 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-md text-xs flex items-center justify-center"
+                                        >
+                                            로그인 하기
+                                        </Link>
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                if (!window.confirm(`${email} 계정을 초기화하고 다시 가입하시겠습니까?`)) return;
+                                                setLoading(true);
+                                                try {
+                                                    const { error } = await supabase.rpc('force_cleanup_user_by_email', { target_email: email });
+                                                    if (error) throw error;
+                                                    alert('계정이 초기화되었습니다. 다시 가입 버튼을 눌러주세요.');
+                                                    setError(null);
+                                                } catch (e: any) {
+                                                    alert('초기화 실패: ' + e.message + '\n관리자에게 문의하세요.');
+                                                } finally {
+                                                    setLoading(false);
+                                                }
+                                            }}
+                                            className="flex-1 py-2.5 bg-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-300 transition-all text-xs"
+                                        >
+                                            계정 초기화 (오류 해결)
+                                        </button>
+                                    </div>
                                 </div>
                             ) : error}
                         </div>
