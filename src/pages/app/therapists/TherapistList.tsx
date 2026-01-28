@@ -245,12 +245,24 @@ export function TherapistList() {
         try {
             setLoading(true);
 
-            // 1. 계정 삭제 (있는 경우)
+            // 1. 활성 일정 확인 (데이터 무결성 보호)
+            const { data: activeSchedules } = await supabase
+                .from('schedules')
+                .select('id')
+                .eq('therapist_id', staff.id)
+                .limit(1);
+
+            if (activeSchedules && activeSchedules.length > 0) {
+                alert('⚠️ 삭제 실패: 이 치료사에게 등록된 일정이 아직 존재합니다.\n일정을 모두 삭제하거나 다른 치료사로 변경한 후 삭제해 주세요.');
+                return;
+            }
+
+            // 2. 계정 삭제 (있는 경우)
             if (staff.userId) {
                 await supabase.rpc('admin_delete_user', { target_user_id: staff.userId });
             }
 
-            // 2. 치료사 정보 완전 삭제 (DB에서 제거)
+            // 3. 치료사 정보 완전 삭제 (DB에서 제거)
             const { error: deleteError } = await supabase
                 .from('therapists')
                 .delete()

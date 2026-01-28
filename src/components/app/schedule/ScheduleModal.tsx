@@ -371,14 +371,21 @@ export function ScheduleModal({ isOpen, onClose, scheduleId, initialDate, onSucc
             }
 
             if (deleteFuture) {
-                // 1. 이후 일정 목록 조회 (참조 데이터 삭제를 위해)
-                const { data: futureSchedules } = await supabase
+                let query = supabase
                     .from('schedules')
                     .select('id')
                     .eq('child_id', formData.child_id)
                     .eq('program_id', formData.program_id)
-                    .eq('therapist_id', formData.therapist_id)
                     .gte('date', formData.date);
+
+                // ✨ [Fix] therapist_id가 null이거나 비어있는 경우(치료사 정보가 삭제된 경우) 대응
+                if (formData.therapist_id) {
+                    query = query.eq('therapist_id', formData.therapist_id);
+                } else {
+                    query = query.is('therapist_id', null);
+                }
+
+                const { data: futureSchedules } = await query;
 
                 if (futureSchedules && futureSchedules.length > 0) {
                     const ids = futureSchedules.map(s => s.id);

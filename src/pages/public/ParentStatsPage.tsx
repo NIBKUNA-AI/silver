@@ -28,16 +28,19 @@ export function ParentStatsPage() {
     const [children, setChildren] = useState<any[]>([]);
     const [selectedChildId, setSelectedChildId] = useState<string>('');
     const [selectedChildName, setSelectedChildName] = useState<string>('');
+    const [parentChecks, setParentChecks] = useState<Record<string, string[]>>({
+        communication: [], social: [], cognitive: [], motor: [], adaptive: []
+    });
 
     useEffect(() => {
         initializePage();
-        return () => { };
-    }, []);
+    }, [center]);
 
     const initializePage = async () => {
         setLoading(true);
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: authData } = await supabase.auth.getUser();
+            const user = authData?.user;
             if (!user) return setError("로그인이 필요합니다.");
 
             const { data: profile } = await supabase
@@ -48,64 +51,32 @@ export function ParentStatsPage() {
 
             setRole(profile?.role || 'parent');
 
-            // ✨ 관리자 또는 슈퍼 어드민이라면: 현재 센터의 아동 목록만 가져오기
             if (profile?.role === 'admin' || profile?.role === 'super_admin') {
-                if (!center?.id) {
-                    setError("센터 정보가 없습니다.");
-                    setLoading(false);
-                    return;
-                }
-                const { data: childList } = await supabase
-                    .from('children')
-                    .select('id, name')
-                    .eq('center_id', center.id); // ✨ Security Filter
-
+                if (!center?.id) { setLoading(false); return; }
+                const { data: childList } = await supabase.from('children').select('id, name').eq('center_id', center.id);
                 setChildren(childList || []);
-
-                if (childList && childList.length > 0) {
+                if (childList?.[0]) {
                     setSelectedChildId(childList[0].id);
                     setSelectedChildName(childList[0].name);
                     await loadChildStats(childList[0].id);
-                } else {
-                    setError("등록된 아동이 없습니다.");
                 }
             } else {
-                // ✨ [FIX] 부모님: parents 레코드 또는 family_relationships 통해 연결된 자녀 조회
                 let childId = null;
-
-                // 1. parents 테이블에서 실제 ID 찾기
-                const { data: parentRecord } = await supabase
-                    .from('parents')
-                    .select('id')
-                    .eq('profile_id', user.id)
-                    .maybeSingle();
-
+                const { data: parentRecord } = await supabase.from('parents').select('id').eq('profile_id', user.id).maybeSingle();
                 if (parentRecord) {
-                    const { data: directChild } = await supabase
-                        .from('children')
-                        .select('id, name')
-                        .eq('parent_id', parentRecord.id)
-                        .maybeSingle();
+                    const { data: directChild } = await supabase.from('children').select('id, name').eq('parent_id', (parentRecord as any).id).maybeSingle();
                     if (directChild) {
-                        childId = directChild.id;
-                        setSelectedChildName(directChild.name || '아동');
+                        childId = (directChild as any).id;
+                        setSelectedChildName((directChild as any).name);
                     }
                 }
-
                 if (!childId) {
-                    // 2. family_relationships 테이블에서 체크
-                    const { data: relationship } = await supabase
-                        .from('family_relationships')
-                        .select('child_id, children(name)')
-                        .eq('parent_id', user.id)
-                        .maybeSingle();
-
-                    if (relationship?.child_id) {
-                        childId = relationship.child_id;
-                        setSelectedChildName(relationship.children?.name || '아동');
+                    const { data: rel } = await supabase.from('family_relationships').select('child_id, children(name)').eq('parent_id', user.id).maybeSingle();
+                    if (rel) {
+                        childId = (rel as any).child_id;
+                        setSelectedChildName((rel as any).children?.name);
                     }
                 }
-
                 if (childId) {
                     setSelectedChildId(childId);
                     await loadChildStats(childId);
@@ -128,64 +99,86 @@ export function ParentStatsPage() {
             .select('*')
             .eq('child_id', childId)
             .order('evaluation_date', { ascending: false })
-            .limit(6); // 최근 6개월 데이터
+            .limit(6);
 
         setDevData(data || []);
+
+        // ✨ 최신 리포트의 체크 항목을 부모 체크 상태로 초기화 (로드 시점)
+        if (data && data[0]) {
+            const latestDetails = data[0].assessment_details || {};
+            setParentChecks(latestDetails);
+        }
     };
 
-    const handleChildChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const id = e.target.value;
-        const child = children.find(c => c.id === id);
-        setSelectedChildId(id);
-        setSelectedChildName(child?.name || '');
-        loadChildStats(id);
+    const handleToggleCheck = (domain: string, itemId: string) => {
+        setParentChecks(prev => {
+            const current = prev[domain] || [];
+            const next = current.includes(itemId)
+                ? current.filter(id => id !== itemId)
+                : [...current, itemId];
+            return { ...prev, [domain]: next };
+        });
     };
 
+    // ✨ [Calculated] 부모님이 체크한 내용을 기반으로 실시간 가상 발달 지표 생성
+    const activeAssessment = {
+        evaluation_date: '실시간 자가진단',
+        score_communication: (parentChecks.communication?.length || 0),
+        score_social: (parentChecks.social?.length || 0),
+        score_cognitive: (parentChecks.cognitive?.length || 0),
+        score_motor: (parentChecks.motor?.length || 0),
+        score_adaptive: (parentChecks.adaptive?.length || 0),
+        assessment_details: parentChecks
+    };
 
+    // 차트에 전달할 데이터 조합 (최신은 부모 체크, 나머지는 히스토리)
+    const combinedData = [activeAssessment, ...(devData || [])];
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] p-6">
-            <div className="max-w-2xl mx-auto print-container">
-                {/* 상단 네비게이션 - 인쇄시 숨김 */}
+            <div className="max-w-2xl mx-auto print-container pb-20">
                 <button onClick={() => navigate(-1)} className="flex items-center gap-2 mb-6 font-black text-slate-400 no-print">
                     <ArrowLeft className="w-4 h-4" /> 뒤로가기
                 </button>
 
-                {/* 헤더 섹션 */}
-                <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 mb-6 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-primary/10 rounded-2xl">
                             <BarChart3 className="w-6 h-6 text-primary" />
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-slate-900">발달 리포트</h2>
-                            <p className="text-xs text-slate-500 font-bold">{selectedChildName} 아동 • 성장 지표 확인</p>
+                            <p className="text-xs text-slate-500 font-bold">{selectedChildName} 아동 • 인터랙티브 성장 추이</p>
                         </div>
                     </div>
                 </div>
 
-                {/* ✨ 관리자용 아동 선택 셀렉트박스 - 인쇄시 숨김 */}
-                {(role === 'admin' || role === 'super_admin') && (
-                    <div className="relative mb-6 no-print">
-                        <select
-                            value={selectedChildId}
-                            onChange={handleChildChange}
-                            className="appearance-none w-full pl-10 pr-10 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-black text-slate-700 outline-none ring-2 ring-primary/5 focus:ring-primary/20 transition-all cursor-pointer"
-                        >
-                            {children.map(child => (
-                                <option key={child.id} value={child.id}>{child.name} 아동</option>
-                            ))}
-                        </select>
-                        <Users className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    </div>
-                )}
-
-                {/* 그래프 출력 영역 */}
                 {loading ? (
                     <div className="p-20 flex justify-center"><Loader2 className="animate-spin text-primary" /></div>
                 ) : (
-                    <ParentDevelopmentChart assessments={devData} />
+                    <div className="space-y-6">
+                        {/* 차트 영역 - 항상 표시됨 (부모 체크 기반) */}
+                        <ParentDevelopmentChart
+                            assessments={combinedData}
+                            isInteractive={role === 'parent'}
+                            onToggleCheck={handleToggleCheck}
+                            parentChecks={parentChecks}
+                        />
+
+                        {/* 상담 준비 가이드 */}
+                        {role === 'parent' && (
+                            <div className="bg-indigo-600 rounded-[32px] p-8 text-white shadow-xl shadow-indigo-200">
+                                <h3 className="text-lg font-black mb-2 flex items-center gap-2">
+                                    💡 상담 준비 팁
+                                </h3>
+                                <p className="text-sm opacity-90 font-medium leading-relaxed">
+                                    상단의 '상세 평가 근거' 탭에서 아이가 현재 할 수 있는 항목들을 체크해 보세요.
+                                    체크할 때마다 그래프가 실시간으로 업데이트됩니다. 궁금한 점이 있다면 체크된 리스트를 보며
+                                    치료사 선생님과 상담 시 질문해 보세요.
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
         </div>

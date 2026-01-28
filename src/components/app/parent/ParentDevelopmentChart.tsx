@@ -2,7 +2,7 @@
 /* eslint-disable */
 import {
     Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
-    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend
+    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip
 } from 'recharts';
 import { Brain, Activity, MessageCircle, Baby, HeartHandshake, CheckCircle2, Circle } from "lucide-react";
 import { cn } from '@/lib/utils';
@@ -55,19 +55,36 @@ const DOMAINS_META = [
     { key: 'adaptive', label: '자조/적응', color: 'text-emerald-600', bg: 'bg-emerald-50', icon: Baby },
 ];
 
-export function ParentDevelopmentChart({ assessments }: { assessments: any[] }) {
+export function ParentDevelopmentChart({
+    assessments,
+    isInteractive = false,
+    onToggleCheck,
+    parentChecks
+}: {
+    assessments: any[],
+    isInteractive?: boolean,
+    onToggleCheck?: (domain: string, itemId: string) => void,
+    parentChecks?: Record<string, string[]>
+}) {
     const [selectedTab, setSelectedTab] = useState<'chart' | 'detail'>('chart');
 
-    if (!assessments || assessments.length === 0) return (
+    const hasData = assessments && assessments.length > 0;
+
+    if (!hasData && !isInteractive) return (
         <div className="bg-white p-20 rounded-[40px] text-center border-2 border-dashed border-slate-100">
             <p className="text-slate-400 font-black">아직 기록된 발달 평가가 없습니다.</p>
             <p className="text-xs text-slate-300 mt-2">치료사가 정기 평가를 작성하면 이곳에 그래프가 표시됩니다.</p>
         </div>
     );
 
-    // 1. 최신 데이터 (Radar Chart용)
-    const latest = assessments[0];
-    const previous = assessments.length > 1 ? assessments[1] : null;  // ✨ 이전 평가
+    const latest = assessments[0] || {
+        evaluation_date: '진단 기록 없음',
+        score_communication: 0, score_social: 0, score_cognitive: 0, score_motor: 0, score_adaptive: 0,
+        assessment_details: {}
+    };
+
+    const previous = assessments.length > 1 ? assessments[1] : null;
+
     const radarData = [
         { subject: '언어/의사소통', A: latest.score_communication || 0, B: previous?.score_communication || 0, fullMark: 5 },
         { subject: '사회/정서', A: latest.score_social || 0, B: previous?.score_social || 0, fullMark: 5 },
@@ -76,22 +93,27 @@ export function ParentDevelopmentChart({ assessments }: { assessments: any[] }) 
         { subject: '자조/적응', A: latest.score_adaptive || 0, B: previous?.score_adaptive || 0, fullMark: 5 },
     ];
 
-    // 2. 이력 데이터 (Line Chart용 - 최근 6개월 역순 정렬)
-    const historyData = [...assessments].reverse().map(a => ({
-        date: a.evaluation_date?.slice(5, 7) + '월', // "01월"
-        '언어': a.score_communication,
-        '사회': a.score_social,
-        '인지': a.score_cognitive,
-        '운동': a.score_motor,
-        '자조': a.score_adaptive,
-    }));
+    const historyData = assessments
+        .filter(a => a.evaluation_date !== '실시간 자가진단')
+        .reverse()
+        .map(a => ({
+            date: a.evaluation_date?.includes('-') ? a.evaluation_date.slice(5, 7) + '월' : a.evaluation_date,
+            '언어': a.score_communication,
+            '사회': a.score_social,
+            '인지': a.score_cognitive,
+            '운동': a.score_motor,
+            '자조': a.score_adaptive,
+        }));
 
-    // Safe JSON Parse
     let details = {};
-    if (typeof latest.assessment_details === 'string') {
-        try { details = JSON.parse(latest.assessment_details); } catch (e) { }
+    if (isInteractive && parentChecks) {
+        details = parentChecks;
     } else {
-        details = latest.assessment_details || {};
+        if (typeof latest.assessment_details === 'string') {
+            try { details = JSON.parse(latest.assessment_details); } catch (e) { }
+        } else {
+            details = latest.assessment_details || {};
+        }
     }
 
     return (
@@ -125,7 +147,9 @@ export function ParentDevelopmentChart({ assessments }: { assessments: any[] }) 
                         <div className="flex justify-between items-start mb-6">
                             <div>
                                 <h3 className="text-lg font-black text-slate-900">영역별 발달 밸런스</h3>
-                                <p className="text-xs text-slate-400 mt-1 font-bold">최근 평가: {latest.evaluation_date}</p>
+                                <p className="text-xs text-indigo-600 mt-1 font-black">
+                                    {isInteractive ? '✨ 부모 자가진단 결과가 반영된 그래프입니다.' : `최근 평가: ${latest.evaluation_date}`}
+                                </p>
                             </div>
                             {previous && (
                                 <div className="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-full">
@@ -134,7 +158,7 @@ export function ParentDevelopmentChart({ assessments }: { assessments: any[] }) 
                             )}
                         </div>
 
-                        <div className="h-[300px] w-full">
+                        <div className="h-[340px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
                                     <PolarGrid stroke="#e2e8f0" />
@@ -144,11 +168,10 @@ export function ParentDevelopmentChart({ assessments }: { assessments: any[] }) 
                                         name="현재 발달"
                                         dataKey="A"
                                         stroke="#6366f1"
-                                        strokeWidth={3}
+                                        strokeWidth={4}
                                         fill="#8b5cf6"
-                                        fillOpacity={0.4}
+                                        fillOpacity={0.5}
                                     />
-                                    {/* ✨ 성장 비교 모드: 이전 평가 오버레이 */}
                                     {previous && (
                                         <Radar
                                             name="이전 평가"
@@ -164,19 +187,17 @@ export function ParentDevelopmentChart({ assessments }: { assessments: any[] }) 
                             </ResponsiveContainer>
                         </div>
 
-                        {/* Legend Chips */}
-                        <div className="flex flex-wrap gap-2 justify-center mt-4">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
                             {DOMAINS_META.map(d => (
-                                <div key={d.key} className={cn("flex items-center gap-1.5 px-3 py-1 rounded-full", d.bg)}>
-                                    <d.icon className={cn("w-3 h-3 icon-class", d.color)} />
-                                    <span className={cn("text-[10px] font-bold", d.color)}>
-                                        {latest[`score_${d.key}`] || 0}/5
+                                <div key={d.key} className={cn("flex flex-col items-center gap-1.5 p-3 rounded-3xl", d.bg)}>
+                                    <d.icon className={cn("w-4 h-4", d.color)} />
+                                    <span className={cn("text-[10px] font-black", d.color)}>
+                                        {latest[`score_${d.key}`] || 0} / 5
                                     </span>
+                                    <span className="text-[9px] text-slate-400 font-bold">{d.label}</span>
                                 </div>
                             ))}
                         </div>
-
-
                     </section>
 
                     {/* 2. 성장 추이 (Line Chart) */}
@@ -193,9 +214,9 @@ export function ParentDevelopmentChart({ assessments }: { assessments: any[] }) 
                                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                             itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
                                         />
-                                        <Line type="monotone" dataKey="언어" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
-                                        <Line type="monotone" dataKey="사회" stroke="#f43f5e" strokeWidth={2} dot={{ r: 3 }} />
-                                        <Line type="monotone" dataKey="인지" stroke="#a855f7" strokeWidth={2} dot={{ r: 3 }} />
+                                        <Line type="monotone" dataKey="언어" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} />
+                                        <Line type="monotone" dataKey="사회" stroke="#f43f5e" strokeWidth={3} dot={{ r: 4 }} />
+                                        <Line type="monotone" dataKey="인지" stroke="#a855f7" strokeWidth={3} dot={{ r: 4 }} />
                                     </LineChart>
                                 </ResponsiveContainer>
                             </div>
@@ -208,7 +229,9 @@ export function ParentDevelopmentChart({ assessments }: { assessments: any[] }) 
                 <section className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-50 space-y-8 animate-in slide-in-from-right-4">
                     <div className="mb-6">
                         <h3 className="text-lg font-black text-slate-900">상세 평가 근거</h3>
-                        <p className="text-xs text-slate-400 mt-1 font-bold">점수 산출 기준이 되는 세부 항목입니다.</p>
+                        <p className="text-sm text-indigo-600 mt-1 font-black">
+                            {isInteractive ? '👉 각 항목을 터치하여 아이의 현재 상태를 체크해 보세요.' : '점수 산출 기준이 되는 세부 항목입니다.'}
+                        </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -217,34 +240,40 @@ export function ParentDevelopmentChart({ assessments }: { assessments: any[] }) 
                             const checkedItems = details[domain.key] || [];
 
                             return (
-                                <div key={domain.key} className="border border-slate-100 rounded-3xl p-5 hover:border-indigo-100 transition-colors">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className={cn("p-2.5 rounded-xl", domain.bg)}>
+                                <div key={domain.key} className="border border-slate-100 rounded-[32px] p-6 hover:border-indigo-100 transition-colors bg-slate-50/30">
+                                    <div className="flex items-center gap-3 mb-5">
+                                        <div className={cn("p-3 rounded-2xl", domain.bg)}>
                                             <domain.icon className={cn("w-5 h-5", domain.color)} />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-800">{domain.label}</h4>
-                                            <span className={cn("text-xs font-black", domain.color)}>{currentScore} / 5 점</span>
+                                            <h4 className="font-black text-slate-800 tracking-tight">{domain.label}</h4>
+                                            <span className={cn("text-xs font-black px-2 py-0.5 rounded-full bg-white border", domain.color)}>{currentScore} / 5 점</span>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2.5">
+                                    <div className="space-y-2">
                                         {CHECKLIST_ITEMS[domain.key]?.map((item: any) => {
                                             const isChecked = checkedItems.includes(item.id);
                                             return (
-                                                <div key={item.id} className="flex items-start gap-2.5">
-                                                    <div className={cn("mt-0.5", isChecked ? "text-emerald-500" : "text-slate-200")}>
-                                                        {isChecked ? <CheckCircle2 className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
+                                                <button
+                                                    key={item.id}
+                                                    disabled={!isInteractive}
+                                                    onClick={() => isInteractive && onToggleCheck?.(domain.key, item.id)}
+                                                    className={cn(
+                                                        "w-full flex items-start gap-3 p-3 rounded-2xl transition-all text-left group",
+                                                        isInteractive && "hover:bg-white hover:shadow-sm active:scale-[0.98]",
+                                                        isChecked ? "text-slate-800" : "text-slate-400"
+                                                    )}
+                                                >
+                                                    <div className={cn("mt-0.5 shrink-0 transition-colors", isChecked ? "text-emerald-500" : "text-slate-200 group-hover:text-slate-300")}>
+                                                        {isChecked ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
                                                     </div>
-                                                    <span className={cn("text-xs font-medium leading-relaxed", isChecked ? "text-slate-600" : "text-slate-300 line-through decoration-slate-200")}>
+                                                    <span className={cn("text-xs font-bold leading-relaxed", !isChecked && "opacity-70")}>
                                                         {item.label}
                                                     </span>
-                                                </div>
+                                                </button>
                                             );
                                         })}
-                                        {(!CHECKLIST_ITEMS[domain.key] || CHECKLIST_ITEMS[domain.key].length === 0) && (
-                                            <p className="text-xs text-slate-300">세부 평가 항목 없음</p>
-                                        )}
                                     </div>
                                 </div>
                             );
