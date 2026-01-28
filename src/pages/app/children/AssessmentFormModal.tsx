@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useCenter } from '@/contexts/CenterContext';
-import { X, Save, Loader2, MessageCircle, Activity } from 'lucide-react';
+import { X, Save, Loader2, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AssessmentFormModalProps {
@@ -45,7 +45,6 @@ export function AssessmentFormModal({
         } else {
             setSummary('');
             setTherapistNotes('');
-            setScores({ communication: 0, social: 0, cognitive: 0, motor: 0, adaptive: 0 });
             setCurrentLogId(logId || null);
             setOriginalTherapistId(null);
             setIsEditMode(false);
