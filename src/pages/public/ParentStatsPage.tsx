@@ -162,9 +162,9 @@ export function ParentStatsPage() {
             alert("✅ 자가진단 결과가 성공적으로 저장되었습니다.\n성장 추이 그래프에서 변화를 확인해보세요!");
 
             // ✨ [유저 요청] 저장 후 체크 리스트 초기화 (다음에 새로 체크할 수 있도록)
-            // setParentChecks({
-            //     communication: [], social: [], cognitive: [], motor: [], adaptive: []
-            // });
+            setParentChecks({
+                communication: [], social: [], cognitive: [], motor: [], adaptive: []
+            });
 
             // 갱신 시 체크 항목 다시 채우지 않도록 false 전달
             await loadChildStats(selectedChildId, false);
