@@ -526,126 +526,16 @@ export function ParentHomePage() {
                     </div>
                 </section>
 
-                {/* 2. 성장 타임라인 리포트 */}
-                <section className="space-y-6">
-                    <div className="flex items-center justify-between px-2">
-                        <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                            <Activity className="w-5 h-5 text-primary" /> 성장 타임라인
-                        </h3>
-                        <div className="relative cursor-pointer" onClick={() => dateInputRef.current.showPicker()}>
-                            <input type="date" ref={dateInputRef} value={filterDate} onChange={handleDateChange} className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-20" />
-                            <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-2xl text-[11px] font-black text-slate-600 border border-slate-200 shadow-sm hover:border-primary/30 transition-all">
-                                <CalendarIcon className="w-3.5 h-3.5 text-primary" /> {filterDate || '날짜 검색'}
-                            </button>
+                {/* [Mod] 홈 화면에서는 일정만 표시하고, 상세 기록은 성장 기록 일지 메뉴에서 확인하도록 수정 */}
+                <div className="bg-indigo-50 p-6 shadow-sm rounded-[32px] border border-indigo-100/50 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Info className="w-5 h-5 text-indigo-500" />
+                        <div>
+                            <p className="text-sm font-black text-indigo-900">상세 기록 확인하기</p>
+                            <p className="text-xs text-indigo-700">작성된 상담 일지와 성장 리포트는 '성장 기록 일지' 메뉴에서 보실 수 있습니다.</p>
                         </div>
                     </div>
-
-                    {allLogs.length > 0 ? (
-                        <div className="relative group">
-                            <div className="bg-white rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden flex flex-col transition-all">
-                                <div className="p-8 bg-slate-50/50 border-b border-slate-50 flex justify-between items-center">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm font-black text-primary border border-primary/10 text-lg">{(currentIndex + 1).toString().padStart(2, '0')}</div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Report Date</p>
-                                            <p className="text-sm font-black text-slate-900">{new Date(allLogs[currentIndex].created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                        </div>
-                                    </div>
-                                    <p className="text-xs font-black text-primary bg-primary/5 px-4 py-2 rounded-full border border-primary/10">{allLogs[currentIndex].therapists?.name} 선생님</p>
-                                </div>
-
-                                <div className="p-8 space-y-10">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-2 text-primary font-black text-[11px] uppercase tracking-widest leading-none"><MessageSquare className="w-4 h-4 fill-primary/10" /> 선생님 피드백</div>
-                                        <p className="text-[#334155] font-bold leading-relaxed text-[16px] whitespace-pre-wrap pl-1 tracking-tight bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                                            {allLogs[currentIndex].content}
-                                        </p>
-                                    </div>
-
-                                    {allLogs[currentIndex].domain_scores && (
-                                        <div className="pt-8 border-t border-slate-100 space-y-6">
-                                            <div className="flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase tracking-widest"><Activity className="w-4 h-4" /> 영역별 성취도</div>
-                                            {/* ✨ Recharts Horizontal Bar Chart */}
-                                            <div style={{ width: '100%', minHeight: 280 }}>
-                                                <ResponsiveContainer width="100%" height={280}>
-                                                    <BarChart
-                                                        layout="vertical"
-                                                        data={Object.entries(allLogs[currentIndex].domain_scores).map(([name, value], idx) => ({ name, value, fill: CHART_COLORS[idx % CHART_COLORS.length] }))}
-                                                        margin={{ top: 5, right: 40, left: 10, bottom: 5 }}
-                                                        barCategoryGap="20%"
-                                                    >
-                                                        <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: '#64748b', fontWeight: 600 }} axisLine={false} tickLine={false} />
-                                                        <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#334155', fontWeight: 700 }} axisLine={false} tickLine={false} width={70} />
-                                                        <Tooltip formatter={(value) => [`${value}점`, '점수']} contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                                                        <Bar dataKey="value" radius={[0, 8, 8, 0]} animationDuration={1200}>
-                                                            {Object.entries(allLogs[currentIndex].domain_scores).map((_, idx) => (
-                                                                <Cell key={`cell-${idx}`} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
-                                                            ))}
-                                                            <LabelList dataKey="value" position="right" formatter={(v) => `${v}점`} style={{ fontSize: 12, fontWeight: 800, fill: '#1e293b' }} />
-                                                        </Bar>
-                                                    </BarChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                            <div className="bg-indigo-50 p-5 rounded-[24px] flex items-start gap-3 border border-indigo-100/50">
-                                                <Info className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
-                                                <p className="text-[11px] text-indigo-700 font-bold leading-snug">본 그래프는 아이의 발달 상태를 이해하기 위한 참고용 데이터입니다.</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="flex justify-between items-center mt-8 px-4">
-                                <button onClick={prevSlide} disabled={currentIndex === 0} className="w-14 h-14 rounded-full flex items-center justify-center transition-all bg-white text-slate-900 shadow-xl active:scale-90 border border-slate-100 disabled:opacity-20 disabled:shadow-none"><ChevronLeft className="w-6 h-6" /></button>
-                                <div className="flex gap-2">
-                                    {allLogs.slice(0, 5).map((_, idx) => (<div key={idx} className={`h-1.5 rounded-full transition-all ${currentIndex === idx ? 'w-8 bg-indigo-600' : 'w-1.5 bg-slate-200'}`}></div>))}
-                                </div>
-                                <button onClick={nextSlide} disabled={currentIndex === allLogs.length - 1} className="w-14 h-14 rounded-full flex items-center justify-center transition-all bg-white text-slate-900 shadow-xl active:scale-90 border border-slate-100 disabled:opacity-20 disabled:shadow-none"><ChevronRight className="w-6 h-6" /></button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="bg-white rounded-[40px] p-10 border border-slate-100 shadow-sm space-y-6">
-                            <div className="text-center">
-                                <p className="text-slate-400 font-bold text-sm italic mb-2">등록된 성장 리포트가 없습니다.</p>
-                                <p className="text-xs text-slate-300">치료사가 평가를 작성하면 이곳에 표시됩니다.</p>
-                            </div>
-
-                            {/* ✨ [Observation Diary] 부모 관찰 일기 입력 */}
-                            <div className="pt-6 border-t border-slate-100">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-sm">📝</div>
-                                    <h4 className="font-black text-slate-700 text-sm">오늘의 관찰 일기</h4>
-                                </div>
-                                <textarea
-                                    value={observationText}
-                                    onChange={(e) => setObservationText(e.target.value)}
-                                    placeholder="오늘 아이에게서 발견한 작은 변화나 특별한 순간을 기록해보세요..."
-                                    className="w-full p-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-300 focus:border-indigo-300 focus:bg-white outline-none resize-none transition-all"
-                                    rows={4}
-                                />
-                                <div className="flex justify-end mt-3">
-                                    <button
-                                        onClick={handleSaveObservation}
-                                        disabled={savingObs || !observationText.trim()}
-                                        className="px-5 py-2 bg-indigo-600 text-white text-xs font-black rounded-xl hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        {savingObs ? '저장 중...' : '저장하기'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    {/* 4. 지능형 홈 케어 팁 (Dynamic) */}
-                    <div className="flex items-center gap-2 mb-4 px-2">
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-[10px]">✨</div>
-                        <h2 className={cn("text-xl font-black", isDark ? "text-white" : "text-slate-900")}>
-                            {childInfo?.name}를 위한 맞춤 케어 팁
-                        </h2>
-                    </div>
-
-                    <DynamicHomeCareTips latestAssessment={allLogs[0]} />
-                </section>
-
+                </div>
             </main>
         </div>
     );

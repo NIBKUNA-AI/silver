@@ -361,13 +361,15 @@ export function AssessmentFormModal({
                     </div>
 
                     {/* Summary */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-black text-slate-700 dark:text-slate-300 ml-1">종합 소견 (부모 공개)</label>
+                    <div className="space-y-3">
+                        <label className="text-sm font-black text-slate-700 flex items-center gap-2">
+                            <MessageCircle className="w-4 h-4 text-primary" /> 상담 일지 (회기 일지)
+                        </label>
                         <textarea
                             value={summary}
                             onChange={(e) => setSummary(e.target.value)}
-                            placeholder="이번 달 발달 변화나 특이사항을 자유롭게 작성해주세요... (평가 근거 요약 포함)"
-                            className="w-full h-32 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-medium text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-indigo-50/50 dark:focus:ring-indigo-500/20 focus:border-indigo-200 dark:focus:border-indigo-500 resize-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                            placeholder="오늘 진행된 상담/평가 내용과 회기 기록을 상세히 입력해주세요. (부모님께 공개됩니다)"
+                            className="w-full h-40 p-5 rounded-3xl border border-slate-200 bg-slate-50 text-slate-700 text-sm font-medium focus:border-primary/30 focus:bg-white outline-none resize-none transition-all placeholder:text-slate-300"
                         />
                     </div>
 
