@@ -62,7 +62,7 @@ export function ProgramListEditor({ initialList, onSave }: ProgramListEditorProp
     };
 
     const handleSaveForm = () => {
-        if (!formData.title) return alert('프로그램명을 입력해주세요.');
+        if (!formData.title) return alert('서비스명을 입력해주세요.');
 
         let newList;
         if (editingId) {
@@ -92,17 +92,17 @@ export function ProgramListEditor({ initialList, onSave }: ProgramListEditorProp
     if (isEditing) {
         return (
             <div className="bg-slate-50 rounded-xl p-6 border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
-                <h3 className="font-bold text-lg mb-6">{editingId ? '프로그램 수정' : '새 프로그램 추가'}</h3>
+                <h3 className="font-bold text-lg mb-6">{editingId ? '케어서비스 수정' : '새 케어서비스 추가'}</h3>
 
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-1">프로그램명 (한글)</label>
+                            <label className="block text-sm font-bold text-slate-700 mb-1">서비스명 (한글)</label>
                             <input
                                 className="w-full p-2 border rounded-lg"
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                placeholder="예: 언어치료"
+                                placeholder="예: 방문요양"
                             />
                         </div>
                         <div>
@@ -111,7 +111,7 @@ export function ProgramListEditor({ initialList, onSave }: ProgramListEditorProp
                                 className="w-full p-2 border rounded-lg"
                                 value={formData.eng}
                                 onChange={(e) => setFormData({ ...formData, eng: e.target.value })}
-                                placeholder="예: Speech Therapy"
+                                placeholder="예: Physical Support"
                             />
                         </div>
                     </div>
@@ -137,7 +137,7 @@ export function ProgramListEditor({ initialList, onSave }: ProgramListEditorProp
                             className="w-full p-2 border rounded-lg h-24 resize-none"
                             value={formData.desc}
                             onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
-                            placeholder="프로그램에 대한 설명을 입력하세요."
+                            placeholder="공식 홈페이지에 노출될 서비스 상세 설명을 입력하세요."
                         />
                     </div>
 
@@ -149,7 +149,7 @@ export function ProgramListEditor({ initialList, onSave }: ProgramListEditorProp
                                 value={tempTarget}
                                 onChange={(e) => setTempTarget(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleAddTarget()}
-                                placeholder="예: 발음이 부정확한 아동 (엔터로 추가)"
+                                placeholder="예: 거동이 불편하신 어르신 (엔터로 추가)"
                             />
                             <button onClick={handleAddTarget} className="bg-slate-200 px-4 rounded-lg font-bold text-slate-600 hover:bg-slate-300">추가</button>
                         </div>
@@ -204,7 +204,7 @@ export function ProgramListEditor({ initialList, onSave }: ProgramListEditorProp
                 className="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center gap-2 text-slate-400 hover:border-slate-400 hover:text-slate-600 transition-all font-bold"
             >
                 <Plus className="w-5 h-5" />
-                새 프로그램 추가
+                새 케어서비스 추가
             </button>
         </div>
     );

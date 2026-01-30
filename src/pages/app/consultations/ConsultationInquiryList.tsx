@@ -121,12 +121,12 @@ export default function ConsultationInquiryList() {
                         fileName="상담문의_목록"
                         headers={['child_name', 'child_gender', 'guardian_name', 'guardian_phone', 'preferred_consult_schedule', 'primary_concerns', 'status', 'marketing_source', 'inflow_source', 'created_at']}
                         headerLabels={{
-                            child_name: '아동명',
+                            child_name: '어르신명',
                             child_gender: '성별',
                             guardian_name: '보호자명',
                             guardian_phone: '연락처',
-                            preferred_consult_schedule: '희망일정',
-                            primary_concerns: '주호소',
+                            preferred_consult_schedule: '희망서비스',
+                            primary_concerns: '건강상태/필요케어',
                             status: '상태',
                             marketing_source: '유입경로(UTM)',
                             inflow_source: '유입경로(설문)',
@@ -196,7 +196,7 @@ export default function ConsultationInquiryList() {
                                 <button onClick={() => deleteInquiry(inq.id)} className="p-3 text-slate-200 dark:text-slate-500 hover:text-rose-500 transition-all"><Trash2 className="w-5 h-5" /></button>
                             </div>
 
-                            <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-6 md:mb-8">{inq.child_name} 아동 <span className="text-slate-300 dark:text-slate-500 text-lg">({inq.child_gender})</span></h3>
+                            <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-6 md:mb-8">{inq.child_name} 어르신 <span className="text-slate-300 dark:text-slate-500 text-lg">({inq.child_gender === 'male' ? '남성' : inq.child_gender === 'female' ? '여성' : inq.child_gender})</span></h3>
 
                             {/* 부모님 작성 내용 */}
                             <div className="bg-slate-50 dark:bg-slate-700/50 p-5 md:p-8 rounded-[24px] md:rounded-[32px] mb-6 border border-slate-100 dark:border-slate-600">
@@ -205,8 +205,8 @@ export default function ConsultationInquiryList() {
                                     <p className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-3"><Clock className="w-5 h-5 text-indigo-400" /> {inq.preferred_consult_schedule}</p>
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-[11px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">부모님 고민사항</p>
-                                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium">{inq.primary_concerns}</p>
+                                    <p className="text-[11px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">보호자 작성 내용</p>
+                                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium whitespace-pre-line">{inq.concern || inq.primary_concerns || '-'}</p>
                                 </div>
                             </div>
 

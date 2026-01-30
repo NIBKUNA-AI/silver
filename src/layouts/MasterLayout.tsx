@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { isSuperAdmin as checkSuperAdmin } from '@/config/superAdmin';
 
 export function MasterLayout() {
-    const { user, role, loading } = useAuth();
+    const { user, role, loading, signOut } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
@@ -79,12 +79,24 @@ export function MasterLayout() {
                         </button>
                     </div>
 
+                    {/* ✨ Portal Exit (For Super Admins to browse centers) */}
                     <button
-                        onClick={() => navigate('/')}
-                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white transition-all text-xs font-bold"
+                        onClick={() => {
+                            localStorage.removeItem('zarada_center_slug');
+                            window.location.href = '/?mode=portal';
+                        }}
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 transition-all text-xs font-bold mb-2"
+                    >
+                        <Building2 className="w-4 h-4" />
+                        통합 페이지로 이동
+                    </button>
+
+                    <button
+                        onClick={signOut}
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-all text-xs font-bold"
                     >
                         <LogOut className="w-4 h-4" />
-                        나가기
+                        로그아웃 (나가기)
                     </button>
                 </div>
             </aside>

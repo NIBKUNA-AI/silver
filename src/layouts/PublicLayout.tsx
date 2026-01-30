@@ -15,10 +15,11 @@ import { Header } from '@/components/public/Header';
 import { Footer } from '@/components/public/Footer';
 import { useTheme } from '@/contexts/ThemeProvider';
 import { useCenterBranding } from '@/hooks/useCenterBranding';
+import { cn } from '@/lib/utils';
 
 export function PublicLayout() {
     const { theme } = useTheme();
-    const { loading } = useCenterBranding();
+    const { branding, loading } = useCenterBranding();
     const isDark = theme === 'dark';
 
     useTrafficSource();
@@ -28,13 +29,33 @@ export function PublicLayout() {
     if (loading) return (
         <div className={`min-h-screen transition-colors ${isDark ? 'bg-slate-950' : 'bg-white'}`}>
             <div className="flex-1 pt-20 animate-pulse flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full border-2 border-slate-200 border-t-indigo-500 animate-spin" />
+                <div className="w-12 h-12 rounded-full border-2 border-slate-200 border-t-brand-500 animate-spin" />
             </div>
         </div>
     );
 
+    // ✨ [Branding Fix] Inject the selected brand color as CSS Variables
+    const brandColor = branding?.brand_color || '#6B8E6B'; // Sage Green as default for Silver Care
+
     return (
-        <div className={`min-h-screen flex flex-col transition-colors ${isDark ? 'bg-slate-950' : 'bg-white'}`}>
+        <div className={cn(
+            "min-h-screen flex flex-col transition-colors",
+            isDark ? "bg-slate-950" : "bg-white"
+        )}>
+            {/* ✨ Dynamic Global Styles for Brand Identity */}
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                :root {
+                    --brand-600: ${brandColor};
+                    --brand-500: ${brandColor}ee;
+                    --brand-400: ${brandColor}cc;
+                    --brand-700: ${brandColor}dd;
+                    --brand-50: ${brandColor}15;
+                    --brand-100: ${brandColor}25;
+                    --brand-200: ${brandColor}40;
+                }
+            `}} />
+
             <Header />
 
             <main className="flex-1 pt-20">

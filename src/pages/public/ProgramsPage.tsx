@@ -1,233 +1,284 @@
 // @ts-nocheck
 /* eslint-disable */
 /**
- * 🎨 Project: Zarada ERP - The Sovereign Canvas
- * 🛠️ Created by: 안욱빈 (An Uk-bin)
- * 📅 Date: 2026-01-10
+ * 🌿 SILVER CARE - ProgramsPage Complete Redesign
  */
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
-import { DEFAULT_PROGRAMS } from '@/constants/defaultPrograms';
 import { useTheme } from '@/contexts/ThemeProvider';
 import { cn } from '@/lib/utils';
 import { useCenter } from '@/contexts/CenterContext';
 import { useCenterBranding } from '@/hooks/useCenterBranding';
-import {
-    SpeechTherapyIcon,
-    PlayTherapyIcon,
-    CognitiveTherapyIcon,
-    SensoryTherapyIcon,
-    SocialGroupIcon,
-    AssessmentIcon
-} from '@/components/icons/ProgramIcons';
-
-// Custom SVG Icons
-const Icons = {
-    arrowRight: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" />
-        </svg>
-    ),
-};
-
-const CUSTOM_PROGRAM_ICONS: Record<string, React.FC<{ className?: string }>> = {
-    'MessageCircle': SpeechTherapyIcon,
-    'Palette': PlayTherapyIcon,
-    'Brain': CognitiveTherapyIcon,
-    'Activity': SensoryTherapyIcon,
-    'Users': SocialGroupIcon,
-    'FileSearch': AssessmentIcon,
-    'default': SpeechTherapyIcon
-};
 
 export function ProgramsPage() {
     const { getSetting } = useAdminSettings();
     const { center } = useCenter();
     const { theme } = useTheme();
-    const { branding, loading } = useCenterBranding(); // ✨ Added loading
+    const { branding, loading } = useCenterBranding();
     const isDark = theme === 'dark';
 
-    // ✨ [Anti-Flicker] Prevent showing hardcoded defaults before branding/settings are ready
     if (loading) return null;
 
-    const brandColor = branding?.brand_color || '#6366f1';
-    const centerName = branding.name || center?.name || '아동발달센터';
-    const introText = branding.settings?.programs_intro_text || getSetting('programs_intro_text') || "아이의 고유한 특성을 존중하며,\n단계별 1:1 맞춤형 솔루션을 제공합니다.";
+    const centerName = branding.name || center?.name || '재가요양센터';
+    const phone = center?.phone || import.meta.env.VITE_CENTER_PHONE || '1588-0000';
+    const basePath = center?.slug ? `/centers/${center.slug}` : '';
 
-    const programsJson = branding.settings?.programs_list || getSetting('programs_list');
-    const dynamicPrograms = programsJson ? (typeof programsJson === 'string' ? JSON.parse(programsJson) : programsJson) : [];
-    const programs = dynamicPrograms.length > 0 ? dynamicPrograms : DEFAULT_PROGRAMS;
+    const services = [
+        {
+            icon: "🧑‍🤝‍🧑",
+            title: "신체활동 지원",
+            subtitle: "일상생활 기본 동작 지원",
+            features: ["식사 도움", "세면/목욕 도움", "배설 도움", "옷 갈아입기", "체위 변경", "이동 도움"],
+            color: "bg-blue-500",
+            lightBg: "bg-blue-50"
+        },
+        {
+            icon: "🏠",
+            title: "가사활동 지원",
+            subtitle: "쾌적한 생활환경 조성",
+            features: ["청소 및 정리정돈", "세탁 및 다림질", "식사 준비", "장보기 대행", "생활필수품 구매"],
+            color: "bg-orange-500",
+            lightBg: "bg-orange-50"
+        },
+        {
+            icon: "💊",
+            title: "건강관리 지원",
+            subtitle: "체계적인 건강 모니터링",
+            features: ["혈압/혈당 측정", "투약 관리 및 확인", "병원 동행", "건강상태 기록", "응급상황 대처"],
+            color: "bg-red-500",
+            lightBg: "bg-red-50"
+        },
+        {
+            icon: "🧠",
+            title: "인지활동 지원",
+            subtitle: "두뇌 건강 유지",
+            features: ["말벗 서비스", "인지자극 활동", "회상요법", "간단한 게임/퍼즐", "독서 지원"],
+            color: "bg-purple-500",
+            lightBg: "bg-purple-50"
+        },
+        {
+            icon: "💚",
+            title: "정서활동 지원",
+            subtitle: "마음 건강 케어",
+            features: ["정서적 대화", "기분 전환 활동", "취미활동 지원", "가족 연락 지원", "외출 동행"],
+            color: "bg-emerald-500",
+            lightBg: "bg-emerald-50"
+        },
+        {
+            icon: "📋",
+            title: "행정업무 지원",
+            subtitle: "복잡한 행정 대행",
+            features: ["등급 신청 대행", "서류 작성 지원", "보험 청구 안내", "복지 서비스 연계"],
+            color: "bg-slate-500",
+            lightBg: "bg-slate-50"
+        },
+    ];
 
     return (
-        <div className={cn("min-h-screen transition-colors", isDark ? "bg-[#0a0c10]" : "bg-[#f8fafc]")}>
+        <div className={cn("min-h-screen", isDark ? "bg-slate-950" : "bg-white")}>
             <Helmet>
-                <title>치료 프로그램 - {centerName}</title>
-                <script type="application/ld+json">
-                    {JSON.stringify({
-                        "@context": "https://schema.org",
-                        "@type": "MedicalBusiness",
-                        "name": centerName,
-                        "description": introText,
-                        "url": window.location.href,
-                        "hasOfferCatalog": {
-                            "@type": "OfferCatalog",
-                            "name": "발달 치료 프로그램",
-                            "itemListElement": programs.flatMap((program: any) => {
-                                // ✨ SEO Magic: Multi-Region Targeting
-                                // Take top 3 keywords as 'Regions' to create multiple service offers
-                                const seoKeywords = branding.settings?.seo_keywords || getSetting('seo_keywords') || '';
-                                const regions = seoKeywords.split(',').map(s => s.trim()).filter(Boolean).slice(0, 3);
-
-                                // If no keywords, return just the original program
-                                if (regions.length === 0) {
-                                    return [{
-                                        "@type": "Offer",
-                                        "itemOffered": {
-                                            "@type": "Service",
-                                            "name": program.title,
-                                            "description": program.desc || program.description,
-                                            "audience": {
-                                                "@type": "PeopleAudience",
-                                                "audienceType": (program.targets || []).join(', ')
-                                            }
-                                        }
-                                    }];
-                                }
-
-                                // Create an offer for each region
-                                return regions.map(region => ({
-                                    "@type": "Offer",
-                                    "itemOffered": {
-                                        "@type": "Service",
-                                        "name": `${region} ${program.title}`, // e.g. "송파 언어치료", "위례 언어치료"
-                                        "description": program.desc || program.description,
-                                        "audience": {
-                                            "@type": "PeopleAudience",
-                                            "audienceType": (program.targets || []).join(', ')
-                                        }
-                                    }
-                                }));
-                            })
-                        }
-                    })}
-                </script>
+                <title>케어 서비스 - {centerName}</title>
             </Helmet>
 
-            {/* ✨ Premium Hero Section (Uniform Branding) */}
-            <section className="relative py-24 px-6 overflow-hidden" style={{ backgroundColor: brandColor }}>
-                <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
-
-                <div className="container mx-auto max-w-4xl relative z-10 text-center text-white">
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                    >
-                        <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-black tracking-wider uppercase mb-6">Excellence in Care</span>
-                        <h1 className="text-4xl md:text-5xl font-black tracking-[-0.05em] mb-6">프로그램 안내</h1>
-                        <p className="text-lg text-white/80 font-medium max-w-xl mx-auto leading-relaxed whitespace-pre-line leading-relaxed">
-                            {introText}
-                        </p>
-                    </motion.div>
+            {/* ========================================
+                🌿 HERO
+            ======================================== */}
+            <section className={cn(
+                "pt-32 pb-20",
+                isDark ? "bg-slate-900" : "bg-gradient-to-b from-emerald-50 to-white"
+            )}>
+                <div className="container mx-auto px-6">
+                    <div className="max-w-3xl">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                        >
+                            <span className="text-emerald-600 font-bold text-sm tracking-widest uppercase mb-4 block">
+                                Our Services
+                            </span>
+                            <h1 className={cn(
+                                "text-4xl md:text-6xl font-black mb-6 leading-tight",
+                                isDark ? "text-white" : "text-slate-900"
+                            )}>
+                                <span className="text-emerald-600">맞춤형</span> 케어 서비스
+                            </h1>
+                            <p className={cn(
+                                "text-lg md:text-xl leading-relaxed",
+                                isDark ? "text-slate-400" : "text-slate-600"
+                            )}>
+                                어르신의 상황과 필요에 맞는<br />
+                                다양한 재가요양 서비스를 제공합니다.
+                            </p>
+                        </motion.div>
+                    </div>
                 </div>
             </section>
 
-            <div className={cn("relative -mt-12 z-20 rounded-t-[50px] px-4 transition-colors", isDark ? "bg-[#0a0c10]" : "bg-[#f8fafc]")}>
-
-                <div className="container mx-auto px-6 pb-40 relative z-10">
-                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 pt-24">
-                        {programs.map((program: any, idx: number) => {
-                            const IconComponent = CUSTOM_PROGRAM_ICONS[program.icon_name] || CUSTOM_PROGRAM_ICONS['default'];
-                            return (
-                                <motion.div
-                                    key={idx}
-                                    className={cn(
-                                        "group relative rounded-[50px] p-10 border transition-all duration-500 hover:-translate-y-3 flex flex-col h-full",
-                                        isDark ? "bg-[#141620] border-white/5 hover:border-white/10" : "bg-white border-slate-100 shadow-2xl shadow-slate-200/50"
-                                    )}
-                                    initial={{ opacity: 0, y: 50 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: idx * 0.1 }}
-                                >
-                                    {/* Hover background detail */}
-                                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-transparent group-hover:from-white/[0.02] transition-all rounded-[50px]"></div>
-
-                                    <div
-                                        className="w-24 h-24 rounded-full flex items-center justify-center mb-10 transition-transform duration-500 group-hover:scale-110 relative shrink-0"
-                                        style={{ backgroundColor: brandColor + '10', color: brandColor }}
-                                    >
-                                        <IconComponent className="w-12 h-12" />
+            {/* ========================================
+                🌿 SERVICES GRID
+            ======================================== */}
+            <section className={cn("py-20", isDark ? "bg-slate-950" : "bg-white")}>
+                <div className="container mx-auto px-6">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {services.map((service, idx) => (
+                            <motion.div
+                                key={idx}
+                                className={cn(
+                                    "rounded-3xl overflow-hidden border",
+                                    isDark
+                                        ? "bg-slate-900 border-slate-800"
+                                        : "bg-white border-slate-200 shadow-lg hover:shadow-xl transition-shadow"
+                                )}
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.1 }}
+                            >
+                                {/* Header */}
+                                <div className={cn(
+                                    "p-6",
+                                    isDark ? "bg-slate-800" : service.lightBg
+                                )}>
+                                    <div className="flex items-center gap-4">
+                                        <div className={cn(
+                                            "w-14 h-14 rounded-2xl flex items-center justify-center text-2xl",
+                                            isDark ? "bg-slate-700" : "bg-white shadow-md"
+                                        )}>
+                                            {service.icon}
+                                        </div>
+                                        <div>
+                                            <h3 className={cn(
+                                                "text-xl font-black",
+                                                isDark ? "text-white" : "text-slate-900"
+                                            )}>{service.title}</h3>
+                                            <p className={cn(
+                                                "text-sm",
+                                                isDark ? "text-slate-400" : "text-slate-600"
+                                            )}>{service.subtitle}</p>
+                                        </div>
                                     </div>
+                                </div>
 
-                                    <div className="flex-1">
-                                        <h3 className={cn("text-2xl font-black mb-1", isDark ? "text-white" : "text-slate-900")}>
-                                            {program.title}
-                                        </h3>
-                                        <p className={cn("text-[10px] font-black uppercase tracking-[0.2em] mb-6 opacity-30", isDark ? "text-white" : "text-slate-500")}>
-                                            {program.eng}
-                                        </p>
-                                        <p className={cn("text-base font-medium leading-relaxed mb-10 opacity-60", isDark ? "text-slate-400" : "text-slate-600")} style={{ wordBreak: 'keep-all' }}>
-                                            {program.desc || program.description}
-                                        </p>
-
-                                        {(program.targets || []).length > 0 && (
-                                            <div className={cn("p-6 rounded-[32px] border transition-colors mb-8", isDark ? "bg-white/5 border-white/5 group-hover:bg-white/10" : "bg-slate-50 border-slate-100")}>
-                                                <h4 className={cn("font-black text-[10px] mb-4 uppercase tracking-[0.2em] opacity-40", isDark ? "text-white" : "text-slate-900")}>추천 대상</h4>
-                                                <ul className="space-y-3">
-                                                    {(program.targets || []).map((target: string, tidx: number) => (
-                                                        <li key={tidx} className="flex items-center gap-3 text-xs font-bold opacity-70">
-                                                            <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: brandColor }}></div>
-                                                            <span className={isDark ? "text-slate-300" : "text-slate-600"}>{target}</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                </motion.div>
-                            );
-                        })}
+                                {/* Features */}
+                                <div className="p-6">
+                                    <ul className="space-y-3">
+                                        {service.features.map((feature, fidx) => (
+                                            <li key={fidx} className="flex items-center gap-3">
+                                                <div className={cn(
+                                                    "w-5 h-5 rounded-full flex items-center justify-center shrink-0",
+                                                    service.color
+                                                )}>
+                                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                                <span className={cn(
+                                                    "text-sm",
+                                                    isDark ? "text-slate-300" : "text-slate-700"
+                                                )}>{feature}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </motion.div>
+                        ))}
                     </div>
-
-                    {/* ✨ Bottom Call to Action */}
-                    <motion.div
-                        className="mt-32 rounded-[60px] p-16 relative overflow-hidden text-center shadow-2xl shadow-indigo-200/50"
-                        style={{ backgroundColor: brandColor }}
-                        initial={{ opacity: 0, y: 40 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                    >
-                        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
-                        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-black/5 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2"></div>
-
-                        <div className="relative z-10 flex flex-col items-center">
-                            <h3 className="text-3xl md:text-5xl font-black mb-8 text-white tracking-tighter leading-tight">
-                                우리 아이에게 가장 필요한 치료,<br />
-                                전문가와 상담해보세요.
-                            </h3>
-                            <p className="text-white/70 text-lg font-medium mb-12 max-w-xl">
-                                검증된 임상 경험을 가진 전문 치료사진이<br />
-                                아이의 발달 상황을 세심하게 체크해드립니다.
-                            </p>
-                            <Link to={center?.slug ? `/centers/${center.slug}/contact` : '/contact'}>
-                                <motion.button
-                                    className="px-12 py-6 bg-white rounded-full font-black text-xl shadow-xl hover:shadow-2xl transition-all flex items-center gap-4"
-                                    style={{ color: brandColor }}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    무료 상담 예약하기 {Icons.arrowRight("w-6 h-6")}
-                                </motion.button>
-                            </Link>
-                        </div>
-                    </motion.div>
                 </div>
-            </div>
+            </section>
+
+            {/* ========================================
+                🌿 장기요양보험 안내
+            ======================================== */}
+            <section className={cn(
+                "py-20",
+                isDark ? "bg-slate-900" : "bg-slate-50"
+            )}>
+                <div className="container mx-auto px-6">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="text-center mb-12">
+                            <span className="text-emerald-600 font-bold text-sm tracking-widest uppercase mb-4 block">
+                                Long-term Care Insurance
+                            </span>
+                            <h2 className={cn(
+                                "text-3xl md:text-4xl font-black",
+                                isDark ? "text-white" : "text-slate-900"
+                            )}>장기요양보험 이용 안내</h2>
+                        </div>
+
+                        <div className={cn(
+                            "p-8 md:p-12 rounded-3xl",
+                            isDark ? "bg-slate-800" : "bg-white shadow-xl"
+                        )}>
+                            <div className="grid md:grid-cols-3 gap-8 text-center">
+                                <div>
+                                    <div className="text-4xl font-black text-emerald-600 mb-2">1~5등급</div>
+                                    <p className={cn(
+                                        "text-sm",
+                                        isDark ? "text-slate-400" : "text-slate-600"
+                                    )}>장기요양등급 대상</p>
+                                </div>
+                                <div>
+                                    <div className="text-4xl font-black text-emerald-600 mb-2">본인부담 15%</div>
+                                    <p className={cn(
+                                        "text-sm",
+                                        isDark ? "text-slate-400" : "text-slate-600"
+                                    )}>일반 수급자 기준</p>
+                                </div>
+                                <div>
+                                    <div className="text-4xl font-black text-emerald-600 mb-2">무료 신청대행</div>
+                                    <p className={cn(
+                                        "text-sm",
+                                        isDark ? "text-slate-400" : "text-slate-600"
+                                    )}>등급 신청 도움</p>
+                                </div>
+                            </div>
+
+                            <div className={cn(
+                                "mt-10 pt-8 border-t text-center",
+                                isDark ? "border-slate-700" : "border-slate-200"
+                            )}>
+                                <p className={cn(
+                                    "text-lg mb-6",
+                                    isDark ? "text-slate-300" : "text-slate-700"
+                                )}>
+                                    장기요양등급이 없으신가요? 저희가 신청을 도와드립니다.
+                                </p>
+                                <a
+                                    href={`tel:${phone}`}
+                                    className="inline-flex items-center gap-3 px-8 py-4 bg-emerald-600 text-white rounded-2xl font-bold hover:bg-emerald-700 transition"
+                                >
+                                    📞 {phone}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ========================================
+                🌿 CTA
+            ======================================== */}
+            <section className="py-20 bg-gradient-to-br from-emerald-600 to-emerald-800">
+                <div className="container mx-auto px-6 text-center">
+                    <h2 className="text-3xl md:text-4xl font-black text-white mb-6">
+                        어떤 서비스가 필요하신가요?
+                    </h2>
+                    <p className="text-emerald-100 text-lg mb-10 max-w-lg mx-auto">
+                        전문 상담사가 어르신 상황에 맞는 최적의 서비스를 안내해 드립니다.
+                    </p>
+                    <Link
+                        to={`${basePath}/contact`}
+                        className="inline-flex items-center gap-2 px-10 py-5 bg-white text-emerald-700 rounded-2xl font-bold text-lg"
+                    >
+                        무료 상담 신청하기
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                    </Link>
+                </div>
+            </section>
         </div>
     );
 }

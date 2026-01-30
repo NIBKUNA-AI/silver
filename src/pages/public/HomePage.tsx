@@ -1,415 +1,404 @@
-
+// @ts-nocheck
+/* eslint-disable */
 /**
- * 🎨 Project: Zarada ERP - The Sovereign Canvas
- * 🛠️ Created by: 안욱빈 (An Uk-bin)
- * 📅 Date: 2026-01-10
- * 🖋️ Description: "코드와 데이터로 세상을 채색하다."
- * ⚠️ Copyright (c) 2026 안욱빈. All rights reserved.
- * -----------------------------------------------------------
- * 이 파일의 UI/UX 설계 및 데이터 연동 로직은 독자적인 기술과
- * 예술적 영감을 바탕으로 구축되었습니다.
+ * ?�� SILVER CARE - Complete Redesign
+ * ?��??�양?�터 ?�용 ?�페?��? - ?�전 ?�규 ?�이?�웃
  */
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
-import { GrowthIcon, HeartCareIcon, StarIcon, BackgroundShapes } from '@/components/icons/BrandIcons';
-import { PlayTherapyIcon, SpeechTherapyIcon, SensoryTherapyIcon, ArtTherapyIcon } from '@/components/icons/ProgramIcons';
 import { useTheme } from '@/contexts/ThemeProvider';
 import { cn } from '@/lib/utils';
-import { HeroBackground } from '@/components/public/HeroBackground';
 import { useCenter } from '@/contexts/CenterContext';
 
-// Custom SVG Icons (no Lucide)
-const SvgIcons = {
-    chevronDown: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 9l6 6 6-6" stroke="currentColor" />
-        </svg>
-    ),
-    arrowRight: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" />
-        </svg>
-    ),
-    quote: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-            <path d="M4.583 17.321C3.548 16.227 3 15 3 13.044c0-3.347 2.48-6.332 6.264-8.044L10.5 6.5c-2.352 1.15-3.88 2.882-4.098 4.69.09-.016.178-.024.266-.024a2.5 2.5 0 010 5c-1.38 0-2.5-1.12-2.5-2.5a.5.5 0 01.015-.105zm10.333 0C13.881 16.227 13.333 15 13.333 13.044c0-3.347 2.48-6.332 6.264-8.044L20.833 6.5c-2.352 1.15-3.88 2.882-4.098 4.69.09-.016.178-.024.266-.024a2.5 2.5 0 010 5c-1.38 0-2.5-1.12-2.5-2.5a.5.5 0 01.015-.105z" />
-        </svg>
-    ),
-    bell: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 8A6 6 0 106 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" />
-        </svg>
-    ),
-};
-
-const DEFAULT_CONTENT = {
-    brandName: import.meta.env.VITE_CENTER_NAME || "재가요양센터",
-    hero: {
-        titleFirst: "재가요양의 중심",
-        titlePoint: "어르신의 행복",
-        titleLast: "이\n더해지는 특별한 공간",
-        description: "방문요양, 신체활동지원, 인지활동지원 전문 기관.\n전문 요양보호사와 함께 어르신의 건강한 일상을 응원합니다.",
-        ctaText: "돌봄 문의하기",
-        defaultBgImage: "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=2000,https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=2000,https://images.unsplash.com/photo-1516307365426-bea591f05011?auto=format&fit=crop&q=80&w=2000"
-    },
-    values: [
-        { title: "전문 케어 서비스", desc: "장기요양보험 기준에 따른 전문 케어 서비스를 제공합니다." },
-        { title: "가족 중심 케어", desc: "어르신을 넘어 보호자의 마음까지 세심하게 살피는 통합 지지 시스템을 운영합니다." },
-        { title: "지속적인 관리", desc: "방문 케어 외에도 어르신의 건강이 유지되도록 체계적인 건강관리를 제공합니다." }
-    ],
-    story: {
-        quote: "어르신의 편안함이\n더해지는 따뜻한 돌봄",
-        description: `${import.meta.env.VITE_CENTER_NAME || '재가요양센터'}는 단순히 케어를 위한 공간을 넘어, 어르신들이 정서적으로 안정을 찾고 활기를 되찾아가는 따뜻한 보금자리를 지향합니다.`,
-        image: "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=1200"
-    }
-};
-
 export function HomePage() {
-    const navigate = useNavigate();
     const { getSetting, loading } = useAdminSettings();
     const { theme } = useTheme();
     const { center } = useCenter();
-    const [centerInfo, setCenterInfo] = useState<any>(null);
     const isDark = theme === 'dark';
 
-    // ✨ Sync context center to local info for backward partial compatibility if needed, 
-    // but prefer using 'center' directly.
-    useEffect(() => {
-        if (center) setCenterInfo(center);
-    }, [center]);
+    const brandName = center?.name || getSetting('center_name') || "?��??�양?�터";
+    const phone = center?.phone || import.meta.env.VITE_CENTER_PHONE || '1588-0000';
+    const basePath = center?.slug ? `/centers/${center.slug}` : '';
 
-    const bannerUrl = getSetting('main_banner_url');
-    const noticeText = getSetting('notice_text');
-    const bgImage = bannerUrl || DEFAULT_CONTENT.hero.defaultBgImage;
-
-    const brandName = centerInfo?.name || getSetting('center_name') || DEFAULT_CONTENT.brandName;
-    const canonicalUrl = `${window.location.origin}/centers/${centerInfo?.slug || centerInfo?.id || 'main'}`;
-
-    if (loading) return <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950" />;
+    if (loading) return <div className="min-h-screen flex items-center justify-center" />;
 
     return (
-        <div className={`min-h-screen font-sans overflow-x-hidden transition-colors ${isDark ? 'bg-slate-950 text-white' : 'bg-white text-slate-900'}`}>
+        <div className={cn("min-h-screen", isDark ? "bg-slate-950 text-white" : "bg-white text-slate-900")}>
             <Helmet>
-                <title>{brandName} - {centerInfo?.description?.slice(0, 20) || '어르신의 행복한 일상을 함께합니다'}</title>
-                <meta name="description" content={centerInfo?.description || DEFAULT_CONTENT.hero.description} />
-                <link rel="canonical" href={canonicalUrl} />
-                <meta property="og:title" content={brandName} />
-                <meta property="og:description" content={centerInfo?.description || DEFAULT_CONTENT.hero.description} />
-                <meta property="og:image" content={bgImage} />
-                {getSetting('seo_keywords') && <meta name="keywords" content={getSetting('seo_keywords')} />}
+                <title>{brandName} - ?�르?�의 ?�복???�상???�께?�니??/title>
             </Helmet>
 
-            {!loading && noticeText && (
-                <div className={`px-4 py-3 ${isDark ? 'bg-slate-900' : 'bg-slate-900'} text-white`}>
-                    <div className="container mx-auto px-4 md:px-8 flex items-center justify-center gap-2 text-sm font-medium animate-in slide-in-from-top duration-500">
-                        {SvgIcons.bell("w-4 h-4 text-yellow-400 fill-yellow-400")}
-                        <span>{noticeText}</span>
+            {/* ========================================
+                ?�� SECTION 1: HERO - ?�?�크�??�어�?
+            ======================================== */}
+            <section className="relative min-h-[90vh] flex items-center">
+                {/* Background Image */}
+                <div className="absolute inset-0">
+                    <img
+                        src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=2000"
+                        alt="?�르???�봄"
+                        className="w-full h-full object-cover"
+                    />
+                    <div className={cn(
+                        "absolute inset-0",
+                        isDark ? "bg-slate-950/80" : "bg-gradient-to-r from-white/95 via-white/80 to-transparent"
+                    )} />
+                </div>
+
+                <div className="container mx-auto px-6 relative z-10">
+                    <div className="max-w-2xl">
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8 }}
+                        >
+                            {/* Badge */}
+                            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 text-brand-700 text-sm font-bold mb-6">
+                                <span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse" />
+                                ?�기?�양기�? 지???�터
+                            </span>
+
+                            {/* Main Title */}
+                            <h1 className={cn(
+                                "text-4xl md:text-6xl font-black leading-tight mb-6",
+                                isDark ? "text-white" : "text-slate-900"
+                            )}>
+                                {getSetting('home_title') || "부모님??건강???�상??n?�께 지켜드립니??}
+                            </h1>
+
+                            <p className={cn(
+                                "text-lg md:text-xl mb-10 leading-relaxed",
+                                isDark ? "text-slate-300" : "text-slate-600"
+                            )}>
+                                {getSetting('home_subtitle') || "�??공인 ?�양보호?��? 직접 가?�을 방문?�여\n?�르?�의 ?�체?�동�??�상?�활???�성�??�봅?�다."}
+                            </p>
+
+                            {/* CTA Buttons */}
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <a
+                                    href={`tel:${phone}`}
+                                    className="inline-flex items-center justify-center gap-3 px-8 py-5 bg-brand-600 text-white rounded-2xl font-bold text-lg hover:bg-brand-700 transition-all shadow-xl shadow-brand-600/30"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    </svg>
+                                    {phone}
+                                </a>
+                                <Link
+                                    to={`${basePath}/contact`}
+                                    className={cn(
+                                        "inline-flex items-center justify-center gap-2 px-8 py-5 rounded-2xl font-bold text-lg border-2 transition-all",
+                                        isDark
+                                            ? "border-white/30 text-white hover:bg-white/10"
+                                            : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                                    )}
+                                >
+                                    무료 ?�담 ?�청
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                    </svg>
+                                </Link>
+                            </div>
+                        </motion.div>
                     </div>
                 </div>
-            )}
+            </section>
 
-            {/* ✨ 모바일 최적화: 높이 조정 및 object-position */}
-            <section className="relative h-[70vh] md:h-[85vh] flex items-center overflow-hidden">
-                <HeroBackground
-                    bgImage={bgImage}
-                    animationType={getSetting('banner_animation') || 'fade'}
-                    duration={Number(getSetting('banner_duration')) || 6}
-                />
+            {/* ========================================
+                ?�� SECTION 2: ?�뢰 배�? - ?�평 ?�트�?
+            ======================================== */}
+            <section className={cn(
+                "py-8 border-y",
+                isDark ? "bg-slate-900 border-slate-800" : "bg-slate-50 border-slate-200"
+            )}>
+                <div className="container mx-auto px-6">
+                    <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
+                        {[
+                            { icon: "?���?, label: "?�기?�양기�? 지?? },
+                            { icon: "?��", label: "배상책임보험 가?? },
+                            { icon: "?��?�⚕�?, label: "?�문 ?�양보호?? },
+                            { icon: "??, label: "365??케??가?? },
+                        ].map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-3">
+                                <span className="text-2xl">{item.icon}</span>
+                                <span className={cn(
+                                    "font-bold",
+                                    isDark ? "text-slate-300" : "text-slate-700"
+                                )}>{item.label}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
-                <div className="container relative z-10 mx-auto px-6 md:px-12">
-                    <div className="max-w-5xl space-y-8 animate-in fade-in slide-in-from-bottom-10 duration-1000">
-                        {/* Premium Tag */}
-                        <motion.div
-                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-sm"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6 }}
-                        >
-                            <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
-                            <span>{DEFAULT_CONTENT.hero.titleFirst}</span>
-                        </motion.div>
+            {/* ========================================
+                ?�� SECTION 3: ?�비???�개 - 그리??카드
+            ======================================== */}
+            <section className={cn("py-24", isDark ? "bg-slate-950" : "bg-white")}>
+                <div className="container mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <span className="text-brand-600 font-bold text-sm tracking-widest uppercase mb-4 block">
+                            Our Services
+                        </span>
+                        <h2 className={cn(
+                            "text-3xl md:text-5xl font-black",
+                            isDark ? "text-white" : "text-slate-900"
+                        )}>
+                            맞춤??케???�비??
+                        </h2>
+                    </div>
 
-                        <motion.h1
-                            className="text-white tracking-tighter"
-                            style={{
-                                fontSize: 'clamp(2rem, 8vw, 5rem)',
-                                fontWeight: 900,
-                                lineHeight: 1.1,
-                                textShadow: '0 4px 20px rgba(0,0,0,0.3)',
-                                whiteSpace: 'pre-line',
-                                wordBreak: 'keep-all'
-                            }}
-                            initial={{ opacity: 0, y: 40 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.2, type: "spring", stiffness: 100 }}
-                        >
-                            {getSetting('home_title') || DEFAULT_CONTENT.hero.titlePoint}
-                        </motion.h1>
-                        {/* Remove separate h2 subtitle if title is custom or keep it as optional */}
-
-                        <motion.p
-                            className="text-white/90 font-medium leading-relaxed max-w-lg whitespace-pre-line text-lg md:text-xl drop-shadow-md"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.8, delay: 0.5 }}
-                        >
-                            {getSetting('home_subtitle') || DEFAULT_CONTENT.hero.description}
-                        </motion.p>
-
-                        <div className="flex gap-4 pt-4">
-                            <Link to={center?.slug ? `/centers/${center.slug}/contact` : '/contact'}>
-                                <motion.button
-                                    className="group px-8 py-4 bg-white text-slate-900 rounded-full font-black text-lg shadow-[0_10px_30px_rgba(255,255,255,0.3)] hover:shadow-[0_20px_40px_rgba(255,255,255,0.4)] transition-all flex items-center gap-3"
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    {DEFAULT_CONTENT.hero.ctaText}
-                                    <div className="bg-slate-900 text-white p-1 rounded-full group-hover:bg-indigo-600 transition-colors">
-                                        {SvgIcons.arrowRight("w-5 h-5 -rotate-45 group-hover:rotate-0 transition-transform duration-300")}
-                                    </div>
-                                </motion.button>
-                            </Link>
-                        </div>
-                    </div >
-                </div >
-
-                <motion.div
-                    className={`absolute bottom-10 left-1/2 -translate-x-1/2 ${isDark ? 'text-white/50' : 'text-white/50'}`}
-                    animate={{ y: [0, 10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                >
-                    {SvgIcons.chevronDown("w-10 h-10")}
-                </motion.div>
-            </section >
-
-            {/* Mobile-First Floating Cards Section */}
-            < div className={`relative -mt-20 z-20 rounded-tl-[80px] rounded-tr-none px-4 pb-32 shadow-[0_-20px_40px_rgba(0,0,0,0.1)] overflow-visible ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`
-            }>
-                {/* Background Abstract Shapes */}
-                < BackgroundShapes />
-
-                <div className="container mx-auto pt-24 px-2 md:px-8 relative z-10">
-
-                    {/* Value Cards - Grid Layout */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {DEFAULT_CONTENT.values.map((item, idx) => (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[
+                            {
+                                icon: "?��?�🤝‍�?,
+                                title: "?�체?�동 지??,
+                                desc: "?�사, ?�면, 배설, ?�동 ???�상?�활 기본 ?�작???��??�립?�다.",
+                                color: "bg-blue-50 text-blue-600"
+                            },
+                            {
+                                icon: "?��",
+                                title: "가?�활??지??,
+                                desc: "�?��, ?�탁, ?�사 준�???쾌적???�활?�경??만들?�드립니??",
+                                color: "bg-orange-50 text-orange-600"
+                            },
+                            {
+                                icon: "?��",
+                                title: "건강관�?지??,
+                                desc: "?�압/?�당 체크, ?�약 관�? 병원 ?�행 ?�비?��? ?�공?�니??",
+                                color: "bg-red-50 text-red-600"
+                            },
+                            {
+                                icon: "?��",
+                                title: "?�서?�동 지??,
+                                desc: "말벗 ?�비?��? ?�출 ?�행?�로 ?�서???�정???�모?�니??",
+                                color: "bg-brand-50 text-brand-600"
+                            },
+                        ].map((service, idx) => (
                             <motion.div
                                 key={idx}
-                                initial={{ opacity: 0, y: 50 }}
+                                className={cn(
+                                    "p-8 rounded-3xl border group hover:shadow-xl transition-all duration-300",
+                                    isDark
+                                        ? "bg-slate-900 border-slate-800 hover:border-brand-500/50"
+                                        : "bg-white border-slate-200 hover:border-brand-500/50"
+                                )}
+                                initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                transition={{ type: "spring", stiffness: 100, delay: idx * 0.1 }}
+                                transition={{ delay: idx * 0.1 }}
                             >
-                                <div className={`h-full rounded-[40px] p-8 md:p-10 shadow-xl border hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 ${isDark ? 'bg-slate-800 border-slate-700 shadow-slate-900/40' : 'bg-white border-slate-100 shadow-slate-200/40'}`}>
-                                    <div className="mb-6">
-                                        {idx === 0 ? <StarIcon /> : idx === 1 ? <HeartCareIcon /> : <GrowthIcon />}
-                                    </div>
-                                    <h3 className={`text-2xl font-black mb-4 tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.title}</h3>
-                                    <p className={`font-medium leading-relaxed text-lg ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{item.desc}</p>
+                                <div className={cn(
+                                    "w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-6",
+                                    isDark ? "bg-slate-800" : service.color.split(' ')[0]
+                                )}>
+                                    {service.icon}
                                 </div>
+                                <h3 className={cn(
+                                    "text-xl font-black mb-3",
+                                    isDark ? "text-white" : "text-slate-900"
+                                )}>{service.title}</h3>
+                                <p className={cn(
+                                    "text-sm leading-relaxed",
+                                    isDark ? "text-slate-400" : "text-slate-600"
+                                )}>{service.desc}</p>
                             </motion.div>
                         ))}
                     </div>
 
-                    {/* Story Section */}
-                    <motion.div
-                        className={`mt-24 relative rounded-[50px] overflow-hidden shadow-2xl border ${isDark ? 'bg-slate-800 border-slate-700 shadow-slate-900/50' : 'bg-white border-slate-100 shadow-indigo-100/50'}`}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        transition={{ duration: 0.8 }}
-                    >
-                        <div className="grid grid-cols-1 lg:grid-cols-2">
-                            <div className="p-10 md:p-16 flex flex-col justify-center space-y-8">
-                                {SvgIcons.quote(`w-14 h-14 ${isDark ? 'text-slate-700' : 'text-indigo-100'}`)}
-                                <h3
-                                    className={`text-3xl md:text-4xl font-black leading-[1.15] tracking-[-0.05em] ${isDark ? 'text-white' : 'text-slate-900'}`}
-                                    style={{ wordBreak: 'keep-all' }}
-                                >
-                                    {getSetting('home_story_title') || DEFAULT_CONTENT.story.quote}
-                                </h3>
-                                <p className={`text-base font-medium leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`} style={{ wordBreak: 'keep-all', whiteSpace: 'pre-line' }}>
-                                    {getSetting('home_story_body') || DEFAULT_CONTENT.story.description}
-                                </p>
-                                <Link
-                                    to={getSetting('home_cta_link') || (center?.slug ? `/centers/${center.slug}/contact` : '/contact')}
-                                    className={`inline-flex items-center gap-2 font-bold text-sm hover:underline mt-2 ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}
-                                >
-                                    {getSetting('home_cta_text') || '상담 예약하기'}
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" />
-                                    </svg>
-                                </Link>
-                            </div>
-                            <div className="relative h-[350px] lg:h-auto">
-                                <img
-                                    src={getSetting('home_story_image') || DEFAULT_CONTENT.story.image}
-                                    alt="Center Concept"
-                                    className="absolute inset-0 w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent lg:bg-gradient-to-l"></div>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Programs Preview Section */}
-                    <motion.section
-                        className="mt-24 text-center"
-                        initial={{ opacity: 0, y: 50 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ type: "spring", stiffness: 80 }}
-                    >
-                        <div className="mb-12">
-                            <span className={cn(
-                                "inline-block px-4 py-1.5 rounded-full text-xs font-black tracking-wider uppercase mb-4",
-                                isDark ? "bg-indigo-900 text-indigo-300" : "bg-indigo-50 text-indigo-600"
-                            )}>
-                                Our Programs
-                            </span>
-                            <h2
-                                className={cn(
-                                    "text-3xl md:text-4xl font-black tracking-[-0.05em]",
-                                    isDark ? "text-white" : "text-slate-900"
-                                )}
-                                style={{ wordBreak: 'keep-all' }}
-                            >
-                                맞춤형 케어 서비스
-                            </h2>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-                            {[
-                                { Icon: SpeechTherapyIcon, name: '신체활동지원', desc: '일상생활 동작 훈련', lightColor: 'from-indigo-50 to-white', darkColor: 'from-indigo-900/30 to-slate-900' },
-                                { Icon: SensoryTherapyIcon, name: '가사지원', desc: '식사, 청소, 세탁', lightColor: 'from-emerald-50 to-white', darkColor: 'from-emerald-900/30 to-slate-900' },
-                                { Icon: ArtTherapyIcon, name: '건강관리', desc: '혈압, 혈당 체크 등', lightColor: 'from-amber-50 to-white', darkColor: 'from-amber-900/30 to-slate-900' },
-                                { Icon: PlayTherapyIcon, name: '인지활동지원', desc: '치매예방 프로그램', lightColor: 'from-rose-50 to-white', darkColor: 'from-rose-900/30 to-slate-900' },
-                            ].map((program, idx) => (
-                                <motion.div
-                                    key={idx}
-                                    className={cn(
-                                        "bg-gradient-to-b rounded-[28px] p-6 shadow-lg border hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer",
-                                        isDark
-                                            ? `${program.darkColor} border-slate-800 shadow-black/20`
-                                            : `${program.lightColor} border-slate-100 shadow-slate-100`
-                                    )}
-                                    initial={{ opacity: 0, y: 30 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: idx * 0.1 }}
-                                    onClick={() => navigate(center?.slug ? `/centers/${center.slug}/programs` : '/programs')}
-                                >
-                                    <div className="w-14 h-14 mx-auto mb-3">
-                                        <program.Icon className="w-14 h-14" />
-                                    </div>
-                                    <p className={cn("font-black text-sm mb-1", isDark ? "text-white" : "text-slate-800")}>{program.name}</p>
-                                    <p className={cn("text-xs font-medium", isDark ? "text-slate-400" : "text-slate-400")}>{program.desc}</p>
-                                </motion.div>
-                            ))}
-                        </div>
-                        <Link to={center?.slug ? `/centers/${center.slug}/programs` : '/programs'} className={cn(
-                            "inline-flex items-center gap-2 mt-10 font-bold text-sm hover:underline",
-                            isDark ? "text-indigo-400" : "text-indigo-600"
-                        )}>
-                            모든 서비스 보기 {SvgIcons.arrowRight("w-4 h-4")}
+                    <div className="text-center mt-12">
+                        <Link
+                            to={`${basePath}/programs`}
+                            className="inline-flex items-center gap-2 text-brand-600 font-bold hover:underline"
+                        >
+                            모든 ?�비??보기
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            </svg>
                         </Link>
-                    </motion.section>
+                    </div>
+                </div>
+            </section>
 
-                    {/* Trust Section - Qualitative Statements */}
-                    <motion.section
-                        className="mt-20 relative"
-                        initial={{ opacity: 0, y: 40 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ type: "spring", stiffness: 80 }}
-                    >
-                        <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 rounded-[50px] p-10 md:p-16 text-white relative overflow-hidden">
-                            {/* Decorative - reduced blur */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-xl"></div>
-                            <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/10 rounded-full blur-lg"></div>
+            {/* ========================================
+                ?�� SECTION 4: ?�용 ?�차 - ?�?�라??
+            ======================================== */}
+            <section className={cn(
+                "py-24",
+                isDark ? "bg-slate-900" : "bg-brand-50"
+            )}>
+                <div className="container mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <span className="text-brand-600 font-bold text-sm tracking-widest uppercase mb-4 block">
+                            Process
+                        </span>
+                        <h2 className={cn(
+                            "text-3xl md:text-5xl font-black",
+                            isDark ? "text-white" : "text-slate-900"
+                        )}>
+                            ?�비???�용 ?�차
+                        </h2>
+                    </div>
 
-                            <div className="relative z-10 text-center max-w-3xl mx-auto">
-                                <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-black tracking-wider uppercase mb-6">
-                                    Why Zarada
-                                </span>
-                                <h2
-                                    className="text-3xl md:text-4xl font-black tracking-[-0.05em] mb-8"
-                                    style={{ wordBreak: 'keep-all' }}
-                                >
-                                    신뢰할 수 있는 전문 케어의<br />
-                                    1:1 맞춤 돌봄
-                                </h2>
+                    <div className="grid md:grid-cols-4 gap-8">
+                        {[
+                            { step: "01", title: "?�화 ?�담", desc: "문의 ?�화�??�르???�황 ?�악" },
+                            { step: "02", title: "방문 ?�담", desc: "?�문 ?�담?��? 직접 방문 ?�담" },
+                            { step: "03", title: "?�급 ?�청", desc: "?�기?�양?�급 ?�청 ?�??지?? },
+                            { step: "04", title: "?�비???�작", desc: "맞춤 ?�양보호??배정 ???�비?? },
+                        ].map((item, idx) => (
+                            <motion.div
+                                key={idx}
+                                className="text-center relative"
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.15 }}
+                            >
+                                {/* Connector Line */}
+                                {idx < 3 && (
+                                    <div className="hidden md:block absolute top-8 left-[60%] w-full h-0.5 bg-brand-300" />
+                                )}
 
-                                {/* Trust Points */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
-                                    {[
-                                        { icon: '🎓', title: '전문 자격', desc: '국가공인 요양보호사' },
-                                        { icon: '💝', title: '개별 맞춤', desc: '1:1 집중 케어' },
-                                        { icon: '📊', title: '체계적 평가', desc: '건강상태 카드' },
-                                        { icon: '🤝', title: '보호자 소통', desc: '매 회기 피드백' }
-                                    ].map((item, idx) => (
-                                        <motion.div
-                                            key={idx}
-                                            className="bg-white/10 backdrop-blur-md rounded-[24px] p-5 border border-white/10"
-                                            initial={{ opacity: 0, y: 20 }}
-                                            whileInView={{ opacity: 1, y: 0 }}
-                                            viewport={{ once: true }}
-                                            transition={{ delay: idx * 0.1 }}
-                                        >
-                                            <div className="text-2xl mb-2">{item.icon}</div>
-                                            <p className="font-black text-sm mb-1">{item.title}</p>
-                                            <p className="text-white/60 text-xs font-medium">{item.desc}</p>
-                                        </motion.div>
-                                    ))}
+                                <div className={cn(
+                                    "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 text-xl font-black relative z-10",
+                                    isDark
+                                        ? "bg-brand-600 text-white"
+                                        : "bg-brand-600 text-white"
+                                )}>
+                                    {item.step}
                                 </div>
+                                <h3 className={cn(
+                                    "text-lg font-black mb-2",
+                                    isDark ? "text-white" : "text-slate-900"
+                                )}>{item.title}</h3>
+                                <p className={cn(
+                                    "text-sm",
+                                    isDark ? "text-slate-400" : "text-slate-600"
+                                )}>{item.desc}</p>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ========================================
+                ?�� SECTION 5: ???�?�인가 - ?�장??
+            ======================================== */}
+            <section className={cn("py-24", isDark ? "bg-slate-950" : "bg-white")}>
+                <div className="container mx-auto px-6">
+                    <div className="grid lg:grid-cols-2 gap-16 items-center">
+                        <div>
+                            <span className="text-brand-600 font-bold text-sm tracking-widest uppercase mb-4 block">
+                                Why Choose Us
+                            </span>
+                            <h2 className={cn(
+                                "text-3xl md:text-5xl font-black mb-8",
+                                isDark ? "text-white" : "text-slate-900"
+                            )}>
+                                {getSetting('home_story_title') || `${brandName}�?n?�택?�야 ?�는 ?�유`}
+                            </h2>
+                            <p className={cn("text-lg mb-8 leading-relaxed", isDark ? "text-slate-400" : "text-slate-600")}>
+                                {getSetting('home_story_body')}
+                            </p>
+
+                            <div className="space-y-6">
+                                {[
+                                    { title: "�??공인 ?�문 ?�력", desc: "?�양보호???�격증을 보유???�문 ?�력�?배정?�니??" },
+                                    { title: "1:1 맞춤 케?�플??, desc: "?�르?�의 건강 ?�태?� ?�요??맞춘 개인�?케?�플?�을 ?�립?�니??" },
+                                    { title: "?�기 모니?�링", desc: "�?1??보호???�드백과 ?�간 케??리포?��? ?�공?�니??" },
+                                    { title: "24?�간 긴급 ?�락�?, desc: "?�급 ?�황 발생 ??즉각 ?�?�할 ???�는 비상 ?�락망을 ?�영?�니??" },
+                                ].map((item, idx) => (
+                                    <motion.div
+                                        key={idx}
+                                        className="flex gap-4"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        whileInView={{ opacity: 1, x: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: idx * 0.1 }}
+                                    >
+                                        <div className="w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center shrink-0 mt-1">
+                                            <svg className="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h4 className={cn(
+                                                "font-bold text-lg mb-1",
+                                                isDark ? "text-white" : "text-slate-900"
+                                            )}>{item.title}</h4>
+                                            <p className={cn(
+                                                "text-sm",
+                                                isDark ? "text-slate-400" : "text-slate-600"
+                                            )}>{item.desc}</p>
+                                        </div>
+                                    </motion.div>
+                                ))}
                             </div>
                         </div>
-                    </motion.section>
 
+                        <div className="relative">
+                            <img
+                                src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800"
+                                alt="?�문 케???�비??
+                                className="rounded-3xl shadow-2xl"
+                            />
+                            {/* Floating Stats Card */}
+                            <div className={cn(
+                                "absolute -bottom-8 -left-8 p-6 rounded-2xl shadow-xl",
+                                isDark ? "bg-slate-800" : "bg-white"
+                            )}>
+                                <div className="text-4xl font-black text-brand-600 mb-1">10+</div>
+                                <div className={cn(
+                                    "text-sm font-bold",
+                                    isDark ? "text-slate-400" : "text-slate-600"
+                                )}>??경력 ?�문?�</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-                    {/* Final CTA Section */}
-                    <motion.section
-                        className="mt-24 mb-8 text-center"
+            {/* ========================================
+                ?�� SECTION 6: 최종 CTA
+            ======================================== */}
+            <section className="py-24 bg-gradient-to-br from-brand-600 to-brand-800">
+                <div className="container mx-auto px-6 text-center">
+                    <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                     >
-                        <h2
-                            className={cn(
-                                "text-3xl md:text-4xl font-black mb-6 tracking-[-0.05em]",
-                                isDark ? "text-white" : "text-slate-900"
-                            )}
-                            style={{ wordBreak: 'keep-all' }}
-                        >
-                            어르신의 편안한 일상, 함께 시작해요
+                        <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
+                            지�?바로 ?�담받으?�요
                         </h2>
-                        <p className={cn(
-                            "font-medium mb-10 max-w-md mx-auto",
-                            isDark ? "text-slate-400" : "text-slate-500"
-                        )} style={{ wordBreak: 'keep-all' }}>
-                            무료 초기 상담을 통해 우리 아이에게 필요한 지원을 알아보세요.
+                        <p className="text-brand-100 text-lg mb-10 max-w-xl mx-auto">
+                            ?�르?�의 건강???�상???�한 �?걸음,<br />
+                            무료 ?�담?�로 ?�작?�보?�요.
                         </p>
-                        <Link to={center?.slug ? `/centers/${center.slug}/contact` : '/contact'}>
-                            <motion.button
-                                className={cn(
-                                    "px-10 py-5 rounded-full font-black text-lg shadow-xl transition-all flex items-center gap-3 mx-auto ring-2",
-                                    isDark
-                                        ? "bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-900/50 ring-indigo-400/30"
-                                        : "bg-slate-900 text-white hover:bg-indigo-600 shadow-slate-300 ring-slate-800/20"
-                                )}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <a
+                                href={`tel:${phone}`}
+                                className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-white text-brand-700 rounded-2xl font-bold text-xl hover:bg-brand-50 transition-all shadow-xl"
                             >
-                                돌봄 문의하기
-                                {SvgIcons.arrowRight("w-5 h-5")}
-                            </motion.button>
-                        </Link>
-                    </motion.section>
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                {phone}
+                            </a>
+                            <Link
+                                to={`${basePath}/contact`}
+                                className="inline-flex items-center justify-center gap-2 px-10 py-5 bg-brand-500 text-white rounded-2xl font-bold text-xl hover:bg-brand-400 transition-all"
+                            >
+                                ?�라???�담 ?�청
+                            </Link>
+                        </div>
+                    </motion.div>
                 </div>
-            </div >
-        </div >
+            </section>
+        </div>
     );
 }
-

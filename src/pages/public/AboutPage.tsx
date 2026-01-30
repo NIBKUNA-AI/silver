@@ -1,9 +1,7 @@
 // @ts-nocheck
 /* eslint-disable */
 /**
- * 🎨 Project: Zarada ERP - The Sovereign Canvas
- * 🛠️ Created by: 안욱빈 (An Uk-bin)
- * 📅 Date: 2026-01-10
+ * 🌿 SILVER CARE - AboutPage Complete Redesign
  */
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
@@ -14,40 +12,6 @@ import { cn } from '@/lib/utils';
 import { useCenter } from '@/contexts/CenterContext';
 import { useCenterBranding } from '@/hooks/useCenterBranding';
 
-// Custom SVG Icons
-const Icons = {
-    award: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="6" stroke="currentColor" />
-            <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" stroke="currentColor" />
-        </svg>
-    ),
-    heart: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke="currentColor" />
-        </svg>
-    ),
-    users: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="9" cy="7" r="4" stroke="currentColor" />
-            <path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" stroke="currentColor" />
-            <circle cx="17" cy="11" r="3" stroke="currentColor" />
-            <path d="M21 21v-1.5a3 3 0 00-3-3h-.5" stroke="currentColor" />
-        </svg>
-    ),
-    clock: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" />
-            <path d="M12 6v6l4 2" stroke="currentColor" />
-        </svg>
-    ),
-    arrowRight: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" />
-        </svg>
-    ),
-};
-
 export function AboutPage() {
     const { getSetting } = useAdminSettings();
     const { center } = useCenter();
@@ -55,109 +19,263 @@ export function AboutPage() {
     const { branding, loading } = useCenterBranding();
     const isDark = theme === 'dark';
 
-    // ✨ [Anti-Flicker] Prevent showing hardcoded defaults before branding/settings are ready
     if (loading) return null;
 
-    const centerName = branding.name || center?.name || '아동발달센터';
-
-    const introText = branding.settings?.about_intro_text || getSetting('about_intro_text') || `아이는 믿는 만큼 자라고, 사랑받는 만큼 행복해집니다.\n${centerName}는 아이들의 건강한 성장을 위해 진심을 다합니다.`;
-    const mainImage = branding.settings?.about_main_image || getSetting('about_main_image');
-    const descTitle = branding.settings?.about_desc_title || getSetting('about_desc_title') || "따뜻한 시선으로\n아이의 잠재력을 발굴합니다";
-    const descBody = branding.settings?.about_desc_body || getSetting('about_desc_body') || `${centerName}는 각 분야별 석/박사 출신의 전문 치료진들이 협력하여 아동 개개인에게 최적화된 맞춤 치료 프로그램을 제공합니다.\n\n단순히 증상을 개선하는 것을 넘어, 아이가 스스로 긍정적인 자아를 형성하고 세상과 소통하며 행복하게 살아갈 수 있도록 돕는 것이 우리의 목표입니다.`;
-
-    const galleryRaw = branding.settings?.about_gallery || getSetting('about_gallery');
-    const galleryImages = galleryRaw ? galleryRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
-
-    const values = [
-        { icon: Icons.award, title: "검증된 전문성", desc: "석/박사급 치료진의 체계적 접근", color: isDark ? "bg-slate-800" : "bg-white", brandColor: true },
-        { icon: Icons.heart, title: "진정성 있는 치료", desc: "아이 중심의 따뜻한 케어", color: isDark ? "bg-rose-900/50 text-rose-400" : "bg-rose-50 text-rose-600" },
-        { icon: Icons.users, title: "체계적인 협진", desc: "다학제적 협력 시스템", color: isDark ? "bg-emerald-900/50 text-emerald-400" : "bg-emerald-50 text-emerald-600" },
-        { icon: Icons.clock, title: "충분한 상담", desc: "부모님과의 깊은 소통", color: isDark ? "bg-amber-900/50 text-amber-400" : "bg-amber-50 text-amber-600" },
-    ];
+    const centerName = branding.name || center?.name || '재가요양센터';
+    const phone = center?.phone || import.meta.env.VITE_CENTER_PHONE || '1588-0000';
+    const basePath = center?.slug ? `/centers/${center.slug}` : '';
 
     return (
-        <div className={cn("min-h-screen transition-colors", isDark ? "bg-slate-950" : "bg-[#F8FAFC]")}>
+        <div className={cn("min-h-screen", isDark ? "bg-slate-950" : "bg-white")}>
             <Helmet>
                 <title>센터 소개 - {centerName}</title>
             </Helmet>
 
-            <section className="relative py-24 px-6 overflow-hidden" style={{ backgroundColor: branding.brand_color }}>
-                <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
-
-                <div className="container mx-auto max-w-4xl relative z-10 text-center text-white">
-                    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-                        <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-black tracking-wider uppercase mb-6">About Us</span>
-                        <h1 className="text-4xl md:text-5xl font-black tracking-[-0.05em] mb-6">센터 소개</h1>
-                        <p className="text-lg text-white/80 font-medium max-w-xl mx-auto leading-relaxed whitespace-pre-line">{introText}</p>
-                    </motion.div>
+            {/* ========================================
+                🌿 HERO SECTION - 심플 텍스트
+            ======================================== */}
+            <section className={cn(
+                "pt-32 pb-20",
+                isDark ? "bg-slate-900" : "bg-gradient-to-b from-emerald-50 to-white"
+            )}>
+                <div className="container mx-auto px-6">
+                    <div className="max-w-3xl">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                        >
+                            <span className="text-emerald-600 font-bold text-sm tracking-widest uppercase mb-4 block">
+                                About Us
+                            </span>
+                            <h1 className={cn(
+                                "text-4xl md:text-6xl font-black mb-6 leading-tight",
+                                isDark ? "text-white" : "text-slate-900"
+                            )}>
+                                어르신의 행복이<br />
+                                <span className="text-emerald-600">우리의 행복</span>입니다
+                            </h1>
+                            <p className={cn(
+                                "text-lg md:text-xl leading-relaxed",
+                                isDark ? "text-slate-400" : "text-slate-600"
+                            )}>
+                                {centerName}는 어르신 한 분 한 분을 가족처럼 모시며,<br />
+                                건강하고 행복한 노후 생활을 함께 합니다.
+                            </p>
+                        </motion.div>
+                    </div>
                 </div>
             </section>
 
-            <div className={cn("relative -mt-12 z-20 rounded-t-[50px] px-4 pb-24 transition-colors", isDark ? "bg-slate-950" : "bg-[#F8FAFC]")}>
-                <div className="container mx-auto max-w-5xl">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-16">
-                        {values.map((item, idx) => (
-                            <motion.div key={idx} className={cn("rounded-[28px] p-6 text-center border", isDark ? "bg-slate-900 border-slate-800 shadow-lg" : "bg-white border-slate-100 shadow-lg shadow-slate-100")} initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.1 }}>
-                                <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center mb-4 mx-auto", item.color)} style={item.brandColor ? { backgroundColor: branding.brand_color + '10', color: branding.brand_color } : undefined}>
-                                    {item.icon("w-7 h-7")}
-                                </div>
-                                <h3 className={cn("font-black text-sm mb-1", isDark ? "text-white" : "text-slate-800")}>{item.title}</h3>
-                                <p className={cn("text-xs font-medium text-slate-400")}>{item.desc}</p>
+            {/* ========================================
+                🌿 MISSION & VISION - 2컬럼
+            ======================================== */}
+            <section className={cn("py-20", isDark ? "bg-slate-950" : "bg-white")}>
+                <div className="container mx-auto px-6">
+                    <div className="grid lg:grid-cols-2 gap-12">
+                        {/* Mission */}
+                        <motion.div
+                            className={cn(
+                                "p-10 rounded-3xl",
+                                isDark ? "bg-slate-900" : "bg-slate-50"
+                            )}
+                            initial={{ opacity: 0, x: -30 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                        >
+                            <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center text-2xl mb-6">
+                                🎯
+                            </div>
+                            <h2 className={cn(
+                                "text-2xl font-black mb-4",
+                                isDark ? "text-white" : "text-slate-900"
+                            )}>우리의 미션</h2>
+                            <p className={cn(
+                                "text-lg leading-relaxed",
+                                isDark ? "text-slate-400" : "text-slate-600"
+                            )}>
+                                모든 어르신이 가정에서 존엄하게 노후를 보낼 수 있도록,
+                                전문적이고 따뜻한 돌봄 서비스를 제공합니다.
+                            </p>
+                        </motion.div>
+
+                        {/* Vision */}
+                        <motion.div
+                            className={cn(
+                                "p-10 rounded-3xl",
+                                isDark ? "bg-slate-900" : "bg-slate-50"
+                            )}
+                            initial={{ opacity: 0, x: 30 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                        >
+                            <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center text-2xl mb-6">
+                                ✨
+                            </div>
+                            <h2 className={cn(
+                                "text-2xl font-black mb-4",
+                                isDark ? "text-white" : "text-slate-900"
+                            )}>우리의 비전</h2>
+                            <p className={cn(
+                                "text-lg leading-relaxed",
+                                isDark ? "text-slate-400" : "text-slate-600"
+                            )}>
+                                대한민국 No.1 재가요양 서비스로서,
+                                어르신과 가족 모두가 신뢰하고 만족하는 돌봄 문화를 선도합니다.
+                            </p>
+                        </motion.div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ========================================
+                🌿 핵심 가치 - 아이콘 그리드
+            ======================================== */}
+            <section className={cn(
+                "py-20",
+                isDark ? "bg-slate-900" : "bg-emerald-50"
+            )}>
+                <div className="container mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <span className="text-emerald-600 font-bold text-sm tracking-widest uppercase mb-4 block">
+                            Core Values
+                        </span>
+                        <h2 className={cn(
+                            "text-3xl md:text-4xl font-black",
+                            isDark ? "text-white" : "text-slate-900"
+                        )}>핵심 가치</h2>
+                    </div>
+
+                    <div className="grid md:grid-cols-4 gap-6">
+                        {[
+                            { icon: "❤️", title: "사랑", desc: "가족을 대하듯 진심으로" },
+                            { icon: "🤝", title: "신뢰", desc: "투명하고 정직한 서비스" },
+                            { icon: "⭐", title: "전문성", desc: "체계적인 교육과 관리" },
+                            { icon: "🌱", title: "성장", desc: "끊임없는 서비스 개선" },
+                        ].map((value, idx) => (
+                            <motion.div
+                                key={idx}
+                                className={cn(
+                                    "p-8 rounded-3xl text-center",
+                                    isDark ? "bg-slate-800" : "bg-white shadow-lg"
+                                )}
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: idx * 0.1 }}
+                            >
+                                <div className="text-4xl mb-4">{value.icon}</div>
+                                <h3 className={cn(
+                                    "text-xl font-black mb-2",
+                                    isDark ? "text-white" : "text-slate-900"
+                                )}>{value.title}</h3>
+                                <p className={cn(
+                                    "text-sm",
+                                    isDark ? "text-slate-400" : "text-slate-600"
+                                )}>{value.desc}</p>
                             </motion.div>
                         ))}
                     </div>
+                </div>
+            </section>
 
-                    <motion.div className={cn("mt-16 rounded-[50px] overflow-hidden border", isDark ? "bg-slate-900 border-slate-800 shadow-2xl shadow-black/30" : "bg-white border-slate-100 shadow-2xl shadow-slate-200/50")} initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
-                        <div className="grid grid-cols-1 lg:grid-cols-2">
-                            <div className="relative h-[350px] lg:h-auto">
-                                {mainImage ? <img src={mainImage} alt="Center" className="absolute inset-0 w-full h-full object-cover" /> : <div className={cn("absolute inset-0 flex items-center justify-center", isDark ? "bg-slate-800 text-slate-500" : "bg-slate-200 text-slate-400")}>센터 이미지</div>}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent lg:bg-gradient-to-r"></div>
-                            </div>
-                            <div className="p-10 md:p-16 flex flex-col justify-center space-y-6">
-                                <h2 className={cn("text-3xl font-black tracking-[-0.05em] leading-tight whitespace-pre-line", isDark ? "text-white" : "text-slate-900")}>{descTitle}</h2>
-                                <p className={cn("font-medium leading-relaxed whitespace-pre-line", isDark ? "text-slate-400" : "text-slate-500")}>{descBody}</p>
-                                <Link to={getSetting('about_cta_link') || (center?.slug ? `/centers/${center.slug}/contact` : '/contact')} className="inline-flex items-center gap-2 font-bold text-sm hover:underline mt-4" style={{ color: branding.brand_color }}>
-                                    {getSetting('about_cta_text') || '상담 예약하기'} {Icons.arrowRight("w-4 h-4")}
-                                </Link>
-                            </div>
-                        </div>
-                    </motion.div>
+            {/* ========================================
+                🌿 센터 특장점 - 리스트
+            ======================================== */}
+            <section className={cn("py-20", isDark ? "bg-slate-950" : "bg-white")}>
+                <div className="container mx-auto px-6">
+                    <div className="grid lg:grid-cols-2 gap-16 items-center">
+                        <motion.div
+                            initial={{ opacity: 0, x: -30 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                        >
+                            <span className="text-emerald-600 font-bold text-sm tracking-widest uppercase mb-4 block">
+                                Why {centerName}
+                            </span>
+                            <h2 className={cn(
+                                "text-3xl md:text-4xl font-black mb-8",
+                                isDark ? "text-white" : "text-slate-900"
+                            )}>
+                                {centerName}의 차별점
+                            </h2>
 
-                    {/* ✨ Premium Center Gallery Section */}
-                    {galleryImages.length > 0 && (
-                        <div className="mt-32 space-y-12">
-                            <div className="text-center space-y-4">
-                                <h2 className={cn("text-3xl md:text-4xl font-black", isDark ? "text-white" : "text-slate-900")}>센터 둘러보기</h2>
-                                <p className={cn("text-base font-medium opacity-60", isDark ? "text-slate-400" : "text-slate-600")}>우리 아이들이 꿈을 키워나가는 따뜻한 공간입니다.</p>
-                            </div>
-
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                {galleryImages.map((img, idx) => (
-                                    <motion.div
+                            <ul className="space-y-6">
+                                {[
+                                    "장기요양기관 지정 센터",
+                                    "배상책임보험 가입으로 안심 케어",
+                                    "국가공인 요양보호사 자격 보유",
+                                    "정기적인 요양보호사 교육 실시",
+                                    "보호자 주간/월간 케어 리포트 제공",
+                                    "24시간 비상 연락망 운영",
+                                ].map((item, idx) => (
+                                    <motion.li
                                         key={idx}
-                                        className={cn(
-                                            "relative aspect-[4/3] rounded-[32px] overflow-hidden group border",
-                                            isDark ? "border-white/5 shadow-2xl" : "border-slate-100 shadow-xl shadow-slate-200/50"
-                                        )}
-                                        initial={{ opacity: 0, y: 30 }}
-                                        whileInView={{ opacity: 1, y: 0 }}
+                                        className="flex items-center gap-4"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        whileInView={{ opacity: 1, x: 0 }}
                                         viewport={{ once: true }}
                                         transition={{ delay: idx * 0.1 }}
                                     >
-                                        <img
-                                            src={img}
-                                            alt={`Center Gallery ${idx + 1}`}
-                                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                        />
-                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </motion.div>
+                                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                                            <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <span className={cn(
+                                            "text-lg font-medium",
+                                            isDark ? "text-slate-300" : "text-slate-700"
+                                        )}>{item}</span>
+                                    </motion.li>
                                 ))}
-                            </div>
-                        </div>
-                    )}
+                            </ul>
+                        </motion.div>
+
+                        <motion.div
+                            className="relative"
+                            initial={{ opacity: 0, x: 30 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                        >
+                            <img
+                                src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=800"
+                                alt="케어 서비스"
+                                className="rounded-3xl shadow-2xl"
+                            />
+                        </motion.div>
+                    </div>
                 </div>
-            </div>
+            </section>
+
+            {/* ========================================
+                🌿 CTA SECTION
+            ======================================== */}
+            <section className={cn(
+                "py-20",
+                isDark ? "bg-emerald-900" : "bg-emerald-600"
+            )}>
+                <div className="container mx-auto px-6 text-center">
+                    <h2 className="text-3xl md:text-4xl font-black text-white mb-6">
+                        지금 무료 상담을 받아보세요
+                    </h2>
+                    <p className="text-emerald-100 text-lg mb-10 max-w-lg mx-auto">
+                        어르신의 상황에 맞는 최적의 케어 방법을 안내해 드립니다.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a
+                            href={`tel:${phone}`}
+                            className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-emerald-700 rounded-2xl font-bold text-lg"
+                        >
+                            📞 {phone}
+                        </a>
+                        <Link
+                            to={`${basePath}/contact`}
+                            className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-emerald-500 text-white rounded-2xl font-bold text-lg hover:bg-emerald-400 transition"
+                        >
+                            온라인 상담 신청
+                        </Link>
+                    </div>
+                </div>
+            </section>
         </div>
     );
 }

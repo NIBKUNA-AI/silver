@@ -1,14 +1,8 @@
 // @ts-nocheck
 /* eslint-disable */
 /**
- * 🎨 Project: Zarada ERP - The Sovereign Canvas
- * 🛠️ Created by: 안욱빈 (An Uk-bin)
- * 📅 Date: 2026-01-10
- * 🖋️ Description: "코드와 데이터로 세상을 채색하다."
- * ⚠️ Copyright (c) 2026 안욱빈. All rights reserved.
- * -----------------------------------------------------------
- * 이 파일의 UI/UX 설계 및 데이터 연동 로직은 독자적인 기술과
- * 예술적 영감을 바탕으로 구축되었습니다.
+ * 🌿 SILVER CARE - Elderly Care Consultation Form
+ * 재가요양 상담 신청 양식
  */
 import { useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -17,7 +11,7 @@ import { useTheme } from '@/contexts/ThemeProvider';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-// Custom SVG Icons (no Lucide)
+// Custom SVG Icons
 const Icons = {
     checkCircle: (className: string) => (
         <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -43,91 +37,68 @@ const Icons = {
             <polygon points="22 2 15 22 11 13 2 9 22 2" stroke="currentColor" />
         </svg>
     ),
-    baby: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="5" stroke="currentColor" />
-            <path d="M3 21v-2a4 4 0 014-4h10a4 4 0 014 4v2" stroke="currentColor" />
-        </svg>
-    ),
-    message: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" />
-        </svg>
-    ),
-    user: (className: string) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" />
-            <circle cx="12" cy="7" r="4" stroke="currentColor" />
-        </svg>
-    ),
 };
 
 interface ConsultationSurveyFormProps {
-    centerId?: string; // ✨ Add centerId prop
-    initialData?: {
-        childName?: string;
-        childBirthDate?: string;
-        childGender?: 'male' | 'female' | 'other';
-        guardianName?: string;
-        guardianPhone?: string;
-        childId?: string;
-    };
+    centerId?: string;
     onSuccess?: () => void;
 }
 
-export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: ConsultationSurveyFormProps) {
+export function ConsultationSurveyForm({ centerId, onSuccess }: ConsultationSurveyFormProps) {
     const { getSource } = useTrafficSource();
     const { theme } = useTheme();
     const isDark = theme === 'dark';
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 15 }, (_, i) => currentYear - i);
-    const months = Array.from({ length: 12 }, (_, i) => i + 1);
-    const days = Array.from({ length: 31 }, (_, i) => i + 1);
-    const services = ['언어치료', '놀이치료', '감각통합', '인지학습', '사회성그룹', '발달검사'];
-
-    // Initial birth date handling
-    const initialBirth = initialData?.childBirthDate ? {
-        year: initialData.childBirthDate.split('-')[0],
-        month: String(parseInt(initialData.childBirthDate.split('-')[1])),
-        day: String(parseInt(initialData.childBirthDate.split('-')[2]))
-    } : { year: '', month: '', day: '' };
-
-    const [birth, setBirth] = useState(initialBirth);
-
-    const [formData, setFormData] = useState({
-        child_name: initialData?.childName || '',
-        child_gender: initialData?.childGender === 'female' ? '여아' : (initialData?.childGender === 'male' ? '남아' : '남아'),
-        diagnosis: '아니오 (없음)',
-        concern: '',
-        preferred_service: [],
-        parent_name: initialData?.guardianName || '',
-        phone: initialData?.guardianPhone || '',
-        relation: '',
-        discovery_path: '' // ✨ New Field
-    });
-
     const [currentStep, setCurrentStep] = useState(1);
     const totalSteps = 3;
     const formContainerRef = useRef<HTMLDivElement>(null);
 
+    // 🌿 어르신 정보 (Silver Care 맞춤)
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 50 }, (_, i) => currentYear - 60 - i); // 60세 이상
+    const months = Array.from({ length: 12 }, (_, i) => i + 1);
+    const days = Array.from({ length: 31 }, (_, i) => i + 1);
+
+    // 재가요양 서비스 종류
+    const services = ['신체활동 지원', '가사활동 지원', '건강관리', '인지활동 지원', '정서 지원', '병원 동행'];
+
+    const [birth, setBirth] = useState({ year: '', month: '', day: '' });
+
+    const [formData, setFormData] = useState({
+        // Step 1: 어르신 정보
+        elder_name: '',
+        elder_gender: '남성',
+        has_care_grade: '없음',
+        care_grade: '',
+        living_situation: '자녀와 동거',
+
+        // Step 2: 건강/케어 정보
+        health_condition: '',
+        preferred_service: [] as string[],
+        service_frequency: '',
+
+        // Step 3: 보호자 정보
+        guardian_name: '',
+        guardian_phone: '',
+        guardian_relation: '',
+        discovery_path: ''
+    });
+
     const scrollToFormTop = () => {
-        // ✨ [UX Fix] 웹 상단이 아닌, 폼 상단으로만 살짝 스크롤
         formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     const nextStep = () => {
         if (currentStep === 1) {
-            if (!formData.child_name || !birth.year || !birth.month || !birth.day) {
-                alert('필수 아동 정보를 모두 입력해주세요.');
+            if (!formData.elder_name) {
+                alert('어르신 성함을 입력해주세요.');
                 return;
             }
         }
         if (currentStep === 2) {
-            if (!formData.concern) {
-                alert('고민 사항을 입력해주세요.');
+            if (!formData.health_condition) {
+                alert('건강 상태 또는 필요한 케어를 입력해주세요.');
                 return;
             }
         }
@@ -147,17 +118,13 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
             return;
         }
 
-        if (!formData.parent_name || !formData.phone || !formData.discovery_path) {
+        if (!formData.guardian_name || !formData.guardian_phone || !formData.discovery_path) {
             alert('보호자 정보와 방문 경로를 모두 입력해주세요.');
             return;
         }
 
         setLoading(true);
-        // ... (API call logic remains same)
         try {
-            const mappedGender = formData.child_gender === '남아' ? 'male' :
-                formData.child_gender === '여아' ? 'female' : 'other';
-
             const utmSource = localStorage.getItem('utm_source');
             const utmMedium = localStorage.getItem('utm_medium');
             const utmCampaign = localStorage.getItem('utm_campaign');
@@ -170,14 +137,20 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
                 utmContent ? `Content: ${utmContent}` : null,
             ].filter(Boolean).join(' / ');
 
+            // 🌿 어르신 정보로 저장
+            const birthDate = birth.year && birth.month && birth.day
+                ? `${birth.year}-${String(birth.month).padStart(2, '0')}-${String(birth.day).padStart(2, '0')}`
+                : null;
+
             const { error } = await supabase.from('consultations').insert([{
                 center_id: centerId,
-                child_name: formData.child_name,
-                child_gender: mappedGender,
-                child_birth_date: `${birth.year}-${String(birth.month).padStart(2, '0')}-${String(birth.day).padStart(2, '0')}`,
-                guardian_name: formData.parent_name,
-                guardian_phone: formData.phone,
-                concern: `${formData.concern}\n\n[관리자 참고] 관계: ${formData.relation} / 장애진단: ${formData.diagnosis}`,
+                // child_* 필드를 어르신 정보로 사용
+                child_name: formData.elder_name,
+                child_gender: formData.elder_gender === '여성' ? 'female' : 'male',
+                child_birth_date: birthDate,
+                guardian_name: formData.guardian_name,
+                guardian_phone: formData.guardian_phone,
+                concern: `[어르신 상태]\n${formData.health_condition}\n\n[관리자 참고]\n장기요양등급: ${formData.has_care_grade}${formData.care_grade ? ` (${formData.care_grade}등급)` : ''}\n주거형태: ${formData.living_situation}\n관계: ${formData.guardian_relation}\n희망 서비스 빈도: ${formData.service_frequency}`,
                 preferred_consult_schedule: formData.preferred_service.join(', '),
                 inflow_source: formData.discovery_path || getSource() || 'Direct',
                 marketing_source: marketingInfo || null,
@@ -199,15 +172,15 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
     const inputClass = cn(
         "w-full p-4 rounded-2xl border-none focus:ring-4 font-bold transition-colors",
         isDark
-            ? "bg-slate-800 text-white placeholder-slate-500 focus:ring-indigo-900"
-            : "bg-slate-50 text-slate-900 focus:ring-indigo-100/50"
+            ? "bg-slate-800 text-white placeholder-slate-500 focus:ring-emerald-900"
+            : "bg-slate-50 text-slate-900 focus:ring-emerald-100/50"
     );
 
     const selectClass = cn(
         "w-full p-4 rounded-2xl border-none focus:ring-2 font-bold cursor-pointer appearance-none transition-colors",
         isDark
-            ? "bg-slate-800 text-white focus:ring-indigo-900"
-            : "bg-slate-50 text-slate-700 focus:ring-indigo-100/50"
+            ? "bg-slate-800 text-white focus:ring-emerald-900"
+            : "bg-slate-50 text-slate-700 focus:ring-emerald-100/50"
     );
 
     if (submitted) {
@@ -224,13 +197,14 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
                 </div>
                 <h2 className={cn("text-3xl font-black", isDark ? "text-white" : "text-slate-900")}>상담 신청 완료!</h2>
                 <p className={cn("font-bold leading-relaxed", isDark ? "text-slate-400" : "text-slate-500")}>
-                    작성해주신 내용을 확인하여 빠른 시일 내에 연락드리겠습니다.
+                    담당자가 확인 후 빠른 시일 내에 연락드리겠습니다.<br />
+                    어르신의 건강한 일상을 함께 하겠습니다.
                 </p>
                 <button
                     onClick={() => window.location.reload()}
                     className={cn(
                         "px-8 py-4 rounded-2xl font-black mx-auto block transition-colors",
-                        isDark ? "bg-indigo-600 text-white hover:bg-indigo-500" : "bg-slate-900 text-white hover:bg-slate-800"
+                        isDark ? "bg-emerald-600 text-white hover:bg-emerald-500" : "bg-emerald-600 text-white hover:bg-emerald-700"
                     )}
                 >
                     확인
@@ -241,16 +215,16 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
 
     return (
         <div ref={formContainerRef} className="space-y-12 scroll-mt-24">
-            {/* ✨ Step Progress Bar */}
+            {/* Step Progress Bar */}
             <div className="flex items-center justify-between max-w-xs mx-auto mb-16">
                 {[1, 2, 3].map((step) => (
                     <div key={step} className="flex items-center relative">
                         <div className={cn(
                             "w-10 h-10 rounded-full flex items-center justify-center font-black text-sm z-10 transition-all duration-500",
                             currentStep === step
-                                ? "bg-indigo-600 text-white scale-110 shadow-lg shadow-indigo-200"
+                                ? "bg-emerald-600 text-white scale-110 shadow-lg shadow-emerald-200"
                                 : currentStep > step
-                                    ? "bg-indigo-100 text-indigo-600"
+                                    ? "bg-emerald-100 text-emerald-600"
                                     : (isDark ? "bg-slate-800 text-slate-600" : "bg-slate-100 text-slate-400")
                         )}>
                             {currentStep > step ? Icons.checkCircle("w-5 h-5") : step}
@@ -258,7 +232,7 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
                         {step < 3 && (
                             <div className={cn(
                                 "absolute left-10 w-24 h-[2px] -z-0",
-                                currentStep > step ? "bg-indigo-600" : (isDark ? "bg-slate-800" : "bg-slate-100")
+                                currentStep > step ? "bg-emerald-600" : (isDark ? "bg-slate-800" : "bg-slate-100")
                             )} />
                         )}
                     </div>
@@ -272,31 +246,41 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4 }}
                 >
+                    {/* 🌿 STEP 1: 어르신 정보 */}
                     {currentStep === 1 && (
                         <section className="space-y-8">
                             <div className="space-y-2">
-                                <h3 className={cn("text-2xl font-black tracking-tight", isDark ? "text-white" : "text-slate-900")}>아이 정보를 알려주세요</h3>
-                                <p className="text-sm font-bold text-slate-400">상담을 위한 기본적인 아이 정보입니다.</p>
+                                <h3 className={cn("text-2xl font-black tracking-tight", isDark ? "text-white" : "text-slate-900")}>
+                                    어르신 정보를 알려주세요
+                                </h3>
+                                <p className="text-sm font-bold text-slate-400">맞춤 케어를 위한 기본 정보입니다.</p>
                             </div>
 
                             <div className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">아이 이름 *</label>
-                                    <input required type="text" placeholder="이름 입력" className={inputClass} value={formData.child_name} onChange={e => setFormData({ ...formData, child_name: e.target.value })} />
+                                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">어르신 성함 *</label>
+                                    <input
+                                        required
+                                        type="text"
+                                        placeholder="성함 입력"
+                                        className={inputClass}
+                                        value={formData.elder_name}
+                                        onChange={e => setFormData({ ...formData, elder_name: e.target.value })}
+                                    />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">생년월일 선택 *</label>
+                                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">출생년도 (선택)</label>
                                     <div className="flex gap-2">
-                                        <select required className={selectClass} value={birth.year} onChange={e => setBirth({ ...birth, year: e.target.value })}>
+                                        <select className={selectClass} value={birth.year} onChange={e => setBirth({ ...birth, year: e.target.value })}>
                                             <option value="">년도</option>
                                             {years.map(y => <option key={y} value={y}>{y}년</option>)}
                                         </select>
-                                        <select required className={selectClass} value={birth.month} onChange={e => setBirth({ ...birth, month: e.target.value })}>
+                                        <select className={selectClass} value={birth.month} onChange={e => setBirth({ ...birth, month: e.target.value })}>
                                             <option value="">월</option>
                                             {months.map(m => <option key={m} value={m}>{m}월</option>)}
                                         </select>
-                                        <select required className={selectClass} value={birth.day} onChange={e => setBirth({ ...birth, day: e.target.value })}>
+                                        <select className={selectClass} value={birth.day} onChange={e => setBirth({ ...birth, day: e.target.value })}>
                                             <option value="">일</option>
                                             {days.map(d => <option key={d} value={d}>{d}일</option>)}
                                         </select>
@@ -307,89 +291,191 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
                                     <div className="space-y-2">
                                         <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">성별</label>
                                         <div className={cn("flex p-1.5 rounded-2xl", isDark ? "bg-slate-800" : "bg-slate-50")}>
-                                            {['남아', '여아'].map(g => (
-                                                <button key={g} type="button" onClick={() => setFormData({ ...formData, child_gender: g })} className={cn("flex-1 py-3 rounded-xl font-black text-sm transition-all", formData.child_gender === g ? (isDark ? "bg-slate-700 text-indigo-400 shadow-sm" : "bg-white text-indigo-600 shadow-sm") : (isDark ? "text-slate-500" : "text-slate-400"))}>
+                                            {['남성', '여성'].map(g => (
+                                                <button
+                                                    key={g}
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, elder_gender: g })}
+                                                    className={cn(
+                                                        "flex-1 py-3 rounded-xl font-black text-sm transition-all",
+                                                        formData.elder_gender === g
+                                                            ? (isDark ? "bg-slate-700 text-emerald-400 shadow-sm" : "bg-white text-emerald-600 shadow-sm")
+                                                            : (isDark ? "text-slate-500" : "text-slate-400")
+                                                    )}
+                                                >
                                                     {g}
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">장애진단 여부</label>
-                                        <select className={selectClass} value={formData.diagnosis} onChange={e => setFormData({ ...formData, diagnosis: e.target.value })}>
-                                            <option>아니오 (없음)</option>
-                                            <option>유 (진단받음)</option>
-                                            <option>검사 예정</option>
+                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">장기요양등급</label>
+                                        <select
+                                            className={selectClass}
+                                            value={formData.has_care_grade}
+                                            onChange={e => setFormData({ ...formData, has_care_grade: e.target.value })}
+                                        >
+                                            <option value="없음">없음 / 모름</option>
+                                            <option value="1등급">1등급</option>
+                                            <option value="2등급">2등급</option>
+                                            <option value="3등급">3등급</option>
+                                            <option value="4등급">4등급</option>
+                                            <option value="5등급">5등급</option>
+                                            <option value="인지지원등급">인지지원등급</option>
+                                            <option value="신청예정">신청 예정</option>
                                         </select>
                                     </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">주거 형태</label>
+                                    <select
+                                        className={selectClass}
+                                        value={formData.living_situation}
+                                        onChange={e => setFormData({ ...formData, living_situation: e.target.value })}
+                                    >
+                                        <option value="자녀와 동거">자녀와 동거</option>
+                                        <option value="배우자와 동거">배우자와 동거</option>
+                                        <option value="독거">혼자 거주 (독거)</option>
+                                        <option value="요양시설">요양시설 거주</option>
+                                        <option value="기타">기타</option>
+                                    </select>
                                 </div>
                             </div>
                         </section>
                     )}
 
+                    {/* 🌿 STEP 2: 건강/케어 정보 */}
                     {currentStep === 2 && (
                         <section className="space-y-8">
                             <div className="space-y-2">
-                                <h3 className={cn("text-2xl font-black tracking-tight", isDark ? "text-white" : "text-slate-900")}>무엇이 고민이신가요?</h3>
-                                <p className="text-sm font-bold text-slate-400">아이의 상황을 자세히 적어주시면 더 정확한 상담이 가능합니다.</p>
+                                <h3 className={cn("text-2xl font-black tracking-tight", isDark ? "text-white" : "text-slate-900")}>
+                                    어떤 도움이 필요하신가요?
+                                </h3>
+                                <p className="text-sm font-bold text-slate-400">어르신의 상황을 알려주시면 맞춤 상담을 도와드립니다.</p>
                             </div>
 
                             <div className="space-y-6">
-                                <textarea required placeholder="주요 고민 사항을 적어주세요." rows={6} className={cn(inputClass, "resize-none rounded-[32px] p-6")} value={formData.concern} onChange={e => setFormData({ ...formData, concern: e.target.value })} />
+                                <textarea
+                                    required
+                                    placeholder="어르신의 건강 상태, 필요한 케어, 특별히 신경 써야 할 부분 등을 자유롭게 적어주세요.&#10;&#10;예: 거동이 불편하셔서 이동 도움이 필요합니다. 당뇨가 있어 식이조절과 혈당 체크가 필요합니다."
+                                    rows={5}
+                                    className={cn(inputClass, "resize-none rounded-[32px] p-6")}
+                                    value={formData.health_condition}
+                                    onChange={e => setFormData({ ...formData, health_condition: e.target.value })}
+                                />
 
                                 <div className="space-y-4">
-                                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">관심 있는 프로그램 (중복 선택 가능)</label>
+                                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">필요한 서비스 (중복 선택 가능)</label>
                                     <div className="flex flex-wrap gap-2">
                                         {services.map(s => (
-                                            <button key={s} type="button" onClick={() => {
-                                                const next = formData.preferred_service.includes(s) ? formData.preferred_service.filter(i => i !== s) : [...formData.preferred_service, s];
-                                                setFormData({ ...formData, preferred_service: next });
-                                            }} className={cn("px-5 py-3 rounded-full text-sm font-black transition-all border-2", formData.preferred_service.includes(s) ? (isDark ? "bg-indigo-600 border-indigo-600 text-white" : "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100") : (isDark ? "bg-slate-800 border-slate-700 text-slate-500" : "bg-white border-slate-100 text-slate-400"))}>
+                                            <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => {
+                                                    const next = formData.preferred_service.includes(s)
+                                                        ? formData.preferred_service.filter(i => i !== s)
+                                                        : [...formData.preferred_service, s];
+                                                    setFormData({ ...formData, preferred_service: next });
+                                                }}
+                                                className={cn(
+                                                    "px-5 py-3 rounded-full text-sm font-black transition-all border-2",
+                                                    formData.preferred_service.includes(s)
+                                                        ? (isDark ? "bg-emerald-600 border-emerald-600 text-white" : "bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-100")
+                                                        : (isDark ? "bg-slate-800 border-slate-700 text-slate-500" : "bg-white border-slate-100 text-slate-400")
+                                                )}
+                                            >
                                                 {s}
                                             </button>
                                         ))}
                                     </div>
                                 </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">희망 서비스 빈도</label>
+                                    <select
+                                        className={selectClass}
+                                        value={formData.service_frequency}
+                                        onChange={e => setFormData({ ...formData, service_frequency: e.target.value })}
+                                    >
+                                        <option value="">선택해주세요</option>
+                                        <option value="주 1~2회">주 1~2회</option>
+                                        <option value="주 3~4회">주 3~4회</option>
+                                        <option value="주 5회 이상">주 5회 이상</option>
+                                        <option value="매일">매일</option>
+                                        <option value="상담 후 결정">상담 후 결정</option>
+                                    </select>
+                                </div>
                             </div>
                         </section>
                     )}
 
+                    {/* 🌿 STEP 3: 보호자 정보 */}
                     {currentStep === 3 && (
                         <section className="space-y-8">
                             <div className="space-y-2">
-                                <h3 className={cn("text-2xl font-black tracking-tight", isDark ? "text-white" : "text-slate-900")}>마지막으로 연락처를 남겨주세요</h3>
-                                <p className="text-sm font-bold text-slate-400">선생님이 확인 후 직접 연락드리겠습니다.</p>
+                                <h3 className={cn("text-2xl font-black tracking-tight", isDark ? "text-white" : "text-slate-900")}>
+                                    마지막으로 연락처를 남겨주세요
+                                </h3>
+                                <p className="text-sm font-bold text-slate-400">담당자가 확인 후 직접 연락드리겠습니다.</p>
                             </div>
 
                             <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">보호자 성함 *</label>
-                                        <input required type="text" placeholder="성함" className={inputClass} value={formData.parent_name} onChange={e => setFormData({ ...formData, parent_name: e.target.value })} />
+                                        <input
+                                            required
+                                            type="text"
+                                            placeholder="성함"
+                                            className={inputClass}
+                                            value={formData.guardian_name}
+                                            onChange={e => setFormData({ ...formData, guardian_name: e.target.value })}
+                                        />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">아이와의 관계</label>
-                                        <input type="text" placeholder="예: 모, 부" className={inputClass} value={formData.relation} onChange={e => setFormData({ ...formData, relation: e.target.value })} />
+                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">어르신과의 관계</label>
+                                        <input
+                                            type="text"
+                                            placeholder="예: 자녀, 배우자"
+                                            className={inputClass}
+                                            value={formData.guardian_relation}
+                                            onChange={e => setFormData({ ...formData, guardian_relation: e.target.value })}
+                                        />
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
                                     <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">연락처 *</label>
-                                    <input required type="tel" placeholder="010-0000-0000" className={inputClass} value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                    <input
+                                        required
+                                        type="tel"
+                                        placeholder="010-0000-0000"
+                                        className={inputClass}
+                                        value={formData.guardian_phone}
+                                        onChange={e => setFormData({ ...formData, guardian_phone: e.target.value })}
+                                    />
                                 </div>
 
                                 <div className="space-y-2 pt-4">
                                     <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">방문 경로 *</label>
-                                    <select required className={selectClass} value={formData.discovery_path} onChange={e => setFormData({ ...formData, discovery_path: e.target.value })}>
+                                    <select
+                                        required
+                                        className={selectClass}
+                                        value={formData.discovery_path}
+                                        onChange={e => setFormData({ ...formData, discovery_path: e.target.value })}
+                                    >
                                         <option value="">저희 센터를 어떻게 알고 오셨나요?</option>
                                         <optgroup label="온라인">
-                                            <option value="Naver Blog">네이버 블로그</option>
+                                            <option value="Naver Search">네이버 검색</option>
                                             <option value="Naver Place">네이버 지도</option>
+                                            <option value="Naver Blog">네이버 블로그</option>
                                             <option value="Instagram">인스타그램/SNS</option>
                                         </optgroup>
-                                        <optgroup label="오프라인/지인">
+                                        <optgroup label="오프라인/기타">
                                             <option value="Referral">지인 소개</option>
-                                            <option value="Hospital">병원 연계/추천</option>
+                                            <option value="Hospital">병원/복지관 추천</option>
+                                            <option value="NHIS">국민건강보험공단 안내</option>
                                             <option value="Others">기타</option>
                                         </optgroup>
                                     </select>
@@ -401,13 +487,27 @@ export function ConsultationSurveyForm({ centerId, initialData, onSuccess }: Con
 
                 <div className="flex gap-4 pt-10">
                     {currentStep > 1 && (
-                        <button type="button" onClick={prevStep} className={cn("px-8 py-5 rounded-[24px] font-black transition-all", isDark ? "bg-slate-800 text-slate-400 hover:text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200")}>
+                        <button
+                            type="button"
+                            onClick={prevStep}
+                            className={cn(
+                                "px-8 py-5 rounded-[24px] font-black transition-all",
+                                isDark ? "bg-slate-800 text-slate-400 hover:text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                            )}
+                        >
                             이전
                         </button>
                     )}
-                    <button disabled={loading} type="submit" className={cn("flex-1 py-5 rounded-[24px] text-lg font-black shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50", isDark ? "bg-indigo-600 hover:bg-indigo-500 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100")}>
+                    <button
+                        disabled={loading}
+                        type="submit"
+                        className={cn(
+                            "flex-1 py-5 rounded-[24px] text-lg font-black shadow-xl transition-all flex items-center justify-center gap-3 disabled:opacity-50",
+                            isDark ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-100"
+                        )}
+                    >
                         {loading ? Icons.loader("w-6 h-6 animate-spin") : (currentStep === totalSteps ? Icons.send("w-5 h-5") : null)}
-                        {currentStep === totalSteps ? "상담 예약 신청하기" : "다음 단계로"}
+                        {currentStep === totalSteps ? "상담 신청하기" : "다음 단계로"}
                     </button>
                 </div>
             </form>

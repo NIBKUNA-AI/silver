@@ -79,8 +79,11 @@ function AppHomeRedirect() {
   }
 
   if (role === 'super_admin') {
-    // 👑 [Sovereign Rule] If a specific center is selected, go to dashboard.
-    // Otherwise, always land on Master Console.
+    // 👑 [Sovereign Rule] If portal mode is requested, stay on landing.
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'portal') return <GlobalLanding />;
+
+    // Otherwise, check for sticky center or go to Master.
     const stickySlug = localStorage.getItem('zarada_center_slug');
     if (stickySlug) return <Navigate to="/app/dashboard" replace />;
     return <Navigate to="/master/centers" replace />;

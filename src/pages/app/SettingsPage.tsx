@@ -23,9 +23,10 @@ import { DEFAULT_PROGRAMS } from '@/constants/defaultPrograms';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCenter } from '@/contexts/CenterContext'; // ✨ Import
+import { useCenter } from '@/contexts/CenterContext';
+import { useTheme } from '@/contexts/ThemeProvider';
 import { AccountDeletionModal } from '@/components/AccountDeletionModal';
-import { Plus, Trash2, Edit2, Globe, Eye, EyeOff } from 'lucide-react'; // ✨ Added Icons
+import { Plus, Trash2, Edit2, Globe, Eye, EyeOff, MapPin, Phone } from 'lucide-react';
 
 // --- ❌ 원본 로직 절대 보존 ---
 const AI_GENERATING_KEY = 'ai_blog_generating';
@@ -37,7 +38,9 @@ const VALID_TABS: TabType[] = ['home', 'about', 'programs', 'therapists', 'brand
 export function SettingsPage() {
     const { settings, getSetting, loading: settingsLoading, fetchSettings } = useAdminSettings();
     const { user } = useAuth();
-    const { center } = useCenter(); // ✨ Use center
+    const { center } = useCenter();
+    const { theme } = useTheme();
+    const isDark = theme === 'dark';
     const centerId = center?.id;
     const [saving, setSaving] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -140,9 +143,9 @@ export function SettingsPage() {
             <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl overflow-x-auto gap-1 no-scrollbar">
                 {[
                     { id: 'home', label: '홈', icon: <LayoutTemplate className="w-4 h-4" /> },
-                    { id: 'about', label: '소개', icon: <Info className="w-4 h-4" /> },
-                    { id: 'programs', label: '프로그램', icon: <BookOpen className="w-4 h-4" /> },
-                    { id: 'therapists', label: '치료사', icon: <Heart className="w-4 h-4" /> },
+                    { id: 'about', label: '센터소개', icon: <Info className="w-4 h-4" /> },
+                    { id: 'programs', label: '케어서비스', icon: <BookOpen className="w-4 h-4" /> },
+                    { id: 'therapists', label: '요양보호사', icon: <Heart className="w-4 h-4" /> },
                     { id: 'center_info', label: '운영정보', icon: <Clock className="w-4 h-4" /> },
                     { id: 'branding', label: '브랜드/SEO', icon: <Palette className="w-4 h-4" /> },
                     { id: 'account', label: '계정', icon: <UserX className="w-4 h-4" /> },
@@ -186,24 +189,34 @@ export function SettingsPage() {
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">HERO SECTION</span>
                             </div>
 
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
-                                {/* Preview */}
-                                <div className="rounded-[40px] overflow-hidden shadow-xl relative aspect-[16/9] xl:aspect-auto xl:h-full min-h-[300px]"
-                                    style={{ backgroundColor: getSetting('brand_color') || '#4f46e5' }}
-                                >
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl -ml-10 -mb-10"></div>
-                                    <div className="relative z-10 flex flex-col items-center justify-center text-center h-full p-10 text-white space-y-6">
-                                        <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-black tracking-wider uppercase">About Us</span>
-                                        <h1 className="text-3xl font-black tracking-[-0.05em]">센터 소개</h1>
-                                        <p className="text-base font-medium opacity-90 leading-relaxed whitespace-pre-line max-w-md">
-                                            {getSetting('about_intro_text') || "아이는 믿는 만큼 자라고,\n사랑받는 만큼 행복해집니다."}
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-stretch">
+                                {/* Actual AboutPage Hero Preview */}
+                                <div className={cn(
+                                    "rounded-[40px] overflow-hidden shadow-2xl relative border border-emerald-100",
+                                    isDark ? "bg-slate-900" : "bg-gradient-to-b from-emerald-50 to-white"
+                                )}>
+                                    <div className="p-12 flex flex-col justify-center h-full text-left">
+                                        <span className="text-emerald-600 font-bold text-[10px] tracking-widest uppercase mb-3 block">
+                                            About Us
+                                        </span>
+                                        <h1 className={cn(
+                                            "text-3xl font-black mb-4 leading-tight",
+                                            isDark ? "text-white" : "text-slate-900"
+                                        )}>
+                                            어르신의 행복이<br />
+                                            <span className="text-emerald-600">우리의 행복</span>입니다
+                                        </h1>
+                                        <p className={cn(
+                                            "text-sm leading-relaxed whitespace-pre-line",
+                                            isDark ? "text-slate-400" : "text-slate-600"
+                                        )}>
+                                            {getSetting('about_intro_text') || "어르신 한 분 한 분을 가족처럼 모시며,\n건강하고 행복한 노후 생활을 함께 합니다."}
                                         </p>
                                     </div>
                                 </div>
 
                                 {/* Editor */}
-                                <div className="bg-white dark:bg-slate-900 rounded-[32px] p-8 border border-slate-100 dark:border-slate-800 shadow-sm h-full flex flex-col justify-center">
+                                <div className="bg-white dark:bg-slate-900 rounded-[32px] p-8 border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-center">
                                     <SaveableTextArea
                                         label="인트로 문구 (상단 배너)"
                                         placeholder="줄바꿈을 사용하여 보기 좋게 작성해주세요."
@@ -232,36 +245,52 @@ export function SettingsPage() {
                             </div>
 
                             {/* Live Preview (Text Left, Image Right) */}
-                            <div className="relative rounded-[50px] overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 group">
+                            <div className={cn(
+                                "relative rounded-[50px] overflow-hidden shadow-2xl border",
+                                isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100"
+                            )}>
                                 <div className="absolute top-4 left-6 z-20 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full text-white text-[10px] font-bold uppercase tracking-widest border border-white/10">
-                                    Main Page Live Preview
+                                    Home: Story Preview
                                 </div>
                                 <div className="grid grid-cols-1 lg:grid-cols-2">
-                                    {/* Text (Left) */}
-                                    <div className="p-10 md:p-16 flex flex-col justify-center space-y-8">
-                                        <div className="text-indigo-100 dark:text-slate-700">
-                                            {/* Quote Icon */}
-                                            <svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor"><path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 8.44772 14.017 9V11C14.017 11.5523 13.5693 12 13.017 12H12.017V5H22.017V15C22.017 18.3137 19.3307 21 16.017 21H14.017ZM5.0166 21L5.0166 18C5.0166 16.8954 5.91203 16 7.0166 16H10.0166C10.5689 16 11.0166 15.5523 11.0166 15V9C11.0166 8.44772 10.5689 8 10.0166 8H6.0166C5.46432 8 5.0166 8.44772 5.0166 9V11C5.0166 11.5523 4.56889 12 4.0166 12H3.0166V5H13.0166V15C13.0166 18.3137 10.3303 21 7.0166 21H5.0166Z" /></svg>
+                                    {/* Text Content */}
+                                    <div className="p-12 md:p-16 flex flex-col justify-center space-y-8">
+                                        <div>
+                                            <span className="text-emerald-600 font-bold text-sm tracking-widest uppercase mb-4 block">
+                                                Why Choose Us
+                                            </span>
+                                            <h3 className={cn("text-3xl md:text-4xl font-black leading-[1.2] mb-6", isDark ? "text-white" : "text-slate-900")}>
+                                                {getSetting('home_story_title') || "부모님의 평온한 일상을\n위한 가장 따뜻한 선택"}
+                                            </h3>
+                                            <p className={cn("text-base leading-relaxed mb-8 font-medium", isDark ? "text-slate-400" : "text-slate-600")}>
+                                                {getSetting('home_story_body') || "메인 홈페이지에 표시될 소개글입니다.\n정성 어린 마음으로 부모님을 모십니다."}
+                                            </p>
                                         </div>
-                                        <h3 className="text-3xl md:text-4xl font-black leading-[1.15] tracking-[-0.05em] text-slate-900 dark:text-white whitespace-pre-line" style={{ wordBreak: 'keep-all' }}>
-                                            {getSetting('home_story_title') || "아이들의 웃음이\n자라나는 두 번째 집"}
-                                        </h3>
-                                        <p className="text-base font-medium leading-relaxed text-slate-500 dark:text-slate-400 whitespace-pre-line" style={{ wordBreak: 'keep-all' }}>
-                                            {getSetting('home_story_body') || "메인 홈페이지에 표시될 소개글입니다.\n설명을 입력하면 실시간으로 반영됩니다."}
-                                        </p>
-                                        <div className="flex items-center gap-2 font-bold text-sm mt-2 text-indigo-600 dark:text-indigo-400">
-                                            {getSetting('home_cta_text') || '상담 예약하기'}
-                                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" /></svg>
+
+                                        <div className="space-y-4">
+                                            {[{ title: "국가공인 전문 인력" }, { title: "1:1 맞춤 케어플랜" }].map((item, idx) => (
+                                                <div key={idx} className="flex gap-4">
+                                                    <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-1">
+                                                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                                    </div>
+                                                    <h4 className={cn("font-bold text-lg", isDark ? "text-white" : "text-slate-900")}>{item.title}</h4>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                    {/* Image (Right) */}
-                                    <div className="relative h-[350px] lg:h-auto bg-slate-100 dark:bg-slate-800">
-                                        {getSetting('home_story_image') ? (
-                                            <img src={getSetting('home_story_image')} alt="Home Preview" className="absolute inset-0 w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="absolute inset-0 flex items-center justify-center text-slate-400 font-bold">이미지가 없습니다</div>
-                                        )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent lg:bg-gradient-to-l"></div>
+                                    {/* Image Side */}
+                                    <div className="hidden lg:block relative p-12">
+                                        <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl relative">
+                                            <img
+                                                src={getSetting('home_story_image') || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800"}
+                                                className="w-full h-full object-cover"
+                                            />
+                                            {/* Floating Stats */}
+                                            <div className={cn("absolute -bottom-4 -left-4 p-4 rounded-xl shadow-xl", isDark ? "bg-slate-800" : "bg-white")}>
+                                                <div className="text-2xl font-black text-emerald-600">10+</div>
+                                                <div className="text-[10px] font-bold text-slate-500">년 경력 전문팀</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -316,12 +345,12 @@ export function SettingsPage() {
                                             <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><path d="M4.583 17.321C3.548 16.227 3 15 3 13.044c0-3.347 2.48-6.332 6.264-8.044L10.5 6.5c-2.352 1.15-3.88 2.882-4.098 4.69.09-.016.178-.024.266-.024a2.5 2.5 0 010 5c-1.38 0-2.5-1.12-2.5-2.5a.5.5 0 01.015-.105zm10.333 0C13.881 16.227 13.333 15 13.333 13.044c0-3.347 2.48-6.332 6.264-8.044L20.833 6.5c-2.352 1.15-3.88 2.882-4.098 4.69.09-.016.178-.024.266-.024a2.5 2.5 0 010 5c-1.38 0-2.5-1.12-2.5-2.5a.5.5 0 01.015-.105z" /></svg>
                                         </div>
                                         <h3 className="text-3xl font-black leading-tight tracking-[-0.05em] text-slate-900 dark:text-white whitespace-pre-line" style={{ wordBreak: 'keep-all' }}>
-                                            {getSetting('about_desc_title') || "따뜻한 시선으로\n아이의 잠재력을 발굴합니다"}
+                                            {getSetting('about_desc_title') || "가족 같은 마음으로\n어르신의 손발이 되어드립니다"}
                                         </h3>
                                         <p className="text-base font-medium leading-relaxed text-slate-500 dark:text-slate-400 whitespace-pre-line" style={{ wordBreak: 'keep-all' }}>
-                                            {getSetting('about_desc_body') || "센터 소개군에 표시될 설명글입니다."}
+                                            {getSetting('about_desc_body') || "센터의 철학과 정성 어린 케어 서비스를\n보호자분들에게 진솔하게 전달해 보세요."}
                                         </p>
-                                        <div className="flex items-center gap-2 font-bold text-sm mt-4 text-indigo-600 dark:text-indigo-400">
+                                        <div className="flex items-center gap-2 font-bold text-sm mt-4" style={{ color: getSetting('brand_color') || '#8B5A2B' }}>
                                             {getSetting('about_cta_text') || '상담 예약하기'}
                                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" /></svg>
                                         </div>
@@ -358,24 +387,120 @@ export function SettingsPage() {
                 )}
 
                 {activeTab === 'programs' && (
-                    <SectionCard title="프로그램 리스트">
-                        <SaveableTextArea label="페이지 안내" initialValue={getSetting('programs_intro_text')} onSave={(v) => handleSave('programs_intro_text', v)} saving={saving} rows={2} />
-                        <div className="mt-8 border-t pt-8">
-                            <ProgramListEditor initialList={programsList} onSave={handleSavePrograms} />
+                    <div className="space-y-10">
+                        {/* ✨ Actual ProgramsPage Header & Card Preview */}
+                        <div className={cn(
+                            "rounded-[40px] overflow-hidden shadow-2xl border",
+                            isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
+                        )}>
+                            <div className={cn(
+                                "p-12 border-b",
+                                isDark ? "bg-slate-900 border-slate-800" : "bg-gradient-to-b from-emerald-50 to-white border-slate-100"
+                            )}>
+                                <span className="text-emerald-600 font-bold text-[10px] tracking-widest uppercase mb-3 block">Our Services</span>
+                                <h1 className={cn(
+                                    "text-3xl font-black mb-4",
+                                    isDark ? "text-white" : "text-slate-900"
+                                )}>
+                                    <span className="text-emerald-600">맞춤형</span> 케어 서비스
+                                </h1>
+                                <p className={cn("text-sm", isDark ? "text-slate-400" : "text-slate-600")}>
+                                    어르신의 상황과 필요에 맞는 다양한 재가요양 서비스를 제공합니다.
+                                </p>
+                            </div>
+
+                            <div className="p-10 bg-slate-50 dark:bg-slate-950 flex justify-center">
+                                <div className={cn(
+                                    "w-full max-w-sm rounded-[32px] overflow-hidden border shadow-xl",
+                                    isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
+                                )}>
+                                    {/* Header Part of Card */}
+                                    <div className={cn("p-6 flex items-center gap-4", isDark ? "bg-slate-800" : "bg-blue-50")}>
+                                        <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-2xl bg-white shadow-md")}>🧑‍🤝‍🧑</div>
+                                        <div>
+                                            <h3 className={cn("text-lg font-black", isDark ? "text-white" : "text-slate-900")}>신체활동 지원</h3>
+                                            <p className={cn("text-[10px] font-bold", isDark ? "text-slate-400" : "text-slate-600")}>일상생활 기본 동작 지원</p>
+                                        </div>
+                                    </div>
+                                    {/* Features Part of Card */}
+                                    <div className="p-6">
+                                        <ul className="space-y-3">
+                                            {["식사 도움", "세면/목욕 도움", "배설 도움"].map((f, i) => (
+                                                <li key={i} className="flex items-center gap-3">
+                                                    <div className="w-5 h-5 rounded-full flex items-center justify-center bg-blue-500 shrink-0">
+                                                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                                                    </div>
+                                                    <span className={cn("text-xs font-medium", isDark ? "text-slate-300" : "text-slate-700")}>{f}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </SectionCard>
+
+                        <SectionCard title="서비스 리스트 에디터" icon={<BookOpen className="text-emerald-500" />}>
+                            <SaveableTextArea label="페이지 상세 안내" initialValue={getSetting('programs_intro_text')} placeholder="어르신들을 위한 다양한 케어 서비스를 소개해 보세요." onSave={(v) => handleSave('programs_intro_text', v)} saving={saving} rows={2} />
+                            <div className="mt-8 border-t dark:border-slate-800 pt-8">
+                                <ProgramListEditor initialList={programsList} onSave={handleSavePrograms} />
+                            </div>
+                        </SectionCard>
+                    </div>
                 )}
 
                 {activeTab === 'therapists' && (
-                    <SectionCard title="치료사 소개 관리" icon={<Heart className="text-rose-500" />}>
-                        <SaveableTextArea label="페이지 인트로 문구" initialValue={getSetting('therapists_intro_text')} onSave={(v) => handleSave('therapists_intro_text', v)} saving={saving} rows={2} />
-                        <div className="pt-6 border-t mt-6 space-y-4">
-                            <div className="pt-6 border-t mt-6 space-y-8">
-                                {/* ✨ Direct Profile Management Manager */}
-                                <TherapistProfilesManager centerId={centerId} />
+                    <div className="space-y-10">
+                        {/* ✨ Actual TherapistsPage Header & Profile Preview */}
+                        <div className={cn(
+                            "rounded-[40px] overflow-hidden shadow-2xl border bg-white dark:bg-slate-950",
+                            isDark ? "border-slate-800" : "border-slate-200"
+                        )}>
+                            <div className={cn(
+                                "p-12 border-b text-center",
+                                isDark ? "bg-slate-900 border-slate-800" : "bg-gradient-to-b from-emerald-50 to-white border-slate-100"
+                            )}>
+                                <span className="text-emerald-600 font-bold text-[10px] tracking-widest uppercase mb-3 block">Our Caregivers</span>
+                                <h1 className={cn("text-3xl font-black mb-4", isDark ? "text-white" : "text-slate-900")}>
+                                    <span className="text-emerald-600">전문</span> 요양보호사
+                                </h1>
+                                <p className={cn("text-sm", isDark ? "text-slate-400" : "text-slate-600")}>
+                                    국가공인 자격을 갖춘 요양보호사가 어르신을 가족처럼 정성껏 돌봅니다.
+                                </p>
+                            </div>
+
+                            <div className="p-10 flex justify-center bg-slate-50 dark:bg-slate-900">
+                                <div className={cn(
+                                    "w-full max-w-sm rounded-[32px] overflow-hidden shadow-xl",
+                                    isDark ? "bg-slate-800" : "bg-white"
+                                )}>
+                                    <div className="aspect-[4/3] bg-slate-200 relative flex items-center justify-center">
+                                        <span className="text-6xl opacity-20">👤</span>
+                                        <div className="absolute bottom-4 left-4 right-4 flex items-center gap-2">
+                                            <span className="px-2 py-1 bg-emerald-500 text-white text-[9px] font-black rounded-lg">요양보호사</span>
+                                        </div>
+                                    </div>
+                                    <div className="p-6">
+                                        <h3 className={cn("font-black text-lg mb-2", isDark ? "text-white" : "text-slate-900")}>홍길동 보호사</h3>
+                                        <p className={cn("text-xs mb-4", isDark ? "text-slate-400" : "text-slate-500")}>"부모님 모시듯 정성을 다하겠습니다."</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {['치매케어', '방문목욕'].map(s => (
+                                                <span key={s} className={cn("px-2 py-1 rounded-md text-[9px] font-black", isDark ? "bg-slate-700 text-slate-300" : "bg-slate-100 text-slate-600")}>{s}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </SectionCard>
+
+                        <SectionCard title="요양보호사 소개 관리" icon={<Heart className="text-rose-500" />}>
+                            <SaveableTextArea label="페이지 인트로 문구" initialValue={getSetting('therapists_intro_text')} placeholder="전문성을 갖춘 요양보호사 선생님들을 소개해 보세요." onSave={(v) => handleSave('therapists_intro_text', v)} saving={saving} rows={2} />
+                            <div className="pt-6 border-t dark:border-slate-800 mt-6 space-y-4">
+                                <div className="pt-6 space-y-8">
+                                    <TherapistProfilesManager centerId={centerId} />
+                                </div>
+                            </div>
+                        </SectionCard>
+                    </div>
                 )}
 
                 {activeTab === 'branding' && (
@@ -390,36 +515,37 @@ export function SettingsPage() {
                                             <p className="text-xs text-slate-400 font-medium ml-1">헤더, 버튼, 강조 문구 등에 적용됩니다.</p>
                                         </div>
                                         <div className="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700">
-                                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getSetting('brand_color') || '#4f46e5' }} />
-                                            <span className="text-[10px] font-black text-slate-500 uppercase">{getSetting('brand_color') || '#4F46E5'}</span>
+                                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getSetting('brand_color') || '#8B5A2B' }} />
+                                            <span className="text-[10px] font-black text-slate-500 uppercase">{getSetting('brand_color') || '#8B5A2B'}</span>
                                         </div>
                                     </div>
 
                                     <div className="flex flex-wrap gap-4 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-700 justify-center">
+                                        {/* 🌿 재가요양 케어 테마 컬러 */}
                                         {[
-                                            { name: 'Indigo (Default)', hex: '#4f46e5' },
-                                            { name: 'Classic Blue', hex: '#2563eb' },
-                                            { name: 'Sky Blue', hex: '#0ea5e9' },
-                                            { name: 'Emerald', hex: '#10b981' },
-                                            { name: 'Rose', hex: '#e11d48' },
-                                            { name: 'Violet', hex: '#7c3aed' },
-                                            { name: 'Amber', hex: '#f59e0b' },
-                                            { name: 'Slate', hex: '#334155' },
+                                            { name: 'Warm Brown', hex: '#8B5A2B', desc: '따뜻함' },
+                                            { name: 'Sage Green', hex: '#6B8E6B', desc: '안정감' },
+                                            { name: 'Ocean Blue', hex: '#4A7C8E', desc: '신뢰' },
+                                            { name: 'Lavender', hex: '#7B6B8E', desc: '편안함' },
+                                            { name: 'Soft Gold', hex: '#D4A574', desc: '품격' },
+                                            { name: 'Forest', hex: '#5D7052', desc: '자연' },
+                                            { name: 'Burgundy', hex: '#8B4555', desc: '격조' },
+                                            { name: 'Deep Teal', hex: '#2F5D5A', desc: '차분함' },
                                         ].map((color) => (
                                             <button
                                                 key={color.hex}
                                                 onClick={() => handleSave('brand_color', color.hex)}
                                                 className={cn(
                                                     "group relative flex flex-col items-center gap-2 p-2 rounded-2xl transition-all hover:bg-white dark:hover:bg-slate-700",
-                                                    (getSetting('brand_color') || '#4f46e5') === color.hex && "bg-white dark:bg-slate-700 shadow-lg ring-1 ring-black/5"
+                                                    (getSetting('brand_color') || '#8B5A2B') === color.hex && "bg-white dark:bg-slate-700 shadow-lg ring-1 ring-black/5"
                                                 )}
                                             >
                                                 <div
                                                     className="w-12 h-12 rounded-xl shadow-inner transition-transform group-hover:scale-110"
                                                     style={{ backgroundColor: color.hex }}
                                                 />
-                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{color.name.split(' ')[0]}</span>
-                                                {(getSetting('brand_color') || '#4f46e5') === color.hex && (
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{color.desc}</span>
+                                                {(getSetting('brand_color') || '#8B5A2B') === color.hex && (
                                                     <div className="absolute -top-1 -right-1 bg-emerald-500 text-white p-1 rounded-full shadow-sm">
                                                         <CheckCircle2 className="w-2.5 h-2.5" />
                                                     </div>
@@ -431,7 +557,7 @@ export function SettingsPage() {
                                         <div className="flex flex-col items-center gap-2 p-2">
                                             <input
                                                 type="color"
-                                                value={getSetting('brand_color') || '#4f46e5'}
+                                                value={getSetting('brand_color') || '#8B5A2B'}
                                                 onChange={(e) => handleSave('brand_color', e.target.value)}
                                                 className="w-12 h-12 rounded-xl cursor-pointer bg-transparent border-none p-0 overflow-hidden"
                                             />
@@ -450,7 +576,7 @@ export function SettingsPage() {
                                     </div>
                                     <SaveableTextArea
                                         label="주요 키워드"
-                                        placeholder="예: 송파, 위례, 감각통합, 언어치료, 아동발달센터"
+                                        placeholder="예: 재가요양, 방문요양, 요양보호사, 장기요양, 노인돌봄"
                                         initialValue={getSetting('seo_keywords')}
                                         onSave={(v) => handleSave('seo_keywords', v)}
                                         saving={saving}
@@ -476,39 +602,54 @@ export function SettingsPage() {
                         </SectionCard>
 
                         {/* 🛠️ Preview Card */}
-                        <div className="bg-slate-900 rounded-[40px] p-10 text-white relative overflow-hidden shadow-2xl">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32" />
-                            <div className="relative z-10 space-y-6">
-                                <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10">Real-time Preview</span>
-                                <div className="space-y-2">
-                                    <h3 className="text-2xl font-black">브랜딩 적용 예시</h3>
-                                    <p className="text-slate-400 text-sm font-medium">선택하신 컬러와 로고가 앱 전반에 어떻게 보이는지 확인하세요.</p>
+                        {/* ✨ Actual Header Structure Preview */}
+                        <div className={cn(
+                            "rounded-[40px] overflow-hidden shadow-2xl relative border",
+                            isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
+                        )}>
+                            {/* Mini Header Preview */}
+                            <div className={cn(
+                                "p-6 flex items-center justify-between border-b",
+                                isDark ? "bg-slate-950 border-slate-800" : "bg-white border-slate-50 shadow-sm"
+                            )}>
+                                <div className="flex items-center gap-2">
+                                    {getSetting('center_logo') ? (
+                                        <img src={getSetting('center_logo')} className="h-4 w-auto" alt="Logo" />
+                                    ) : (
+                                        <div className="w-6 h-6 rounded bg-emerald-500 flex items-center justify-center text-[8px] text-white font-black">S</div>
+                                    )}
+                                    <span className={cn("font-black text-xs", isDark ? "text-white" : "text-slate-900")}>
+                                        {getSetting('center_name') || "Silver Care"}
+                                    </span>
                                 </div>
+                                <div className="flex gap-3 text-[9px] font-bold text-slate-400">
+                                    <span>센터소개</span>
+                                    <span className="text-emerald-600 border-b border-emerald-600">케어서비스</span>
+                                    <span>요양보호사</span>
+                                </div>
+                            </div>
 
-                                <div className="p-6 bg-white rounded-3xl space-y-6">
-                                    <div className="flex items-center justify-between border-b pb-4">
-                                        <div className="flex items-center gap-2">
-                                            {getSetting('center_logo') ? (
-                                                <img src={getSetting('center_logo')} className="h-6 w-auto" alt="Logo" />
-                                            ) : (
-                                                <div className="w-6 h-6 rounded bg-slate-200" />
-                                            )}
-                                            <span className="font-black text-slate-900 text-sm">Zarada</span>
+                            {/* Branding Element Preview */}
+                            <div className="p-10 space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Brand UI Elements</h3>
+                                </div>
+                                <div className="space-y-4">
+                                    <button
+                                        className="w-full py-4 rounded-2xl text-white font-black text-sm shadow-xl transition-all"
+                                        style={{ backgroundColor: getSetting('brand_color') || '#8B5A2B' }}
+                                    >
+                                        브랜드 컬러 적용 버튼
+                                    </button>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-4 rounded-xl border-2 border-emerald-100 bg-emerald-50/50 flex flex-col items-center text-center">
+                                            <span className="text-emerald-600 font-black text-lg mb-1">Check!</span>
+                                            <span className="text-[10px] text-slate-500 font-medium">테마 강조 컬러</span>
                                         </div>
-                                        <div className="flex gap-2">
-                                            <div className="w-4 h-4 rounded-full bg-slate-100" />
-                                            <div className="w-4 h-4 rounded-full bg-slate-100" />
+                                        <div className="p-4 rounded-xl bg-slate-950 flex flex-col items-center text-center text-white">
+                                            <span className="text-emerald-400 font-black text-lg mb-1">Dark</span>
+                                            <span className="text-[10px] text-slate-400 font-medium">다크모드 대응</span>
                                         </div>
-                                    </div>
-                                    <div className="space-y-3">
-                                        <div className="h-4 w-3/4 bg-slate-100 rounded-full" />
-                                        <div className="h-4 w-1/2 bg-slate-100 rounded-full" />
-                                        <button
-                                            className="w-full py-3 rounded-2xl text-white font-black text-xs shadow-lg transition-transform active:scale-95"
-                                            style={{ backgroundColor: getSetting('brand_color') || '#4f46e5' }}
-                                        >
-                                            저장된 버튼 스타일
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -517,8 +658,60 @@ export function SettingsPage() {
                 )
                 }
 
-                {/* ✨ 정보/운영 탭 통합 섹션 - 원본 UI 보존 및 필드 추가 */}
-                {activeTab === 'center_info' && <CenterInfoSection />}
+                {/* ✨ 정보/운영 탭 통합 섹션 - 프리뷰 추가 */}
+                {activeTab === 'center_info' && (
+                    <div className="space-y-10">
+                        {/* 🏢 센터 정보 프리뷰 (Contact Card) */}
+                        {/* ✨ Actual Footer Structure Preview */}
+                        <div className={cn(
+                            "rounded-[40px] overflow-hidden shadow-2xl border bg-gradient-to-b",
+                            isDark ? "from-slate-900 to-slate-950 border-slate-800" : "from-slate-50 to-slate-100/50 border-slate-100"
+                        )}>
+                            <div className="p-12">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Left: Contact Info */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">센터 정보</h3>
+                                        <ul className="space-y-3 text-xs">
+                                            <li className="flex items-start gap-3 text-slate-500">
+                                                <MapPin size={14} className="mt-0.5 shrink-0" />
+                                                <span>{getSetting('center_address') || center?.address || "서울특별시 송파구 가락동 123-45"}</span>
+                                            </li>
+                                            <li className="flex items-center gap-3 text-slate-500 font-bold">
+                                                <Phone size={14} className="shrink-0" />
+                                                <span className="text-emerald-600">{getSetting('center_phone') || center?.phone || "02-123-4567"}</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    {/* Right: Hours */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">운영 시간</h3>
+                                        <div className="space-y-2 text-[11px]">
+                                            <div className="flex justify-between border-b border-slate-200 dark:border-slate-800 pb-1">
+                                                <span className="text-slate-500">평일</span>
+                                                <span className="font-bold text-slate-700 dark:text-slate-300">{getSetting('weekday_hours') || "09:00 - 18:00"}</span>
+                                            </div>
+                                            <div className="flex justify-between border-b border-slate-200 dark:border-slate-800 pb-1">
+                                                <span className="text-slate-500">토요일</span>
+                                                <span className="font-bold text-slate-700 dark:text-slate-300">{getSetting('saturday_hours') || "09:00 - 13:00"}</span>
+                                            </div>
+                                            <div className="flex justify-between text-rose-500 font-bold">
+                                                <span>휴무</span>
+                                                <span>{getSetting('holiday_text') || "일요일 및 공휴일"}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center opacity-50">
+                                    <span className="text-[10px] font-medium text-slate-400">&copy; 2026 {center?.name}. All rights reserved.</span>
+                                    <span className="text-[10px] font-black text-slate-300">Zarada</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <CenterInfoSection />
+                    </div>
+                )}
 
 
 
@@ -782,7 +975,7 @@ function HomeSettingsTab({ getSetting, handleSave, saving }) {
                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                         <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">Live Website Preview</h3>
                     </div>
-                    <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-800">21:9 CINEMATIC VIEW</span>
+                    <span className="text-[10px] font-black px-3 py-1.5 rounded-full border" style={{ color: getSetting('brand_color') || '#8B5A2B', backgroundColor: (getSetting('brand_color') || '#8B5A2B') + '10', borderColor: (getSetting('brand_color') || '#8B5A2B') + '20' }}>21:9 CINEMATIC VIEW</span>
                 </div>
 
                 <div className="relative group">
@@ -791,6 +984,7 @@ function HomeSettingsTab({ getSetting, handleSave, saving }) {
                         title={getSetting('home_title')}
                         subtitle={getSetting('home_subtitle')}
                         bgUrl={getSetting('main_banner_url')?.split(',')[0]}
+                        getSetting={getSetting}
                     />
                 </div>
             </div>
@@ -810,7 +1004,7 @@ function HomeSettingsTab({ getSetting, handleSave, saving }) {
                         <SaveableTextArea
                             label="서브 타이틀 (상세 설명)"
                             initialValue={getSetting('home_subtitle')}
-                            placeholder="예: 우리 아이의 성장을 돕는 치료 프로그램을 확인하세요."
+                            placeholder="예: 부모님의 행복한 노후를 위한 정성 어린 케어 서비스를 확인하세요."
                             onSave={(v) => handleSave('home_subtitle', v)}
                             saving={saving}
                             rows={3}
@@ -993,10 +1187,13 @@ function SaveableTextArea({ label, initialValue, onSave, saving, placeholder, ro
     );
 }
 
-function HeroPreview({ title, subtitle, bgUrl }) {
+function HeroPreview({ title, subtitle, bgUrl, getSetting }) {
+    const { theme } = useTheme();
+    const isDark = theme === 'dark';
+
     return (
         <div
-            className="relative w-full aspect-[21/9] rounded-2xl md:rounded-[30px] overflow-hidden shadow-2xl border border-white/10 bg-slate-900 group"
+            className="relative w-full aspect-[21/9] rounded-2xl md:rounded-[50px] overflow-hidden shadow-2xl border border-white/10 bg-slate-900 group"
             style={{ containerType: 'inline-size' }}
         >
             {/* 1. Immersive Background Layer */}
@@ -1004,61 +1201,73 @@ function HeroPreview({ title, subtitle, bgUrl }) {
                 {bgUrl ? (
                     <img src={bgUrl} className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-110" alt="Preview Background" />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900" />
+                    <img
+                        src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=2000"
+                        className="w-full h-full object-cover"
+                    />
                 )}
-                {/* Precise Gradient Overlay mimicking HomePage.tsx */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/30 to-transparent z-10" />
+                {/* Gradient Overlay matching HomePage.tsx */}
+                <div className={cn(
+                    "absolute inset-0",
+                    isDark ? "bg-slate-950/80" : "bg-gradient-to-r from-white/95 via-white/80 to-transparent"
+                )} />
             </div>
 
-            {/* 2. Content Layer - Using cqw for perfect relative scaling */}
+            {/* 2. Content Layer - Using cqw for relative scaling */}
             <div className="absolute inset-0 z-20 flex flex-col justify-center px-[8cqw] text-left">
-                <div className="max-w-[55cqw] space-y-[2.5cqw] text-left">
-                    {/* Compact Badge */}
-                    <div className="inline-flex items-center gap-[1cqw] px-[2cqw] py-[0.6cqw] bg-white/10 backdrop-blur-md rounded-full border border-white/10">
-                        <div className="w-[0.8cqw] h-[0.8cqw] rounded-full bg-indigo-400" />
-                        <span className="text-[1.2cqw] font-black text-white/80 uppercase tracking-widest">아동발달의 중심</span>
-                    </div>
+                <div className="max-w-[55cqw] space-y-[2cqw] text-left">
+                    {/* Badge */}
+                    <span className="inline-flex items-center gap-[1cqw] px-[2.5cqw] py-[1.2cqw] rounded-full bg-emerald-100 text-emerald-700 font-bold" style={{ fontSize: '1.2cqw' }}>
+                        <span className="w-[0.8cqw] h-[0.8cqw] bg-emerald-500 rounded-full animate-pulse" />
+                        장기요양기관 지정 센터
+                    </span>
 
-                    {/* Scaled Title - Matches clamp(2rem, 8vw, 5rem) proportions */}
+                    {/* Main Title - Matches HomePage h1 style */}
                     <h1
-                        className="text-white font-black leading-[1.1] tracking-tighter whitespace-pre-line text-left"
+                        className={cn(
+                            "font-black leading-[1.2] whitespace-pre-line text-left",
+                            isDark ? "text-white" : "text-slate-900"
+                        )}
                         style={{
-                            fontSize: '4.2cqw',
-                            textShadow: '0 0.5cqw 2cqw rgba(0,0,0,0.4)',
-                            wordBreak: 'keep-all',
+                            fontSize: '4.8cqw',
+                            letterSpacing: '-0.02em',
                         }}
                     >
-                        {title || "꿈과 희망이\n자라나는 공간"}
+                        {title || "부모님의 건강한 일상을\n함께 지켜드립니다"}
                     </h1>
 
-                    {/* Scaled Subtitle - Matches md:text-xl proportions */}
+                    {/* Subtitle */}
                     <p
-                        className="text-white/80 font-medium leading-relaxed whitespace-pre-line text-left opacity-90"
+                        className={cn(
+                            "font-medium leading-relaxed whitespace-pre-line text-left",
+                            isDark ? "text-slate-300" : "text-slate-600"
+                        )}
                         style={{
-                            fontSize: '1.4cqw',
-                            textShadow: '0 0.2cqw 1cqw rgba(0,0,0,0.3)'
+                            fontSize: '1.6cqw',
+                            opacity: 0.9
                         }}
                     >
-                        {subtitle || "실제 사이트의 웅장한 비율을\n그대로 구현한 실시간 프리뷰입니다."}
+                        {subtitle || "국가공인 요양보호사가 직접 가정을 방문하여\n어르신의 신체활동과 일상생활을 정성껏 돌봅니다."}
                     </p>
 
-                    {/* Button Mockup */}
-                    <div className="pt-[1cqw]">
-                        <div className="inline-flex items-center gap-[2cqw] px-[4cqw] py-[1.5cqw] bg-white text-slate-900 rounded-full shadow-2xl">
-                            <span className="text-[1.3cqw] font-black">상담 문의하기</span>
-                            <div className="w-[3cqw] h-[3cqw] bg-slate-900 rounded-full flex items-center justify-center">
-                                <ChevronRight className="w-[1.8cqw] h-[1.8cqw] text-white" />
-                            </div>
+                    {/* CTA Buttons Mockup */}
+                    <div className="flex gap-[1.5cqw] pt-[1cqw]">
+                        <div className="px-[4cqw] py-[1.5cqw] bg-emerald-600 text-white rounded-[1.5cqw] font-bold shadow-xl" style={{ fontSize: '1.4cqw' }}>
+                            📞 상담 예약
+                        </div>
+                        <div className={cn(
+                            "px-[4cqw] py-[1.5cqw] rounded-[1.5cqw] font-bold border-2",
+                            isDark ? "border-white/30 text-white" : "border-slate-300 text-slate-700"
+                        )} style={{ fontSize: '1.4cqw' }}>
+                            무료 상담 신청
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Browser Dots */}
-            <div className="absolute top-[3cqw] left-[6cqw] z-30 flex gap-[1cqw] opacity-50">
-                <div className="w-[1cqw] h-[1cqw] rounded-full bg-rose-500" />
-                <div className="w-[1cqw] h-[1cqw] rounded-full bg-amber-500" />
-                <div className="w-[1cqw] h-[1cqw] rounded-full bg-emerald-500" />
+            {/* Scale Indicator */}
+            <div className="absolute top-[3cqw] right-[4cqw] z-30 px-[1.5cqw] py-[0.5cqw] bg-black/50 backdrop-blur-md rounded-full border border-white/20">
+                <span className="text-white font-black uppercase tracking-widest" style={{ fontSize: '0.8cqw' }}>21:9 Live View</span>
             </div>
         </div>
     );
@@ -1201,8 +1410,8 @@ function TherapistProfilesManager({ centerId }: { centerId: string }) {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h3 className="text-lg font-black text-slate-800 dark:text-white">프로필 목록</h3>
-                    <p className="text-xs text-slate-500 font-medium">홈페이지 '치료사 소개' 란에 표시될 프로필을 관리합니다.</p>
+                    <h3 className="text-lg font-black text-slate-800 dark:text-white">요양보호사 목록</h3>
+                    <p className="text-xs text-slate-500 font-medium">홈페이지 '요양보호사 소개' 란에 표시될 프로필을 관리합니다.</p>
                 </div>
                 <button
                     onClick={() => handleOpenModal()}
@@ -1299,7 +1508,7 @@ function TherapistProfilesManager({ centerId }: { centerId: string }) {
                                     type="text"
                                     value={formData.bio}
                                     onChange={e => setFormData({ ...formData, bio: e.target.value })}
-                                    placeholder="예: 아이들의 꿈을 응원합니다."
+                                    placeholder="예: 부모님을 모시는 정성 어린 마음으로 돌보겠습니다."
                                     className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900 dark:text-white placeholder:text-slate-400"
                                 />
                             </div>
@@ -1310,7 +1519,7 @@ function TherapistProfilesManager({ centerId }: { centerId: string }) {
                                     type="text"
                                     value={formData.specialties}
                                     onChange={e => setFormData({ ...formData, specialties: e.target.value })}
-                                    placeholder="언어치료, 인지치료"
+                                    placeholder="방문요양, 치매케어, 목욕보조"
                                     className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-slate-900 dark:text-white placeholder:text-slate-400"
                                 />
                             </div>
