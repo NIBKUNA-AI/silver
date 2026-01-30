@@ -27,6 +27,7 @@ export function Settlement() {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('therapist');
     const [lastError, setLastError] = useState<any>(null); // ✨ Error State
+    const [diagLog, setDiagLog] = useState<string[]>([]); // ✨ Diagnostic State
 
     const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
     const [settlementList, setSettlementList] = useState<any[]>([]);
@@ -91,7 +92,10 @@ export function Settlement() {
         if (!centerId) return;
 
         setLoading(true);
+        setDiagLog(['🔍 진단 시작...']);
         try {
+            setDiagLog(prev => [...prev, `Target Center: ${centerId} (Len: ${centerId?.length})`]);
+
             // ✨ [Redundant Strategy] Try RPC first (to bypass RLS), then fallback to standard select
             let staffData = null;
 
@@ -102,9 +106,13 @@ export function Settlement() {
                 console.log("⚠️ Using RPC Data (V4) for Settlement Visibility");
                 staffData = rpcData;
                 setLastError(null); // Clear error if success
+                setDiagLog(prev => [...prev, `✅ RPC Success. Data Count: ${rpcData.length}`]);
             } else {
                 console.warn("RPC V4 Failed. Please run database/fix_visibility_v4.sql", rpcError);
-                if (rpcError) setLastError({ type: 'RPC V4 Error', ...rpcError });
+                if (rpcError) {
+                    setLastError({ type: 'RPC V4 Error', ...rpcError });
+                    setDiagLog(prev => [...prev, `❌ RPC Error: ${rpcError.message}`]);
+                }
                 // Fallback
                 const { data: selectData } = await supabase
                     .from('therapists')
@@ -113,6 +121,21 @@ export function Settlement() {
                 staffData = selectData;
             }
             if (!staffData) staffData = [];
+
+            // ✨ Deep Diagnostic Probe if Empty
+            if (staffData.length === 0) {
+                setDiagLog(prev => [...prev, `⚠️ Result is Empty (0 rows). Running Deep Probe...`]);
+                const { count, error: countError } = await supabase
+                    .from('therapists')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('center_id', centerId);
+
+                setDiagLog(prev => [...prev, `🔍 Raw Table Count for this Center: ${count === null ? 'NULL' : count} (Error: ${countError?.message || 'None'})`]);
+
+                // Check if ANY therapists exist at all
+                const { count: totalCount } = await supabase.from('therapists').select('*', { count: 'exact', head: true });
+                setDiagLog(prev => [...prev, `🌍 Total Therapists in DB: ${totalCount}`]);
+            }
 
             const startDate = `${selectedMonth}-01`;
             const endDate = new Date(new Date(startDate).setMonth(new Date(startDate).getMonth() + 1)).toISOString().slice(0, 10);
@@ -298,12 +321,12 @@ export function Settlement() {
                             <div>현재 센터 ID: {centerId}</div>
 
                             {/* Error Details */}
-                            <div className="bg-white p-2 rounded border border-yellow-200 font-mono overflow-auto max-h-40">
-                                [상태 진단]<br />
-                                • RPC 호출 에러: {lastError ? JSON.stringify(lastError) : '없음 (성공했으나 데이터가 0건입니다)'}<br />
-                                • DB 연결: {supabase ? '정상' : '실패'}
+                            <div className="bg-white p-2 rounded border border-yellow-200 font-mono overflow-auto max-h-60 text-[11px] leading-tight">
+                                <div className="font-bold border-b pb-1 mb-1">[실시간 진단 로그 v4.1]</div>
+                                {diagLog.map((log, i) => <div key={i}>{log}</div>)}
+                                {lastError && <div className="text-red-600 mt-2 font-bold">Error: {JSON.stringify(lastError)}</div>}
                             </div>
-                            <div>* 팁: '새로고침(F5)'을 해보세요. V3 패치가 적용되었다면 정상 표시됩니다.</div>
+                            <div>* 해결책: 로그를 확인 후 전달해주세요.</div>
                         </div>
                     )}
 
