@@ -68,8 +68,7 @@ export function Settlement() {
                 hire_type: editForm.hire_type,
                 base_salary: Number(editForm.base_salary) || 0,
                 required_sessions: Number(editForm.base_session_count) || 0,
-                session_price_weekday: Number(editForm.hourly) || 0, // Store Base Rate here
-                remarks: editForm.remarks
+                session_price_weekday: Number(editForm.hourly) || 0
             }).eq('id', id);
 
             if (error) throw error;
@@ -209,7 +208,7 @@ export function Settlement() {
                     payout = baseSalary;
                     revenue = payout;
                     incentiveText = `월 고정 급여 ${baseSalary.toLocaleString()}원 (행정직원)`;
-                } else if (hireType === 'fulltime' || hireType === 'regular' || staff.system_role === 'admin') {
+                } else if (hireType === 'fulltime' || hireType === 'regular') {
                     // 정규직: 고정급 + (초과 시) 1.5배 가산
                     const goal = staff.required_sessions || 160; // 월 목표 시간
                     const overTimeRate = hourlyRate * 1.5; // 초과근무 1.5배
@@ -362,7 +361,7 @@ export function Settlement() {
                                                 </select>
                                             )}
 
-                                            {(editForm.hire_type === 'fulltime' || t.system_role === 'staff' || t.system_role === 'admin') && (
+                                            {(editForm.hire_type === 'fulltime' || editForm.hire_type === 'regular' || t.system_role === 'staff') && (
                                                 <>
                                                     <div><span className="text-xs text-slate-400">월 고정 급여 (원)</span><input type="number" className="w-full p-2 border dark:border-slate-700 rounded-lg font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white" value={editForm.base_salary} onChange={e => setEditForm({ ...editForm, base_salary: e.target.value })} placeholder="0" /></div>
                                                     {t.system_role !== 'staff' && (
