@@ -42,6 +42,8 @@ export type AdminSettingKey =
     | 'ai_next_topic'
     | 'brand_color'
     | 'seo_keywords'
+    | 'banner_animation'
+    | 'banner_duration'
     | 'openai_api_key';
 
 export interface ProgramItem {

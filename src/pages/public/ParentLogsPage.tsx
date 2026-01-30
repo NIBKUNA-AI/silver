@@ -4,20 +4,35 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import {
     ChevronLeft, MessageSquare,
-    User, Activity, ChevronRight, X
+    User, ChevronRight, X
 } from 'lucide-react';
-import {
-    BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LabelList
-} from 'recharts';
+
 import { useCenter } from '@/contexts/CenterContext';
+
+interface Log {
+    id: string;
+    session_date: string;
+    content: string;
+    therapists?: { name: string };
+    evaluation_date?: string;
+    summary?: string;
+    [key: string]: unknown; // Safe fallback for other props
+}
+
+interface Observation {
+    id: string;
+    created_at: string;
+    content: string;
+    child_id?: string;
+}
 
 export function ParentLogsPage() {
     const navigate = useNavigate();
     const { center } = useCenter();
-    const [logs, setLogs] = useState<any[]>([]);
+    const [logs, setLogs] = useState<Log[]>([]);
     const [loading, setLoading] = useState(true);
-    const [parentObservations, setParentObservations] = useState<any[]>([]);
-    const [selectedLog, setSelectedLog] = useState<any>(null);
+    const [parentObservations, setParentObservations] = useState<Observation[]>([]);
+    const [selectedLog, setSelectedLog] = useState<Log | null>(null);
 
     useEffect(() => {
         fetchLogs();
@@ -87,7 +102,7 @@ export function ParentLogsPage() {
             const { data, error: fetchError } = await query;
             if (fetchError) throw fetchError;
 
-            const formattedLogs = (data as any[])?.map(assessment => ({
+            const formattedLogs: Log[] = (data as any[])?.map(assessment => ({
                 ...assessment,
                 session_date: assessment.evaluation_date,
                 content: assessment.summary,
@@ -105,7 +120,7 @@ export function ParentLogsPage() {
                 setParentObservations(observations || []);
             }
 
-        } catch (e: any) {
+        } catch (e) {
             console.error("Logs fetch error:", e);
         } finally {
             setLoading(false);
@@ -114,7 +129,7 @@ export function ParentLogsPage() {
 
 
     // 월별 그룹화
-    const groupedLogs = logs.reduce((acc: any, log) => {
+    const groupedLogs = logs.reduce((acc: Record<string, Log[]>, log) => {
         const month = new Date(log.session_date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' });
         if (!acc[month]) acc[month] = [];
         acc[month].push(log);
@@ -145,7 +160,7 @@ export function ParentLogsPage() {
 
             <main className="max-w-4xl mx-auto p-6 space-y-12">
                 {Object.keys(groupedLogs).length > 0 ? (
-                    Object.entries(groupedLogs).map(([month, monthLogs]: [string, any]) => (
+                    Object.entries(groupedLogs).map(([month, monthLogs]: [string, Log[]]) => (
                         <section key={month} className="space-y-6">
                             <div className="flex items-center gap-4">
                                 <h2 className="text-xl font-black text-slate-900 whitespace-nowrap">{month}</h2>
@@ -153,7 +168,7 @@ export function ParentLogsPage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {monthLogs.map((log: any) => (
+                                {monthLogs.map((log) => (
                                     <div
                                         key={log.id}
                                         onClick={() => setSelectedLog(log)}

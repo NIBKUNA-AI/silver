@@ -343,7 +343,7 @@ export function BlogPostPage() {
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={{
-                                img: ({ node, ...props }) => <img {...props} className="rounded-xl shadow-lg my-12 w-full h-auto" loading="lazy" />,
+                                img: ({ ...props }) => <img {...props} className="rounded-xl shadow-lg my-12 w-full h-auto" loading="lazy" />,
                             }}
                         >
                             {post.content}

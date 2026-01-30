@@ -8,12 +8,19 @@ import { useClickOutside } from '@/hooks/useClickOutside';
 
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface Center {
+    id: string;
+    name: string;
+    slug: string;
+    address: string;
+}
+
 export const GlobalLanding = () => {
     const navigate = useNavigate();
     const { role } = useAuth();
     const [keyword, setKeyword] = useState('');
-    const [centers, setCenters] = useState<{ id: string, name: string, slug: string, address: string }[]>([]);
-    const [filteredCenters, setFilteredCenters] = useState<{ id: string, name: string, slug: string, address: string }[]>([]);
+    const [centers, setCenters] = useState<Center[]>([]);
+    const [filteredCenters, setFilteredCenters] = useState<Center[]>([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -51,8 +58,9 @@ export const GlobalLanding = () => {
                     setCenters(data);
                     setFilteredCenters(data);
                 }
-            } catch (err: any) {
-                console.error("❌ Failed to fetch centers:", err.message);
+            } catch (err) {
+                const message = err instanceof Error ? err.message : 'Unknown error';
+                console.error("❌ Failed to fetch centers:", message);
                 setFetchError("센터 정보를 불러오지 못했습니다.");
             } finally {
                 setIsInitialLoading(false);
@@ -75,7 +83,7 @@ export const GlobalLanding = () => {
         }
     }, [keyword, centers]);
 
-    const handleSelect = (center: any) => {
+    const handleSelect = (center: Center) => {
         console.log("🎯 Selecting center:", center.slug);
         // ✨ [Critical] Clear previous state to avoid conflict
         localStorage.setItem('zarada_center_slug', center.slug);

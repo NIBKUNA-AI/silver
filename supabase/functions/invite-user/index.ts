@@ -3,7 +3,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.10";
 
-declare const Deno: any;
+declare const Deno: {
+    env: { get: (key: string) => string | undefined };
+};
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -69,7 +71,7 @@ serve(async (req: Request) => {
             auth: { autoRefreshToken: false, persistSession: false }
         });
 
-        const { data: callerProfile, error: profileError } = await supabaseAdmin
+        const { data: callerProfile } = await supabaseAdmin
             .from("user_profiles")
             .select("role, center_id")
             .eq("id", user.id)
@@ -176,9 +178,10 @@ serve(async (req: Request) => {
             { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
         );
 
-    } catch (error: any) {
-        console.error(`${logTag} 🔴 EXCEPTION: ${error.message}`);
-        return new Response(JSON.stringify({ error: error.message }), {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error(`${logTag} 🔴 EXCEPTION: ${errorMessage}`);
+        return new Response(JSON.stringify({ error: errorMessage }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400,
         });

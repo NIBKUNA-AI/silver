@@ -1,5 +1,4 @@
-// @ts-nocheck
-/* eslint-disable */
+
 /**
  * 🎨 Project: Zarada ERP - The Sovereign Canvas
  * 🛠️ Created by: 안욱빈 (An Uk-bin)
@@ -15,7 +14,6 @@ import { Helmet } from 'react-helmet-async';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
-import { supabase } from '@/lib/supabase';
 import { GrowthIcon, HeartCareIcon, StarIcon, BackgroundShapes } from '@/components/icons/BrandIcons';
 import { PlayTherapyIcon, SpeechTherapyIcon, SensoryTherapyIcon, ArtTherapyIcon } from '@/components/icons/ProgramIcons';
 import { useTheme } from '@/contexts/ThemeProvider';
@@ -415,12 +413,3 @@ export function HomePage() {
     );
 }
 
-function ValueItem({ icon, title, desc }) {
-    return (
-        <div className="space-y-6 text-left">
-            <div className="bg-white w-20 h-20 rounded-3xl flex items-center justify-center shadow-sm border border-slate-100">{icon}</div>
-            <h3 className="text-2xl font-black text-slate-900">{title}</h3>
-            <p className="text-slate-500 font-medium leading-relaxed">{desc}</p>
-        </div>
-    );
-}

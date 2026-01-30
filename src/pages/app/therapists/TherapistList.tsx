@@ -142,7 +142,7 @@ export function TherapistList() {
                         system_role: formData.system_role,
                         system_status: 'active', // Ensure they are active
                         center_id: centerId,
-                        center_id: centerId
+
                     }, { onConflict: 'email' });
 
                 if (therapistError) throw therapistError;
@@ -295,12 +295,7 @@ export function TherapistList() {
             session_price_weekend: staff.session_price_weekend || 0,
             incentive_price: staff.incentive_price || 24000,
             evaluation_price: staff.evaluation_price || 50000,
-            base_salary: staff.base_salary || 0,
-            required_sessions: staff.required_sessions || 0,
-            session_price_weekday: staff.session_price_weekday || 0,
-            session_price_weekend: staff.session_price_weekend || 0,
-            incentive_price: staff.incentive_price || 24000,
-            evaluation_price: staff.evaluation_price || 50000
+
         });
         setIsModalOpen(true);
     };
