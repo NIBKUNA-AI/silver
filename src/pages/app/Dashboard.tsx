@@ -357,7 +357,7 @@ export function Dashboard() {
                         therapistRevMap[tName] = (therapistRevMap[tName] || 0) + sessionPrice;
 
                         // Program / Service Type
-                        const pName = s.service_type || '치료 세션';
+                        const pName = s.service_type || '케어 세션';
                         progCountMap[pName] = (progCountMap[pName] || 0) + 1;
 
                         // Child Contribution
@@ -397,7 +397,7 @@ export function Dashboard() {
             setProgramData(sortedProg);
 
             setAgeData(Object.entries(ageCountMap).map(([name, value]) => ({ name, value })));
-            setGenderData([{ name: '남아', value: mCount }, { name: '여아', value: fCount }]);
+            setGenderData([{ name: '남성', value: mCount }, { name: '여성', value: fCount }]);
 
             setTopChildren(Object.entries(childContribMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5));
 
@@ -666,7 +666,7 @@ export function Dashboard() {
                                     관리자 전용 데이터 관리
                                     <span className="text-[10px] font-bold bg-amber-600 text-white px-2 py-0.5 rounded-full">SUPER ADMIN</span>
                                 </h2>
-                                <p className="text-sm font-medium text-amber-700 dark:text-yellow-400/80">아동, 수납, 수업 데이터를 Excel(CSV)로 추출할 수 있습니다</p>
+                                <p className="text-sm font-medium text-amber-700 dark:text-yellow-400/80">어르신, 수납, 케어 데이터를 Excel(CSV)로 추출할 수 있습니다</p>
                             </div>
                         </div>
                         <div className="flex gap-3 flex-wrap">
@@ -717,9 +717,9 @@ export function Dashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <KpiCard title="확정 매출" value={`₩${kpi.revenue.toLocaleString()}`} icon={SvgIcons.dollar} trend="확정" trendUp={true} color="text-blue-600 dark:text-blue-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
-                <KpiCard title="활성 아동" value={`${kpi.active}명`} icon={SvgIcons.users} trend="현재원" trendUp={true} color="text-indigo-600 dark:text-indigo-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
-                <KpiCard title="완료 수업" value={`${kpi.sessions}건`} icon={SvgIcons.calendar} trend="실적" trendUp={true} color="text-emerald-600 dark:text-emerald-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
-                <KpiCard title="신규 아동" value={`${kpi.new}명`} icon={SvgIcons.activity} trend="이번달" trendUp={kpi.new > 0} color="text-rose-600 dark:text-rose-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
+                <KpiCard title="활성 어르신" value={`${kpi.active}명`} icon={SvgIcons.users} trend="현재원" trendUp={true} color="text-indigo-600 dark:text-indigo-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
+                <KpiCard title="완료 케어" value={`${kpi.sessions}건`} icon={SvgIcons.calendar} trend="실적" trendUp={true} color="text-emerald-600 dark:text-emerald-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
+                <KpiCard title="신규 어르신" value={`${kpi.new}명`} icon={SvgIcons.activity} trend="이번달" trendUp={kpi.new > 0} color="text-rose-600 dark:text-rose-400" bg="bg-white dark:bg-slate-900" border="border-slate-200 dark:border-slate-800" />
             </div>
 
             {slide === 0 && (
@@ -749,7 +749,7 @@ export function Dashboard() {
                         </ChartContainer>
                     </div>
 
-                    <ChartContainer title="치료사별 매출 기여도" icon={SvgIcons.stethoscope} innerHeight="h-[250px]" brandColor={BRAND_COLOR}>
+                    <ChartContainer title="요양보호사별 매출 기여도" icon={SvgIcons.stethoscope} innerHeight="h-[250px]" brandColor={BRAND_COLOR}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={therapistData} layout="vertical" margin={{ top: 20, right: 50, left: 20, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
@@ -789,7 +789,7 @@ export function Dashboard() {
                                 </PieChart>
                             </ResponsiveContainer>
                         </ChartContainer>
-                        <ChartContainer title="아동 연령별" icon={SvgIcons.users} innerHeight="h-[300px]">
+                        <ChartContainer title="어르신 연령별" icon={SvgIcons.users} innerHeight="h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart margin={{ top: 80 }}>
                                     <Pie data={ageData} innerRadius={50} outerRadius={70} dataKey="value" stroke="none">

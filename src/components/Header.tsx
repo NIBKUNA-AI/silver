@@ -21,21 +21,21 @@ export function Header() {
             <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                 {/* 로고 영역 */}
                 <Link to="/" className="font-black text-xl flex items-center gap-2">
-                    🧸 {localStorage.getItem('cached_center_name') || import.meta.env.VITE_CENTER_NAME || '아동발달센터'}
+                    🫡 {localStorage.getItem('cached_center_name') || import.meta.env.VITE_CENTER_NAME || '재가요양센터'}
                 </Link>
 
                 {/* 우측 메뉴 영역 */}
                 <div className="flex items-center gap-4">
                     <Link to="/about" className="text-sm font-bold text-slate-500 hover:text-slate-900">센터 소개</Link>
-                    <Link to="/programs" className="text-sm font-bold text-slate-500 hover:text-slate-900">프로그램</Link>
+                    <Link to="/programs" className="text-sm font-bold text-slate-500 hover:text-slate-900">서비스 소개</Link>
 
                     {/* ✨ 로그인 상태에 따른 버튼 분기 처리 */}
                     {user ? (
                         <>
-                            {/* 🔔 [추가] 관리자/치료사에게만 알림 센터 표시 */}
+                            {/* 🔔 [추가] 관리자/요양보호사에게만 알림 센터 표시 */}
                             {role !== 'parent' && <NotificationCenter />}
 
-                            {/* 🛡️ 학부모가 아닐 때만 '관리자 대시보드' 버튼 노출 */}
+                            {/* 🛡️ 보호자가 아닐 때만 '관리자 대시보드' 버튼 노출 */}
                             {role !== 'parent' && (
                                 <Link
                                     to="/app/dashboard"
@@ -45,13 +45,13 @@ export function Header() {
                                 </Link>
                             )}
 
-                            {/* 👨‍👩‍👧‍👦 [추가] 학부모일 때는 '내 아이 관리' 버튼을 헤더에도 띄워주면 좋습니다 (선택사항) */}
+                            {/* 👨‍👩‍👧‍👦 [추가] 보호자일 때는 '어르신 관리' 버튼을 헤더에도 띄워줍니다 */}
                             {role === 'parent' && (
                                 <Link
                                     to="/parent/home"
                                     className="px-4 py-2 bg-yellow-50 text-yellow-600 border border-yellow-200 rounded-full text-xs font-black hover:bg-yellow-100 transition-colors"
                                 >
-                                    👶 내 아이 센터
+                                    🫂 어르신 케어 센터
                                 </Link>
                             )}
 

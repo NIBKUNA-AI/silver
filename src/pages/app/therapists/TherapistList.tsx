@@ -249,7 +249,7 @@ export function TherapistList() {
                 .limit(1);
 
             if (activeSchedules && activeSchedules.length > 0) {
-                alert('⚠️ 삭제 실패: 이 치료사에게 등록된 일정이 아직 존재합니다.\n일정을 모두 삭제하거나 다른 치료사로 변경한 후 삭제해 주세요.');
+                alert('⚠️ 삭제 실패: 이 요양보호사에게 등록된 일정이 아직 존재합니다.\n일정을 모두 삭제하거나 다른 요양보호사로 변경한 후 삭제해 주세요.');
                 return;
             }
 
@@ -359,7 +359,7 @@ export function TherapistList() {
                         }}
                         className="bg-indigo-600 text-white px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all hover:bg-indigo-700 shadow-lg shadow-indigo-200"
                     >
-                        <Plus className="w-5 h-5" /> 치료사 등록
+                        <Plus className="w-5 h-5" /> 요양보호사 등록
                     </button>
                     <button
                         onClick={() => {
@@ -426,7 +426,7 @@ export function TherapistList() {
                                                     "bg-emerald-100 text-emerald-600 border-emerald-200"
                                         )}>
                                             {staff.system_status === 'retired' ? 'RETIRED' : (
-                                                { 'admin': 'ADMIN', 'staff': 'STAFF' }[staff.system_role] || 'THERAPIST'
+                                                { 'admin': 'ADMIN', 'staff': 'STAFF' }[staff.system_role] || 'CAREGIVER'
                                             )}
                                         </span>
                                     </h3>
@@ -464,8 +464,8 @@ export function TherapistList() {
                         <div className="flex justify-between items-center mb-8">
                             <h2 className="text-2xl font-black text-slate-900 dark:text-white">
                                 {editingId
-                                    ? ({ 'admin': '관리자 정보 수정', 'staff': '행정직원 정보 수정' }[formData.system_role] || '치료사 정보 수정')
-                                    : ({ 'admin': '새 관리자 등록', 'staff': '새 행정직원 등록' }[formData.system_role] || '새 치료사 등록')}
+                                    ? ({ 'admin': '관리자 정보 수정', 'staff': '행정직원 정보 수정' }[formData.system_role] || '요양보호사 정보 수정')
+                                    : ({ 'admin': '새 관리자 등록', 'staff': '새 행정직원 등록' }[formData.system_role] || '새 요양보호사 등록')}
                             </h2>
                             <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><X className="w-6 h-6 text-slate-400" /></button>
                         </div>
@@ -527,7 +527,7 @@ export function TherapistList() {
                                                 {
                                                     'admin': '🛡️ 관리자 (Admin)',
                                                     'staff': '💼 행정직원 (Staff)',
-                                                    'therapist': '🩺 치료사 (Therapist)'
+                                                    'therapist': '🧑‍⚕️ 요양보호사 (Caregiver)'
                                                 }[formData.system_role] || '🩺 치료사 (Therapist)'
                                             }
                                         />

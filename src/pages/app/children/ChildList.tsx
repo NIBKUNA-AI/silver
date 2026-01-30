@@ -81,7 +81,7 @@ export function ChildList() {
             if (error) throw error;
             setChildren(data || []);
         } catch (error) {
-            console.error('아동 목록 로딩 실패:', error);
+            console.error('어르신 목록 로딩 실패:', error);
         } finally {
             setLoading(false);
         }
@@ -110,22 +110,22 @@ export function ChildList() {
 
     return (
         <>
-            <Helmet><title>아동 관리 - 자라다 Admin</title></Helmet>
+            <Helmet><title>어르신 관리 - 자라다 Admin</title></Helmet>
 
             <div className="space-y-6 p-2">
                 <div className="flex flex-col md:flex-row justify-between items-end gap-4">
                     <div>
-                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">아동 관리</h1>
-                        <p className="text-slate-500 dark:text-slate-400 font-medium">센터 이용 아동 및 보호자 계정 연결을 관리합니다.</p>
+                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">어르신 관리</h1>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium">센터 이용 어르신 및 보호자 계정 연결을 관리합니다.</p>
                     </div>
                     <div className="flex gap-2">
                         {/* ✨ [Export] Excel Download Button */}
                         <ExcelExportButton
                             data={filteredChildren}
-                            fileName="아동목록_전체"
+                            fileName="어르신목록_전체"
                             headers={['name', 'birth_date', 'gender', 'guardian_name', 'contact', 'address', 'memo']}
                             headerLabels={{
-                                name: '아동명',
+                                name: '어르신명',
                                 birth_date: '생년월일',
                                 gender: '성별',
                                 guardian_name: '보호자명',
@@ -138,7 +138,7 @@ export function ChildList() {
                             onClick={handleRegister}
                             className="flex items-center gap-2 bg-slate-900 dark:bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-slate-800 dark:hover:bg-indigo-700 transition-all shadow-lg shadow-slate-200 dark:shadow-indigo-900/30"
                         >
-                            <UserPlus className="w-5 h-5" /> 신규 아동 등록
+                            <UserPlus className="w-5 h-5" /> 신규 어르신 등록
                         </button>
                     </div>
                 </div>
@@ -149,7 +149,7 @@ export function ChildList() {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input
                                 type="text"
-                                placeholder="아동 또는 보호자 이름 검색..."
+                                placeholder="어르신 또는 보호자 이름 검색..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-2xl text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-slate-100 dark:focus:ring-indigo-500/20 transition-all"
@@ -171,7 +171,7 @@ export function ChildList() {
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                                 {filteredChildren.length === 0 ? (
-                                    <tr><td colSpan={6} className="p-20 text-center text-slate-400 dark:text-slate-500 font-bold">등록된 아동 정보가 없습니다.</td></tr>
+                                    <tr><td colSpan={6} className="p-20 text-center text-slate-400 dark:text-slate-500 font-bold">등록된 어르신 정보가 없습니다.</td></tr>
                                 ) : (
                                     filteredChildren.map((child) => (
                                         <tr key={child.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition-colors group">
@@ -208,7 +208,7 @@ export function ChildList() {
                                                 {child.parent_id ? (
                                                     <div className="flex items-center gap-2 text-emerald-600 font-black">
                                                         <LinkIcon className="w-3.5 h-3.5" />
-                                                        <span className="text-xs">부모 계정 연결됨</span>
+                                                        <span className="text-xs">보호자 계정 연결됨</span>
                                                     </div>
                                                 ) : (
                                                     <div className="flex items-center gap-2 text-slate-300 font-bold">
@@ -229,7 +229,7 @@ export function ChildList() {
                                                 <button
                                                     onClick={() => handleEdit(child.id)}
                                                     className="p-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-900 dark:hover:border-slate-400 transition-all hover:shadow-md"
-                                                    title="아동 정보 수정"
+                                                    title="어르신 정보 수정"
                                                 >
                                                     <Pencil className="w-4 h-4" />
                                                 </button>

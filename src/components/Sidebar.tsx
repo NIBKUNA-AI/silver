@@ -192,10 +192,10 @@ const MENU_GROUPS = [
         items: [
             // ✨ [Therapist] Only Schedule & Consultations
             // ✨ [Manager] Schedule, Billing, Programs
-            { name: '치료 일정', path: '/app/schedule', icon: Icons.calendar, roles: ['super_admin', 'admin', 'therapist', 'manager', 'staff'] },
+            { name: '방문 케어 일정', path: '/app/schedule', icon: Icons.calendar, roles: ['super_admin', 'admin', 'therapist', 'manager', 'staff'] },
             { name: '수납 관리', path: '/app/billing', icon: Icons.billing, roles: ['super_admin', 'admin', 'manager', 'staff'] },
-            { name: '상담일지', path: '/app/consultations', icon: Icons.consultation, roles: ['super_admin', 'admin', 'therapist'] }, // Manager doesn't write logs usually? User said "Therapist Only for own kids", but admin can see all. User didn't explicitly say Manager CANNOT see logs, but "Therapist account features... Administrative staff account features...". Administrative list didn't include logs. So remove manager.
-            { name: '프로그램 관리', path: '/app/programs', icon: Icons.program, roles: ['super_admin', 'admin', 'manager', 'staff'] },
+            { name: '케어일지', path: '/app/consultations', icon: Icons.consultation, roles: ['super_admin', 'admin', 'therapist'] },
+            { name: '서비스 관리', path: '/app/programs', icon: Icons.program, roles: ['super_admin', 'admin', 'manager', 'staff'] },
         ]
     },
     {
@@ -204,9 +204,9 @@ const MENU_GROUPS = [
         items: [
             // ✨ [Manager] Leads, Children, Parents allowed.
             // ✨ [Therapist] REMOVED from Leads, Children, Parents (User request: Therapist only Schedule & Logs)
-            { name: '상담문의', path: '/app/leads', icon: Icons.leads, roles: ['super_admin', 'admin', 'manager', 'staff'] },
-            { name: '아동 관리', path: '/app/children', icon: Icons.child, roles: ['super_admin', 'admin', 'manager', 'staff'] }, // Therapist removed
-            { name: '부모 관리', path: '/app/parents', icon: Icons.members, roles: ['super_admin', 'admin', 'manager', 'staff'] }, // Therapist removed
+            { name: '돌봄문의', path: '/app/leads', icon: Icons.leads, roles: ['super_admin', 'admin', 'manager', 'staff'] },
+            { name: '어르신 관리', path: '/app/children', icon: Icons.child, roles: ['super_admin', 'admin', 'manager', 'staff'] },
+            { name: '보호자 관리', path: '/app/parents', icon: Icons.members, roles: ['super_admin', 'admin', 'manager', 'staff'] },
             { name: '직원 관리', path: '/app/therapists', icon: Icons.staff, roles: ['super_admin', 'admin'] }, // Manager NO
             { name: '급여 관리', path: '/app/settlement', icon: Icons.salary, roles: ['super_admin', 'admin'] }, // Manager NO
         ]
@@ -269,7 +269,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
         if (onClose) onClose();
         const cid = centerId || 'global';
         try {
-            if (itemName === '치료 일정') {
+            if (itemName === '방문 케어 일정') {
                 // 1. 로컬 상태 즉시 해제 및 마지막 확인 시간 저장
                 const now = new Date().toISOString();
                 localStorage.setItem(`last_schedule_check_${cid}`, now);
@@ -286,7 +286,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
                 }
             }
 
-            if (itemName === '상담문의') {
+            if (itemName === '돌봄문의') {
                 // 상담문의는 로컬 스토리지에 마지막 확인 일시 저장
                 localStorage.setItem(`last_inquiry_check_${cid}`, new Date().toISOString());
                 setHasUnreadInquiry(false);
@@ -524,7 +524,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => v
                                                         {item.name}
 
                                                         {/* ✨ [Notification Dot] 노란색 알림 표시 */}
-                                                        {((item.name === '상담문의' && hasUnreadInquiry) || (item.name === '치료 일정' && hasUnreadSchedule)) && (
+                                                        {((item.name === '돌봄문의' && hasUnreadInquiry) || (item.name === '방문 케어 일정' && hasUnreadSchedule)) && (
                                                             <span className="absolute right-3 w-2 h-2 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.6)] animate-pulse" />
                                                         )}
                                                     </Link>

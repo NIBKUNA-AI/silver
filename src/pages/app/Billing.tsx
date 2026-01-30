@@ -111,8 +111,8 @@ export function Billing() {
                         fileName={`수납리스트_${selectedMonth}`}
                         headers={['name', 'completed', 'paid', 'credit']}
                         headerLabels={{
-                            name: '아동명',
-                            completed: '총 수업료',
+                            name: '어르신',
+                            completed: '총 서비스료',
                             paid: '기수납액',
                             credit: '잔여 크레딧'
                         }}
@@ -134,7 +134,7 @@ export function Billing() {
                         <Search className={cn("absolute left-4 top-3.5 w-5 h-5", isDark ? "text-slate-500" : "text-slate-400")} />
                         <input
                             type="text"
-                            placeholder="아동 이름 검색..."
+                            placeholder="어르신 이름 검색..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             className={cn("w-full pl-12 pr-4 py-3.5 border rounded-2xl text-sm transition-all outline-none", isDark ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:ring-4 focus:ring-indigo-500/20" : "border-slate-200 focus:ring-4 focus:ring-blue-50")}
@@ -145,7 +145,7 @@ export function Billing() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className={cn("text-xs font-black uppercase tracking-widest", isDark ? "bg-slate-800 text-slate-400" : "bg-slate-50 text-slate-400")}>
-                            <tr><th className="p-4 md:p-8">아동 정보</th><th className="p-4 md:p-8 text-right">수업료(완료)</th><th className="p-4 md:p-8 text-right">기수납액</th><th className="p-4 md:p-8 text-right">잔액</th><th className="p-4 md:p-8 text-center">관리</th></tr>
+                            <tr><th className="p-4 md:p-8">어르신 정보</th><th className="p-4 md:p-8 text-right">서비스료(완료)</th><th className="p-4 md:p-8 text-right">기수납액</th><th className="p-4 md:p-8 text-right">잔액</th><th className="p-4 md:p-8 text-center">관리</th></tr>
                         </thead>
                         <tbody className={cn("divide-y", isDark ? "divide-slate-800" : "divide-slate-100")}>
                             {loading ? (
@@ -315,7 +315,7 @@ function PaymentModal({ childData, month, onClose, onSuccess, isDark }) {
                             "mt-auto pt-8 border-t-4 border-dashed space-y-4 md:space-y-6 pb-8",
                             isDark ? "border-slate-700" : "border-slate-50"
                         )}>
-                            <div className="flex justify-between font-bold text-slate-400 text-base md:text-lg px-2 md:px-4"><span>수업료 합계</span><span>{totalFee.toLocaleString()}원</span></div>
+                            <div className="flex justify-between font-bold text-slate-400 text-base md:text-lg px-2 md:px-4"><span>서비스료 합계</span><span>{totalFee.toLocaleString()}원</span></div>
                             <div className="flex justify-between font-bold text-blue-500 text-base md:text-lg px-2 md:px-4"><span>기수납액(이번달)</span><span>-{alreadyPaid.toLocaleString()}원</span></div>
                             <div className={cn("flex justify-between font-black text-3xl md:text-5xl pt-4 md:pt-6 px-2 md:px-4", isDark ? "text-white" : "text-slate-900")}><span>최종 결제</span><span>{Math.max(0, finalBalance).toLocaleString()}원</span></div>
                             <div className="flex gap-3 md:gap-4 mt-6 md:mt-8">

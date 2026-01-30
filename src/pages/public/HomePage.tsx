@@ -46,24 +46,24 @@ const SvgIcons = {
 };
 
 const DEFAULT_CONTENT = {
-    brandName: import.meta.env.VITE_CENTER_NAME || "아동발달센터",
+    brandName: import.meta.env.VITE_CENTER_NAME || "재가요양센터",
     hero: {
-        titleFirst: "아동발달의 중심",
-        titlePoint: "아이의 행복",
-        titleLast: "이\n자라나는 특별한 공간",
-        description: "언어치료, 감각통합, 미술/놀이치료 전문 기관.\n최고의 치료사진과 함께 우리 아이의 잠재력을 키워주세요.",
-        ctaText: "상담 문의하기",
-        defaultBgImage: "https://images.unsplash.com/photo-1566438480900-0609be27a4be?auto=format&fit=crop&q=80&w=2000,https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&q=80&w=2000,https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&q=80&w=2000"
+        titleFirst: "재가요양의 중심",
+        titlePoint: "어르신의 행복",
+        titleLast: "이\n더해지는 특별한 공간",
+        description: "방문요양, 신체활동지원, 인지활동지원 전문 기관.\n전문 요양보호사와 함께 어르신의 건강한 일상을 응원합니다.",
+        ctaText: "돌봄 문의하기",
+        defaultBgImage: "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=2000,https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=2000,https://images.unsplash.com/photo-1516307365426-bea591f05011?auto=format&fit=crop&q=80&w=2000"
     },
     values: [
-        { title: "근거 기반 치료", desc: "검증된 임상 데이터를 바탕으로 아이에게 가장 적합한 프로그램을 제안합니다." },
-        { title: "가족 중심 케어", desc: "아이를 넘어 부모님의 마음까지 세심하게 살피는 통합 지지 시스템을 운영합니다." },
-        { title: "지속적인 성장", desc: "치료실 밖에서도 아이의 성장이 이어지도록 체계적인 사후 관리를 제공합니다." }
+        { title: "전문 케어 서비스", desc: "장기요양보험 기준에 따른 전문 케어 서비스를 제공합니다." },
+        { title: "가족 중심 케어", desc: "어르신을 넘어 보호자의 마음까지 세심하게 살피는 통합 지지 시스템을 운영합니다." },
+        { title: "지속적인 관리", desc: "방문 케어 외에도 어르신의 건강이 유지되도록 체계적인 건강관리를 제공합니다." }
     ],
     story: {
-        quote: "아이들의 웃음이\n자라나는 두 번째 집",
-        description: `${import.meta.env.VITE_CENTER_NAME || '아동발달센터'}는 단순히 치료를 위한 공간을 넘어, 아이들이 정서적으로 안정을 찾고 스스로의 힘을 키워가는 따뜻한 보금자리를 지향합니다.`,
-        image: "https://images.unsplash.com/photo-1587653263995-422546a72569?auto=format&fit=crop&q=80&w=1200"
+        quote: "어르신의 편안함이\n더해지는 따뜻한 돌봄",
+        description: `${import.meta.env.VITE_CENTER_NAME || '재가요양센터'}는 단순히 케어를 위한 공간을 넘어, 어르신들이 정서적으로 안정을 찾고 활기를 되찾아가는 따뜻한 보금자리를 지향합니다.`,
+        image: "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=1200"
     }
 };
 
@@ -93,7 +93,7 @@ export function HomePage() {
     return (
         <div className={`min-h-screen font-sans overflow-x-hidden transition-colors ${isDark ? 'bg-slate-950 text-white' : 'bg-white text-slate-900'}`}>
             <Helmet>
-                <title>{brandName} - {centerInfo?.description?.slice(0, 20) || '아이의 행복한 성장을 함께합니다'}</title>
+                <title>{brandName} - {centerInfo?.description?.slice(0, 20) || '어르신의 행복한 일상을 함께합니다'}</title>
                 <meta name="description" content={centerInfo?.description || DEFAULT_CONTENT.hero.description} />
                 <link rel="canonical" href={canonicalUrl} />
                 <meta property="og:title" content={brandName} />
@@ -277,15 +277,15 @@ export function HomePage() {
                                 )}
                                 style={{ wordBreak: 'keep-all' }}
                             >
-                                맞춤형 발달 지원 프로그램
+                                맞춤형 케어 서비스
                             </h2>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
                             {[
-                                { Icon: SpeechTherapyIcon, name: '언어치료', desc: '의사소통 능력 향상', lightColor: 'from-indigo-50 to-white', darkColor: 'from-indigo-900/30 to-slate-900' },
-                                { Icon: SensoryTherapyIcon, name: '감통치료', desc: '감각통합 발달 지원', lightColor: 'from-emerald-50 to-white', darkColor: 'from-emerald-900/30 to-slate-900' },
-                                { Icon: ArtTherapyIcon, name: '미술치료', desc: '정서 표현 및 치유', lightColor: 'from-amber-50 to-white', darkColor: 'from-amber-900/30 to-slate-900' },
-                                { Icon: PlayTherapyIcon, name: '놀이치료', desc: '사회성·정서 발달', lightColor: 'from-rose-50 to-white', darkColor: 'from-rose-900/30 to-slate-900' },
+                                { Icon: SpeechTherapyIcon, name: '신체활동지원', desc: '일상생활 동작 훈련', lightColor: 'from-indigo-50 to-white', darkColor: 'from-indigo-900/30 to-slate-900' },
+                                { Icon: SensoryTherapyIcon, name: '가사지원', desc: '식사, 청소, 세탁', lightColor: 'from-emerald-50 to-white', darkColor: 'from-emerald-900/30 to-slate-900' },
+                                { Icon: ArtTherapyIcon, name: '건강관리', desc: '혈압, 혈당 체크 등', lightColor: 'from-amber-50 to-white', darkColor: 'from-amber-900/30 to-slate-900' },
+                                { Icon: PlayTherapyIcon, name: '인지활동지원', desc: '치매예방 프로그램', lightColor: 'from-rose-50 to-white', darkColor: 'from-rose-900/30 to-slate-900' },
                             ].map((program, idx) => (
                                 <motion.div
                                     key={idx}
@@ -313,7 +313,7 @@ export function HomePage() {
                             "inline-flex items-center gap-2 mt-10 font-bold text-sm hover:underline",
                             isDark ? "text-indigo-400" : "text-indigo-600"
                         )}>
-                            모든 프로그램 보기 {SvgIcons.arrowRight("w-4 h-4")}
+                            모든 서비스 보기 {SvgIcons.arrowRight("w-4 h-4")}
                         </Link>
                     </motion.section>
 
@@ -338,17 +338,17 @@ export function HomePage() {
                                     className="text-3xl md:text-4xl font-black tracking-[-0.05em] mb-8"
                                     style={{ wordBreak: 'keep-all' }}
                                 >
-                                    신뢰할 수 있는 전문 치료진의<br />
-                                    1:1 맞춤 케어
+                                    신뢰할 수 있는 전문 케어의<br />
+                                    1:1 맞춤 돌봄
                                 </h2>
 
                                 {/* Trust Points */}
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
                                     {[
-                                        { icon: '🎓', title: '전문 자격', desc: '국가공인 치료사' },
+                                        { icon: '🎓', title: '전문 자격', desc: '국가공인 요양보호사' },
                                         { icon: '💝', title: '개별 맞춤', desc: '1:1 집중 케어' },
-                                        { icon: '📊', title: '체계적 평가', desc: '과학적 검사 도구' },
-                                        { icon: '🤝', title: '부모 소통', desc: '매 회기 피드백' }
+                                        { icon: '📊', title: '체계적 평가', desc: '건강상태 카드' },
+                                        { icon: '🤝', title: '보호자 소통', desc: '매 회기 피드백' }
                                     ].map((item, idx) => (
                                         <motion.div
                                             key={idx}
@@ -383,7 +383,7 @@ export function HomePage() {
                             )}
                             style={{ wordBreak: 'keep-all' }}
                         >
-                            아이의 첫 걸음, 함께 시작해요
+                            어르신의 편안한 일상, 함께 시작해요
                         </h2>
                         <p className={cn(
                             "font-medium mb-10 max-w-md mx-auto",
@@ -402,7 +402,7 @@ export function HomePage() {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                             >
-                                무료 상담 예약하기
+                                돌봄 문의하기
                                 {SvgIcons.arrowRight("w-5 h-5")}
                             </motion.button>
                         </Link>

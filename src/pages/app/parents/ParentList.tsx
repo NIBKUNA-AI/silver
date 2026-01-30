@@ -4,7 +4,7 @@
  * 🎨 Project: Zarada ERP
  * 🛠️ Created by: Gemini AI
  * 📅 Date: 2026-01-16
- * 🖋️ Description: "부모님 계정(User Profiles) 전체 관리 페이지"
+ * 🖋️ Description: "보호자 계정(User Profiles) 전체 관리 페이지"
  */
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -85,7 +85,7 @@ export function ParentList() {
             });
             setParents(merged);
         } catch (error) {
-            console.error('부모 목록 로딩 실패:', error);
+            console.error('보호자 목록 로딩 실패:', error);
         } finally {
             setLoading(false);
         }
@@ -170,12 +170,12 @@ export function ParentList() {
 
     return (
         <div className="space-y-6 p-2 pb-20">
-            <Helmet><title>부모님 계정 관리 - 자라다 Admin</title></Helmet>
+            <Helmet><title>보호자 계정 관리 - 자라다 Admin</title></Helmet>
 
             <div className="flex flex-col md:flex-row justify-between items-end gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">부모님 계정 관리</h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium">가입된 학부모 계정 목록 및 상태를 관리합니다.</p>
+                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">보호자 계정 관리</h1>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">가입된 보호자 계정 목록 및 상태를 관리합니다.</p>
                 </div>
                 <div>
                     <ExcelExportButton
@@ -183,12 +183,12 @@ export function ParentList() {
                             ...p,
                             children_names: p.children.map(c => c.name).join(', ')
                         }))}
-                        fileName="부모님_계정_목록"
+                        fileName="보호자_계정_목록"
                         headers={['name', 'email', 'children_names', 'status', 'created_at']}
                         headerLabels={{
                             name: '이름',
                             email: '이메일',
-                            children_names: '자녀',
+                            children_names: '어르신',
                             status: '상태',
                             created_at: '가입일'
                         }}
@@ -247,7 +247,7 @@ export function ParentList() {
                             <tr>
                                 <th className="px-6 py-5">프로필 정보</th>
                                 <th className="px-6 py-5">이메일 (ID)</th>
-                                <th className="px-6 py-5">연결된 자녀</th>
+                                <th className="px-6 py-5">연결된 어르신</th>
                                 <th className="px-6 py-5">상태</th>
                                 <th className="px-6 py-5 text-center">관리</th>
                             </tr>
@@ -284,7 +284,7 @@ export function ParentList() {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <span className="text-slate-300 text-xs">자녀 없음</span>
+                                                <span className="text-slate-300 text-xs">연결된 어르신 없음</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-5">
