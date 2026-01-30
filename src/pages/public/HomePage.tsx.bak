@@ -1,8 +1,8 @@
 ﻿// @ts-nocheck
 /* eslint-disable */
 /**
- * 🌿 SILVER CARE - Complete Redesign
- * 재가요양센터 전용 홈페이지 - 완전 신규 레이아웃
+ * ?�� SILVER CARE - Complete Redesign
+ * ?��??�양?�터 ?�용 ?�페?��? - ?�전 ?�규 ?�이?�웃
  */
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
@@ -19,7 +19,7 @@ export function HomePage() {
     const { center } = useCenter();
     const isDark = theme === 'dark';
 
-    const brandName = center?.name || getSetting('center_name') || "재가요양센터";
+    const brandName = center?.name || getSetting('center_name') || "?��??�양?�터";
     const phone = center?.phone || import.meta.env.VITE_CENTER_PHONE || '1588-0000';
     const basePath = center?.slug ? `/centers/${center.slug}` : '';
 
@@ -28,18 +28,18 @@ export function HomePage() {
     return (
         <div className={cn("min-h-screen", isDark ? "bg-slate-950 text-white" : "bg-white text-slate-900")}>
             <Helmet>
-                <title>{brandName} - 어르신의 행복한 일상을 함께합니다</title>
+                <title>{brandName} - ?�르?�의 ?�복???�상???�께?�니??/title>
             </Helmet>
 
             {/* ========================================
-                🌿 SECTION 1: HERO - 히어로 섹션
+                ?�� SECTION 1: HERO - ?�?�크�??�어�?
             ======================================== */}
             <section className="relative min-h-[90vh] flex items-center">
                 {/* Background Image */}
                 <div className="absolute inset-0">
                     <img
                         src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=2000"
-                        alt="어르신 돌봄"
+                        alt="?�르???�봄"
                         className="w-full h-full object-cover"
                     />
                     <div className={cn(
@@ -58,7 +58,7 @@ export function HomePage() {
                             {/* Badge */}
                             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-50 text-brand-700 text-sm font-bold mb-6">
                                 <span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse" />
-                                장기요양기관 지정 센터
+                                ?�기?�양기�? 지???�터
                             </span>
 
                             {/* Main Title */}
@@ -66,14 +66,14 @@ export function HomePage() {
                                 "text-4xl md:text-6xl font-black leading-tight mb-6",
                                 isDark ? "text-white" : "text-slate-900"
                             )}>
-                                {getSetting('home_title') || "부모님의 건강과 일상을\n함께 지켜드립니다."}
+                                {getSetting('home_title') || "부모님??건강???�상??n?�께 지켜드립니??}
                             </h1>
 
                             <p className={cn(
                                 "text-lg md:text-xl mb-10 leading-relaxed",
                                 isDark ? "text-slate-300" : "text-slate-600"
                             )}>
-                                {getSetting('home_subtitle') || "국가 공인 요양보호사가 직접 가정을 방문하여\n어르신의 신체활동과 일상생활을 정성껏 돌봅니다."}
+                                {getSetting('home_subtitle') || "�??공인 ?�양보호?��? 직접 가?�을 방문?�여\n?�르?�의 ?�체?�동�??�상?�활???�성�??�봅?�다."}
                             </p>
 
                             {/* CTA Buttons */}
@@ -96,7 +96,7 @@ export function HomePage() {
                                             : "border-slate-300 text-slate-700 hover:bg-slate-50"
                                     )}
                                 >
-                                    무료 상담 신청
+                                    무료 ?�담 ?�청
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                                     </svg>
@@ -108,7 +108,7 @@ export function HomePage() {
             </section>
 
             {/* ========================================
-                🌿 SECTION 2: 신뢰 배지 - 수평 스트립
+                ?�� SECTION 2: ?�뢰 배�? - ?�평 ?�트�?
             ======================================== */}
             <section className={cn(
                 "py-8 border-y",
@@ -117,10 +117,10 @@ export function HomePage() {
                 <div className="container mx-auto px-6">
                     <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
                         {[
-                            { icon: "🏛️", label: "장기요양기관 지정" },
-                            { icon: "🛡️", label: "배상책임보험 가입" },
-                            { icon: "👩‍⚕️", label: "전문 요양보호사" },
-                            { icon: "💚", label: "365일 케어 가능" },
+                            { icon: "?���?, label: "?�기?�양기�? 지?? },
+                            { icon: "?��", label: "배상책임보험 가?? },
+                            { icon: "?��?�⚕�?, label: "?�문 ?�양보호?? },
+                            { icon: "??, label: "365??케??가?? },
                         ].map((item, idx) => (
                             <div key={idx} className="flex items-center gap-3">
                                 <span className="text-2xl">{item.icon}</span>
@@ -135,7 +135,7 @@ export function HomePage() {
             </section>
 
             {/* ========================================
-                🌿 SECTION 3: 서비스 소개 - 그리드 카드
+                ?�� SECTION 3: ?�비???�개 - 그리??카드
             ======================================== */}
             <section className={cn("py-24", isDark ? "bg-slate-950" : "bg-white")}>
                 <div className="container mx-auto px-6">
@@ -147,34 +147,34 @@ export function HomePage() {
                             "text-3xl md:text-5xl font-black",
                             isDark ? "text-white" : "text-slate-900"
                         )}>
-                            맞춤형 케어 서비스
+                            맞춤??케???�비??
                         </h2>
                     </div>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {[
                             {
-                                icon: "👨‍🤝‍👨",
-                                title: "신체활동 지원",
-                                desc: "식사, 세면, 배설, 이동 등 일상생활 기본 동작을 도와드립니다.",
+                                icon: "?��?�🤝‍�?,
+                                title: "?�체?�동 지??,
+                                desc: "?�사, ?�면, 배설, ?�동 ???�상?�활 기본 ?�작???��??�립?�다.",
                                 color: "bg-blue-50 text-blue-600"
                             },
                             {
-                                icon: "🏠",
-                                title: "가사활동 지원",
-                                desc: "청소, 세탁, 식사 준비 등 쾌적한 생활환경을 만들어드립니다.",
+                                icon: "?��",
+                                title: "가?�활??지??,
+                                desc: "�?��, ?�탁, ?�사 준�???쾌적???�활?�경??만들?�드립니??",
                                 color: "bg-orange-50 text-orange-600"
                             },
                             {
-                                icon: "💊",
-                                title: "건강관리 지원",
-                                desc: "혈압/혈당 체크, 투약 관리, 병원 동행 서비스를 제공합니다.",
+                                icon: "?��",
+                                title: "건강관�?지??,
+                                desc: "?�압/?�당 체크, ?�약 관�? 병원 ?�행 ?�비?��? ?�공?�니??",
                                 color: "bg-red-50 text-red-600"
                             },
                             {
-                                icon: "🧠",
-                                title: "정서활동 지원",
-                                desc: "말벗 서비스와 외출 동행으로 정서적 안정을 도모합니다.",
+                                icon: "?��",
+                                title: "?�서?�동 지??,
+                                desc: "말벗 ?�비?��? ?�출 ?�행?�로 ?�서???�정???�모?�니??",
                                 color: "bg-brand-50 text-brand-600"
                             },
                         ].map((service, idx) => (
@@ -214,7 +214,7 @@ export function HomePage() {
                             to={`${basePath}/programs`}
                             className="inline-flex items-center gap-2 text-brand-600 font-bold hover:underline"
                         >
-                            모든 서비스 보기
+                            모든 ?�비??보기
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                             </svg>
@@ -224,7 +224,7 @@ export function HomePage() {
             </section>
 
             {/* ========================================
-                🌿 SECTION 4: 이용 절차 - 타임라인
+                ?�� SECTION 4: ?�용 ?�차 - ?�?�라??
             ======================================== */}
             <section className={cn(
                 "py-24",
@@ -239,16 +239,16 @@ export function HomePage() {
                             "text-3xl md:text-5xl font-black",
                             isDark ? "text-white" : "text-slate-900"
                         )}>
-                            서비스 이용 절차
+                            ?�비???�용 ?�차
                         </h2>
                     </div>
 
                     <div className="grid md:grid-cols-4 gap-8">
                         {[
-                            { step: "01", title: "전화 상담", desc: "문의 전화로 어르신 상황 파악" },
-                            { step: "02", title: "방문 상담", desc: "전문 상담사가 직접 방문 상담" },
-                            { step: "03", title: "등급 신청", desc: "장기요양등급 신청 대행 지원" },
-                            { step: "04", title: "서비스 시작", desc: "맞춤 요양보호사 배정 및 서비스" },
+                            { step: "01", title: "?�화 ?�담", desc: "문의 ?�화�??�르???�황 ?�악" },
+                            { step: "02", title: "방문 ?�담", desc: "?�문 ?�담?��? 직접 방문 ?�담" },
+                            { step: "03", title: "?�급 ?�청", desc: "?�기?�양?�급 ?�청 ?�??지?? },
+                            { step: "04", title: "?�비???�작", desc: "맞춤 ?�양보호??배정 ???�비?? },
                         ].map((item, idx) => (
                             <motion.div
                                 key={idx}
@@ -286,7 +286,7 @@ export function HomePage() {
             </section>
 
             {/* ========================================
-                🌿 SECTION 5: 왜 선택인가 - 스토리
+                ?�� SECTION 5: ???�?�인가 - ?�장??
             ======================================== */}
             <section className={cn("py-24", isDark ? "bg-slate-950" : "bg-white")}>
                 <div className="container mx-auto px-6">
@@ -299,7 +299,7 @@ export function HomePage() {
                                 "text-3xl md:text-5xl font-black mb-8",
                                 isDark ? "text-white" : "text-slate-900"
                             )}>
-                                {getSetting('home_story_title') || `${brandName}을\n선택해야 하는 이유`}
+                                {getSetting('home_story_title') || `${brandName}�?n?�택?�야 ?�는 ?�유`}
                             </h2>
                             <p className={cn("text-lg mb-8 leading-relaxed", isDark ? "text-slate-400" : "text-slate-600")}>
                                 {getSetting('home_story_body')}
@@ -307,10 +307,10 @@ export function HomePage() {
 
                             <div className="space-y-6">
                                 {[
-                                    { title: "국가 공인 전문 인력", desc: "요양보호사 자격증을 보유한 전문 인력을 배정합니다." },
-                                    { title: "1:1 맞춤 케어플랜", desc: "어르신의 건강 상태와 필요에 맞춘 개인별 케어플랜을 수립합니다." },
-                                    { title: "정기 모니터링", desc: "월 1회 보호자 피드백과 주간 케어 리포트를 제공합니다." },
-                                    { title: "24시간 긴급 연락망", desc: "응급 상황 발생 시 즉각 대응할 수 있는 비상 연락망을 운영합니다." },
+                                    { title: "�??공인 ?�문 ?�력", desc: "?�양보호???�격증을 보유???�문 ?�력�?배정?�니??" },
+                                    { title: "1:1 맞춤 케?�플??, desc: "?�르?�의 건강 ?�태?� ?�요??맞춘 개인�?케?�플?�을 ?�립?�니??" },
+                                    { title: "?�기 모니?�링", desc: "�?1??보호???�드백과 ?�간 케??리포?��? ?�공?�니??" },
+                                    { title: "24?�간 긴급 ?�락�?, desc: "?�급 ?�황 발생 ??즉각 ?�?�할 ???�는 비상 ?�락망을 ?�영?�니??" },
                                 ].map((item, idx) => (
                                     <motion.div
                                         key={idx}
@@ -343,7 +343,7 @@ export function HomePage() {
                         <div className="relative">
                             <img
                                 src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=800"
-                                alt="전문 케어 서비스"
+                                alt="?�문 케???�비??
                                 className="rounded-3xl shadow-2xl"
                             />
                             {/* Floating Stats Card */}
@@ -355,7 +355,7 @@ export function HomePage() {
                                 <div className={cn(
                                     "text-sm font-bold",
                                     isDark ? "text-slate-400" : "text-slate-600"
-                                )}>년 경력 전문가</div>
+                                )}>??경력 ?�문?�</div>
                             </div>
                         </div>
                     </div>
@@ -363,7 +363,7 @@ export function HomePage() {
             </section>
 
             {/* ========================================
-                🌿 SECTION 6: 최종 CTA
+                ?�� SECTION 6: 최종 CTA
             ======================================== */}
             <section className="py-24 bg-gradient-to-br from-brand-600 to-brand-800">
                 <div className="container mx-auto px-6 text-center">
@@ -373,11 +373,11 @@ export function HomePage() {
                         viewport={{ once: true }}
                     >
                         <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
-                            지금 바로 상담받으세요
+                            지�?바로 ?�담받으?�요
                         </h2>
                         <p className="text-brand-100 text-lg mb-10 max-w-xl mx-auto">
-                            어르신의 건강한 일상을 위한 첫 걸음,<br />
-                            무료 상담으로 시작해보세요.
+                            ?�르?�의 건강???�상???�한 �?걸음,<br />
+                            무료 ?�담?�로 ?�작?�보?�요.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <a
@@ -393,7 +393,7 @@ export function HomePage() {
                                 to={`${basePath}/contact`}
                                 className="inline-flex items-center justify-center gap-2 px-10 py-5 bg-brand-500 text-white rounded-2xl font-bold text-xl hover:bg-brand-400 transition-all"
                             >
-                                온라인 상담 신청
+                                ?�라???�담 ?�청
                             </Link>
                         </div>
                     </motion.div>
@@ -402,3 +402,5 @@ export function HomePage() {
         </div>
     );
 }
+
+
