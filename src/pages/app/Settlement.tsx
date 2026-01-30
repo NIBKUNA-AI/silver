@@ -91,12 +91,25 @@ export function Settlement() {
 
         setLoading(true);
         try {
-            // ✨ [Update] Removed Super Admin filter so the Owner/Admin can see their own payroll
-            const { data: staffData } = await supabase
-                .from('therapists')
-                .select('*')
-                .eq('center_id', centerId);
-            // .filter('email', 'not.in', superAdminListHost); // Hidden to allow Admin visibility
+            // ✨ [Redundant Strategy] Try RPC first (to bypass RLS), then fallback to standard select
+            let staffData = null;
+
+            const { data: rpcData, error: rpcError } = await supabase
+                .rpc('get_settlement_targets', { p_center_id: centerId });
+
+            if (!rpcError && rpcData) {
+                console.log("⚠️ Using RPC Data for Settlement Visibility");
+                staffData = rpcData;
+            } else {
+                console.warn("RPC Failed, falling back to standard select. (Please run database/fix_visibility.sql)", rpcError);
+                // Fallback
+                const { data: selectData } = await supabase
+                    .from('therapists')
+                    .select('*')
+                    .eq('center_id', centerId);
+                staffData = selectData;
+            }
+            if (!staffData) staffData = [];
 
             const startDate = `${selectedMonth}-01`;
             const endDate = new Date(new Date(startDate).setMonth(new Date(startDate).getMonth() + 1)).toISOString().slice(0, 10);
