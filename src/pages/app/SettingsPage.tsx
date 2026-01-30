@@ -11,6 +11,7 @@
  * 예술적 영감을 바탕으로 구축되었습니다.
  */
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { MessageCircle, Bell, LayoutTemplate, Info, BookOpen, Palette, CheckCircle2, Brain, Loader2, X, Receipt, Search, ChevronLeft, ChevronRight, Pencil, Clock, Share2, UserX, Heart } from 'lucide-react';
@@ -1256,14 +1257,14 @@ function TherapistProfilesManager({ centerId }: { centerId: string }) {
                 })}
             </div>
 
-            {isModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-900 w-full max-w-2xl p-8 rounded-[40px] shadow-2xl relative">
-                        <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-6">
+            {isModalOpen && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-2xl p-8 rounded-[40px] shadow-2xl relative max-h-[90vh] flex flex-col">
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-6 shrink-0">
                             {editingProfile ? '프로필 수정' : '새 프로필 등록'}
                         </h2>
 
-                        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar flex-1">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-400 uppercase ml-1">이름</label>
                                 <input
@@ -1336,12 +1337,13 @@ function TherapistProfilesManager({ centerId }: { centerId: string }) {
                             </div>
                         </div>
 
-                        <div className="mt-8 flex gap-3">
+                        <div className="mt-8 flex gap-3 shrink-0">
                             <button onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold rounded-2xl hover:bg-slate-200">취소</button>
                             <button onClick={handleSave} className="flex-1 py-4 bg-slate-900 dark:bg-indigo-600 text-white font-black rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">저장하기</button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
