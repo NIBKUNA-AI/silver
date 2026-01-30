@@ -119,8 +119,14 @@ export function TherapistList() {
                     }
                 });
 
-                if (error) throw error;
-                if (data && data.error) throw new Error(data.error);
+                if (error) {
+                    console.error("Invitation Function Error:", error);
+                    throw error;
+                }
+
+                if (data && data.error) {
+                    throw new Error(data.error);
+                }
 
                 // ✨ Show Custom Success Modal instead of Alert
                 setSuccessModal({
@@ -162,14 +168,22 @@ export function TherapistList() {
                     title: '정보 수정 완료',
                     message: `${formData.name}님의 정보가 성공적으로 업데이트되었습니다.`
                 });
-
-                fetchStaffs();
-                setIsModalOpen(false);
             }
 
-        } catch (error) {
-            console.error(error);
-            alert('❌ 처리 실패: ' + (error.message || '알 수 없는 오류'));
+            // Common Success Actions
+            await fetchStaffs();
+            setIsModalOpen(false);
+
+        } catch (error: any) {
+            console.error("직원 처리 중 오류:", error);
+
+            // Check for CORS or Network errors specifically
+            const errorMsg = error.message || "알 수 없는 오류가 발생했습니다.";
+            if (errorMsg.includes("Failed to fetch") || errorMsg.includes("NetworkError")) {
+                alert("서버 연결에 실패했습니다. (CORS/네트워크 오류)\n잠시 후 다시 시도하거나, 문제가 지속되면 관리자에게 문의하세요.\n(Tip: Supabase Edge Function의 JWT Verification 설정을 확인해주세요)");
+            } else {
+                alert(`오류가 발생했습니다: ${errorMsg}`);
+            }
         } finally {
             setLoading(false);
         }

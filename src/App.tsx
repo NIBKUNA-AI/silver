@@ -70,29 +70,9 @@ import { SplashScreen } from '@/components/SplashScreen';
 import { useState, useEffect } from 'react';
 
 function AppHomeRedirect() {
-  const { role, loading } = useAuth();
-
-  if (loading) return null; // 로딩 중에는 아무것도 렌더링하지 않아 플래시 방지
-
-  if (!role) {
-    return <GlobalLanding />;
-  }
-
-  if (role === 'super_admin') {
-    // 👑 [Sovereign Rule] If portal mode is requested, stay on landing.
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('mode') === 'portal') return <GlobalLanding />;
-
-    // Otherwise, check for sticky center or go to Master.
-    const stickySlug = localStorage.getItem('zarada_center_slug');
-    if (stickySlug) return <Navigate to="/app/dashboard" replace />;
-    return <Navigate to="/master/centers" replace />;
-  }
-
-  if (role === 'admin' || role === 'staff' || role === 'employee' || role === 'therapist') {
-    return <Navigate to="/app/schedule" replace />;
-  }
-  return <Navigate to="/parent/home" replace />;
+  // ✨ [Modified] Always show Global Landing Page first, even if logged in.
+  // The user explicitly requested to see the "Integrated Page" (GlobalLanding) when visiting the root URL.
+  return <GlobalLanding />;
 }
 
 function App() {

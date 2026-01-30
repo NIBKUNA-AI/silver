@@ -1,189 +1,183 @@
-// @ts-ignore
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// @ts-ignore
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.10";
+// @ts-nocheck
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+//
+// ⚠️ IMPORTANT CONFIGURATION REQUIRED ⚠️
+// You MUST disable "Enforce JWT Verification" for this function in the Supabase Dashboard.
+// 1. Go to Supabase Dashboard > Edge Functions > invite-user
+// 2. Click "Active" (or Settings icon)
+// 3. Uncheck "Enforce JWT Verification" and Save.
+// (We handle Auth manually in the code. If you don't do this, OPTIONS requests will fail with CORS errors)
 
-declare const Deno: {
-    env: { get: (key: string) => string | undefined };
-};
+import { createClient } from 'npm:@supabase/supabase-js@2.47.10'
 
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
 
-serve(async (req: Request) => {
-    const logTag = `[INVITE-USER-${Math.random().toString(36).substring(7)}]`;
-    console.log(`\n--- 🚀 ${logTag} START ---`);
-    console.log(`Method: ${req.method} | Time: ${new Date().toISOString()}`);
+Deno.serve(async (req) => {
+    const logTag = `[INVITE-USER-${Math.random().toString(36).substring(7)}]`
+    console.log(`\n--- 🚀 ${logTag} START ---`)
+    console.log(`Method: ${req.method} | Time: ${new Date().toISOString()}`)
 
-    if (req.method === "OPTIONS") {
-        console.log(`${logTag} 🛠️ [CORS] Handling OPTIONS request.`);
-        return new Response("ok", { headers: corsHeaders });
+    // 1. Handle CORS Preflight
+    if (req.method === 'OPTIONS') {
+        return new Response('ok', { headers: corsHeaders })
     }
 
     try {
-        // 1. [Headers Logging]
-        const authHeader = req.headers.get('Authorization');
-        const originHeader = req.headers.get('origin');
-        console.log(`${logTag} 🌐 Origin: ${originHeader}`);
-        console.log(`${logTag} 🔑 Auth Header Present: ${!!authHeader} (${authHeader?.substring(0, 20)}...)`);
-
-        // 2. [Env Variables Check]
-        const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-        const supabaseServiceKey =
-            Deno.env.get("PRIVATE_SERVICE_ROLE_KEY") ??
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
-            Deno.env.get("SB_SERVICE_ROLE_KEY") ?? "";
+        // 2. Environment Check
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('PRIVATE_SERVICE_ROLE_KEY')
 
         if (!supabaseUrl || !supabaseServiceKey) {
-            console.error(`${logTag} ❌ Critical: Environment variables missing.`);
-            return new Response(JSON.stringify({
-                error: "Server configuration error",
-                details: "Missing SERVICE_ROLE_KEY. Please set PRIVATE_SERVICE_ROLE_KEY in secrets."
-            }), { status: 500, headers: corsHeaders });
+            console.error(`${logTag} ❌ Critical: Environment variables missing.`)
+            return new Response(
+                JSON.stringify({ error: 'Server configuration error: Missing Secrets' }),
+                { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
         }
 
-        // 3. [Auth] Identify Caller
+        // 3. Auth Header Check
+        const authHeader = req.headers.get('Authorization')
         if (!authHeader) {
-            console.error(`${logTag} ❌ No Authorization header provided.`);
-            return new Response(JSON.stringify({ error: "Unauthorized: Missing token in headers" }), { status: 401, headers: corsHeaders });
+            return new Response(
+                JSON.stringify({ error: 'Missing Authorization header' }),
+                { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
         }
 
-        const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
-            global: { headers: { Authorization: authHeader } }
-        });
+        // 4. Validate User (Manual Auth)
+        const supabaseClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+            global: { headers: { Authorization: authHeader } },
+        })
 
-        const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+        const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
+
         if (authError || !user) {
-            console.error(`${logTag} ❌ getUser() failed: ${authError?.message || "User not found in session"}`);
-            return new Response(JSON.stringify({
-                error: "Unauthorized: Invalid or expired session",
-                details: authError?.message || "User session invalid"
-            }), { status: 401, headers: corsHeaders });
+            console.error(`${logTag} ❌ Unauthorized: ${authError?.message}`)
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized', details: authError?.message }),
+                { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
         }
 
-        console.log(`${logTag} 👤 Caller identified: ${user.email} (${user.id})`);
+        // 5. Check Permissions (Super Admin or Local Admin)
+        const SUPER_ADMINS = ['anukbin@gmail.com']
+        const isSuperAdmin = SUPER_ADMINS.includes(user.email || '')
 
-        // 4. [Admin Check] Use Service Role to bypass RLS
+        // Admin Client for Privileged Actions
         const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-            auth: { autoRefreshToken: false, persistSession: false }
-        });
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            }
+        })
 
-        const { data: callerProfile } = await supabaseAdmin
-            .from("user_profiles")
-            .select("role, center_id")
-            .eq("id", user.id)
-            .maybeSingle();
+        let targetCenterId = ''
 
-        const SUPER_ADMINS = ['anukbin@gmail.com'];
-        const isSuperAdmin = SUPER_ADMINS.includes(user.email || '');
-        const isAdmin = callerProfile?.role === 'admin';
+        if (isSuperAdmin) {
+            // Super Admin can pass center_id in body
+        } else {
+            // Normal Admin must be checked against DB
+            const { data: profile } = await supabaseAdmin
+                .from('user_profiles')
+                .select('role, center_id')
+                .eq('id', user.id)
+                .single()
 
-        console.log(`${logTag} 🔒 Permissions: isSuperAdmin=${isSuperAdmin}, isAdmin=${isAdmin}`);
-
-        if (!isSuperAdmin && !isAdmin) {
-            console.error(`${logTag} ❌ Permission Denied: Caller is neither SuperAdmin nor Admin.`);
-            return new Response(JSON.stringify({ error: "Forbidden: Admin access required." }), { status: 403, headers: corsHeaders });
+            if (profile?.role !== 'admin') {
+                return new Response(
+                    JSON.stringify({ error: 'Forbidden: You must be an Admin.' }),
+                    { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                )
+            }
+            targetCenterId = profile.center_id
         }
 
-        // 5. [Target Info Parsing]
-        const payload = await req.json();
-        const { email, name, role, center_id, redirectTo: clientRedirectTo, ...details } = payload;
-        const origin = originHeader || "https://app.myparents.co.kr";
-        const finalRedirectTo = clientRedirectTo || `${origin}/auth/update-password`;
+        // 6. Parse Body
+        const { email, name, role, center_id, redirectTo, ...details } = await req.json()
 
-        if (!email) throw new Error("Target email is required.");
+        if (isSuperAdmin && center_id) targetCenterId = center_id
 
-        // 🛡️ Multi-Center Safety
-        const targetCenterId = isSuperAdmin ? center_id : callerProfile?.center_id;
         if (!targetCenterId) {
-            console.error(`${logTag} ❌ Center ID mission: Admin must have a center_id or be SuperAdmin.`);
-            throw new Error("Target center identification failed.");
+            throw new Error("Target Center ID could not be determined.")
         }
 
-        console.log(`${logTag} 📧 Inviting: ${email} | Role: ${role} | Center: ${targetCenterId}`);
+        console.log(`${logTag} 📧 Inviting: ${email} -> Center: ${targetCenterId} (Role: ${role})`)
 
-        // 6. [Send Invitation]
-        console.log(`${logTag} 🔎 Attempting to invite user: ${email}...`);
+        // 7. Execute Invite
+        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
+            data: {
+                name,
+                full_name: name,
+                role,
+                center_id: targetCenterId
+            },
+            redirectTo: redirectTo || `${req.headers.get('origin')}/auth/update-password`
+        })
 
-        let finalUserId: string | null = null;
-
-        // 🚀 Always call inviteUserByEmail to trigger the actual invitation flow
-        const { data: authData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-            data: { name, role, full_name: name, center_id: targetCenterId },
-            redirectTo: finalRedirectTo,
-        });
+        let finalUserId = inviteData?.user?.id
 
         if (inviteError) {
-            if (inviteError.message.toLowerCase().includes("already")) {
-                console.log(`${logTag} ℹ️ User ${email} already exists in Auth. Syncing profile only...`);
-                const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
-                finalUserId = listData?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())?.id || null;
-
-                if (!finalUserId) {
-                    console.error(`${logTag} ❌ Failed to find existing user ID after 422 error.`);
-                    throw new Error("User exists but could not be resolved.");
+            // If user already exists, we might need to find them
+            if (inviteError.message.includes("already registered") || inviteError.status === 422) {
+                console.log(`${logTag} ℹ️ User exists, Syncing tables only...`)
+                const { data: existingProfile } = await supabaseAdmin.from('user_profiles').select('id').eq('email', email).maybeSingle()
+                if (existingProfile) {
+                    finalUserId = existingProfile.id
+                } else {
+                    // Try to find in Auth users list using listUsers (Last Resort)
+                    const { data: listData } = await supabaseAdmin.auth.admin.listUsers()
+                    const foundUser = listData?.users.find(u => u.email === email)
+                    if (foundUser) {
+                        finalUserId = foundUser.id
+                    } else {
+                        throw new Error("User exists in Auth but not in DB. Manual intervention required.")
+                    }
                 }
             } else {
-                console.error(`${logTag} ❌ Supabase Auth Invitation Error:`, inviteError.message);
-                throw inviteError;
+                throw inviteError
             }
-        } else {
-            console.log(`${logTag} 📧 Invitation email triggered successfully for: ${email}`);
-            finalUserId = authData?.user?.id;
         }
 
-        if (!finalUserId) throw new Error("Could not resolve target User ID.");
+        if (!finalUserId) throw new Error("Failed to resolve User ID")
 
-        // 7. [Sync] Strict profile/center binding
-        console.log(`${logTag} 🔄 Syncing profile for ${finalUserId} to center ${targetCenterId}...`);
-        const { error: syncError } = await supabaseAdmin
-            .from("user_profiles")
-            .upsert({
-                id: finalUserId,
+        // 8. Sync Tables
+        // User Profile
+        await supabaseAdmin.from('user_profiles').upsert({
+            id: finalUserId,
+            email,
+            name,
+            role: role || 'therapist',
+            center_id: targetCenterId,
+            status: 'active'
+        })
+
+        // Therapist Table
+        if (role !== 'parent') {
+            await supabaseAdmin.from('therapists').upsert({
                 email,
                 name,
-                role: role || 'therapist',
-                status: 'active',
-                center_id: targetCenterId
-            }, { onConflict: 'id' });
-
-        if (syncError) {
-            console.error(`${logTag} ❌ Profile Sync Error:`, syncError.message);
-            throw syncError;
+                center_id: targetCenterId,
+                system_role: role || 'therapist',
+                system_status: 'active',
+                ...details
+            }, { onConflict: 'email' })
         }
-
-        if (role !== 'parent') {
-            console.log(`${logTag} 🩺 Syncing to therapists table for role: ${role}`);
-            const { error: thError } = await supabaseAdmin
-                .from("therapists")
-                .upsert({
-                    email,
-                    name,
-                    center_id: targetCenterId,
-                    system_role: role || 'therapist',
-                    system_status: 'active',
-                    ...details
-                }, { onConflict: 'email' });
-            if (thError) console.warn(`${logTag} ⚠️ Staff table sync warning:`, thError.message);
-        }
-
-        console.log(`${logTag} ✅ SUCCESS: ${email} invited to center ${targetCenterId}`);
-        console.log(`--- ${logTag} FINISH ---\n`);
 
         return new Response(
-            JSON.stringify({ message: "Success", userId: finalUserId }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-        );
+            JSON.stringify({ message: 'Invitation sent successfully', userId: finalUserId }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
 
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        console.error(`${logTag} 🔴 EXCEPTION: ${errorMessage}`);
-        return new Response(JSON.stringify({ error: errorMessage }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 400,
-        });
+    } catch (err) {
+        console.error(`${logTag} 🔴 Error:`, err)
+        return new Response(
+            JSON.stringify({ error: err instanceof Error ? err.message : 'Unknown Error' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
     }
-});
+})
