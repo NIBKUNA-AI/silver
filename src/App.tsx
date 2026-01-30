@@ -70,9 +70,29 @@ import { SplashScreen } from '@/components/SplashScreen';
 import { useState, useEffect } from 'react';
 
 function AppHomeRedirect() {
-  // ✨ [Modified] Always show Global Landing Page first, even if logged in.
-  // The user explicitly requested to see the "Integrated Page" (GlobalLanding) when visiting the root URL.
-  return <GlobalLanding />;
+  const { role, loading } = useAuth();
+  const location = window.location;
+
+  // 1. If at root ('/'), ALWAYS show Global Landing (Portal)
+  if (location.pathname === '/') {
+    return <GlobalLanding />;
+  }
+
+  // 2. If at '/app', wait for loading then decide
+  if (loading) return null;
+
+  // 3. Not logged in? Go to Global Landing
+  if (!role) {
+    return <Navigate to="/" replace />;
+  }
+
+  // 4. Logged in? Route to appropriate initial page
+  if (role === 'parent') {
+    return <Navigate to="/parent/home" replace />;
+  }
+
+  // Admin/Staff/Therapist
+  return <Navigate to="/app/schedule" replace />;
 }
 
 function App() {
