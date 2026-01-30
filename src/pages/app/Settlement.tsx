@@ -91,12 +91,12 @@ export function Settlement() {
 
         setLoading(true);
         try {
-            const superAdminListHost = `("${SUPER_ADMIN_EMAILS.join('","')}")`;
+            // ✨ [Update] Removed Super Admin filter so the Owner/Admin can see their own payroll
             const { data: staffData } = await supabase
                 .from('therapists')
                 .select('*')
-                .eq('center_id', centerId)
-                .filter('email', 'not.in', superAdminListHost);
+                .eq('center_id', centerId);
+            // .filter('email', 'not.in', superAdminListHost); // Hidden to allow Admin visibility
 
             const startDate = `${selectedMonth}-01`;
             const endDate = new Date(new Date(startDate).setMonth(new Date(startDate).getMonth() + 1)).toISOString().slice(0, 10);
