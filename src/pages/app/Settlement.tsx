@@ -86,7 +86,14 @@ export function Settlement() {
         // ... (Excel logic preserved)
     };
 
-    // ... (useEffect preserved)
+    // ✨ Trigger logging on mount
+    useEffect(() => {
+        if (centerId) {
+            fetchSettlements();
+        } else {
+            setDiagLog(['Wait... Center ID not ready']);
+        }
+    }, [centerId]);
 
     const fetchSettlements = async () => {
         if (!centerId) return;
