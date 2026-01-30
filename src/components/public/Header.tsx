@@ -114,12 +114,12 @@ export function Header() {
                                 <img
                                     src={branding.logo_url}
                                     alt={branding.name}
-                                    className="h-12 md:h-14 w-auto object-contain transition-all duration-300 group-hover:scale-105"
+                                    className="h-12 md:h-14 w-auto object-contain rounded-2xl transition-all duration-300 group-hover:scale-105"
                                     style={isDark ? { filter: 'brightness(0) invert(1)' } : undefined}
                                 />
                             ) : (
                                 <span className="text-xl font-black tracking-tighter" style={{ color: branding.brand_color }}>
-                                    Zarada
+                                    SilverTree
                                 </span>
                             )}
                         </Link>
@@ -137,8 +137,8 @@ export function Header() {
                                         rel="noopener noreferrer"
                                         className={cn(
                                             "text-[13px] font-bold transition-all hover:scale-105 flex items-center gap-1.5 px-4 py-2 rounded-full",
-                                            "bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 hover:border-indigo-500/20",
-                                            isDark ? "text-indigo-300" : "text-indigo-600"
+                                            "bg-[#6B8E6B]/5 hover:bg-[#6B8E6B]/10 border border-[#6B8E6B]/10 hover:border-[#6B8E6B]/20",
+                                            isDark ? "text-[#8AAD8A]" : "text-[#6B8E6B]"
                                         )}
                                     >
                                         <span className="relative">
@@ -205,7 +205,7 @@ export function Header() {
                                                         : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 shadow-slate-100"
                                                 )}
                                             >
-                                                {isParent ? "👶 마이 페이지" : "⚙️ 업무 시스템"}
+                                                {isParent ? "👤 마이 페이지" : "⚙️ 업무 시스템"}
                                             </Link>
 
                                             <div className="relative">
@@ -377,7 +377,7 @@ export function Header() {
                                                     onClick={() => setIsMenuOpen(false)}
                                                 >
                                                     {item.name}
-                                                    {isActive(item.href) && <span className="ml-2 text-indigo-500">.</span>}
+                                                    {isActive(item.href) && <span className="ml-2 text-[#6B8E6B]">.</span>}
                                                 </Link>
                                             )}
                                         </motion.div>
@@ -412,7 +412,7 @@ export function Header() {
                                                 ) : (
                                                     <Link
                                                         to="/app/dashboard"
-                                                        className="w-full py-4 text-center text-lg font-bold text-white bg-indigo-600 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98]"
+                                                        className="w-full py-4 text-center text-lg font-bold text-white bg-[#6B8E6B] rounded-2xl hover:bg-[#5A7A5A] transition-all shadow-lg shadow-[#6B8E6B]/20 active:scale-[0.98]"
                                                         onClick={() => setIsMenuOpen(false)}
                                                     >
                                                         업무 시스템

@@ -1,7 +1,7 @@
 {
-    "name": "Zarada - 스마트한 센터 관리",
-    "short_name": "Zarada",
-    "description": "우리 아이 성장 관리, 자라다와 함께하세요.",
+    "name": "SilverTree - 스마트한 실버 케어 관리",
+    "short_name": "SilverTree",
+    "description": "부모님을 위한 따뜻한 선택, 실버트리와 함께하세요.",
     "start_url": "/",
     "scope": "/",
     "display": "standalone",

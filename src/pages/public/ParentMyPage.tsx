@@ -1,7 +1,7 @@
 // @ts-nocheck
 /* eslint-disable */
 /**
- * 🎨 Project: Zarada ERP - The Sovereign Canvas
+ * 🎨 Project: SilverTree ERP - The Sovereign Canvas
  * 🛠️ Created by: 안욱빈 (An Uk-bin)
  * 📅 Date: 2026-01-10
  * 🖋️ Description: "코드와 데이터로 세상을 채색하다."
@@ -92,7 +92,7 @@ export function ParentMyPage() {
     const handleShare = async () => {
         const shareData = {
             title: centerName,
-            text: `${centerName}에서 우리 아이의 성장을 확인해보세요!`,
+            text: `${centerName}에서 부모님의 돌봄 상태를 확인해보세요!`,
             url: window.location.origin
         };
         if (navigator.share) {
@@ -127,13 +127,13 @@ export function ParentMyPage() {
     };
 
     return (
-        <div className={cn("min-h-screen p-6 pb-32 transition-colors", isDark ? "bg-slate-950 text-slate-100" : "bg-[#FDFCFB] text-slate-900")}>
+        <div className={cn("min-h-screen p-6 pb-32 transition-colors", isDark ? "bg-slate-950 text-slate-100" : "bg-[#FDF8F3] text-slate-900")}>
             <Helmet><title>마이페이지 | {centerName}</title></Helmet>
 
             <header className="mb-8 mt-4 px-2">
                 <h1 className="text-3xl font-black mb-2">마이페이지</h1>
                 <p className={cn("text-sm font-bold", isDark ? "text-slate-400" : "text-slate-500")}>
-                    내 정보와 연결된 자녀를 관리합니다.
+                    내 정보와 연결된 부모님(어르신)을 관리합니다.
                 </p>
             </header>
 
@@ -156,7 +156,7 @@ export function ParentMyPage() {
                     <h2 className="text-lg font-black">{profile?.name || user?.user_metadata?.name || '부모님'}</h2>
                     <p className={cn("text-xs font-medium", isDark ? "text-slate-500" : "text-slate-400")}>{user?.email}</p>
                     <div className="flex flex-wrap gap-2 mt-2">
-                        <span className="px-2 py-1 rounded-md bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase tracking-wider">Parent</span>
+                        <span className="px-2 py-1 rounded-md bg-[#6B8E6B]/10 text-[#6B8E6B] text-[10px] font-black uppercase tracking-wider">Guardian</span>
                         {/* ✨ Super Admin Access Button */}
                         {(user?.user_metadata?.role === 'super_admin') && (
                             <a href="/app/dashboard" className="px-2 py-1 rounded-md bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-wider hover:bg-rose-100 transition-colors">
@@ -171,13 +171,13 @@ export function ParentMyPage() {
             <section className="mb-8">
                 <div className="flex items-center justify-between mb-4 px-2">
                     <h3 className="text-lg font-black flex items-center gap-2">
-                        <Gift className="w-5 h-5 text-indigo-500" /> 연결된 자녀
+                        <Gift className="w-5 h-5 text-[#6B8E6B]" /> 연결된 어르신
                     </h3>
                     <button
                         onClick={() => setShowInviteModal(true)}
-                        className="text-xs font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full hover:bg-indigo-100 transition-colors"
+                        className="text-xs font-black text-[#6B8E6B] bg-[#6B8E6B]/10 px-3 py-1.5 rounded-full hover:bg-[#6B8E6B]/20 transition-colors"
                     >
-                        + 자녀 추가
+                        + 어르신 추가
                     </button>
                 </div>
 
@@ -204,8 +204,8 @@ export function ParentMyPage() {
                         ))
                     ) : (
                         <div className="p-8 rounded-3xl border-2 border-dashed border-slate-200 text-center space-y-2">
-                            <p className="text-slate-400 font-bold text-sm">연결된 자녀가 없습니다.</p>
-                            <button onClick={() => setShowInviteModal(true)} className="text-indigo-600 font-black text-sm underline">초대 코드 입력하기</button>
+                            <p className="text-slate-400 font-bold text-sm">연결된 어르신이 없습니다.</p>
+                            <button onClick={() => setShowInviteModal(true)} className="text-[#6B8E6B] font-black text-sm underline">초대 코드 입력하기</button>
                         </div>
                     )}
                 </div>
@@ -214,7 +214,7 @@ export function ParentMyPage() {
             {/* Customer Support */}
             <section className="mb-8">
                 <h3 className="text-lg font-black flex items-center gap-2 mb-4 px-2">
-                    <Phone className="w-5 h-5 text-indigo-500" /> 고객 지원
+                    <Phone className="w-5 h-5 text-[#6B8E6B]" /> 고객 지원
                 </h3>
                 <div className={cn(
                     "rounded-[32px] overflow-hidden border custom-button-action",
@@ -274,7 +274,7 @@ export function ParentMyPage() {
                 isOpen={showInviteModal}
                 onClose={() => setShowInviteModal(false)}
                 onSuccess={(name) => {
-                    alert(`${name} 어린이와 연결되었습니다!`);
+                    alert(`${name} 어르신과 연결되었습니다!`);
                     fetchChildren();
                     setShowInviteModal(false);
                 }}

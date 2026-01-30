@@ -1,5 +1,5 @@
 /**
- * 🎨 Project: Zarada ERP
+ * 🎨 Project: SilverTree ERP
  * Refactored for Multi-tenancy Support
  */
 import { useCenterBranding } from '@/hooks/useCenterBranding';
@@ -13,7 +13,7 @@ export function ZaradaLogoFooter() {
                 <img
                     src={branding.logo_url}
                     alt={branding.name}
-                    className="h-16 w-auto object-contain transition-all hover:scale-105"
+                    className="h-16 w-auto object-contain rounded-2xl transition-all hover:scale-105"
                 />
             ) : (
                 /* Fallback to Text Logo if no image */
@@ -21,7 +21,7 @@ export function ZaradaLogoFooter() {
                     {/* ✨ 'Z' Point Design */}
                     {branding.name ? (
                         <>
-                            <span className="text-primary text-4xl mr-0.5">{branding.name.charAt(0)}</span>
+                            <span className="text-[#6B8E6B] text-4xl mr-0.5">{branding.name.charAt(0)}</span>
                             <span className="text-slate-900">{branding.name.slice(1)}</span>
                         </>
                     ) : (

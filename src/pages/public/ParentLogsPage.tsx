@@ -138,23 +138,23 @@ export function ParentLogsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#FDFCFB] flex items-center justify-center">
+            <div className="min-h-screen bg-[#FDF8F3] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                    <p className="text-slate-400 font-black animate-pulse">아이의 성장을 정리 중...</p>
+                    <div className="w-16 h-16 border-4 border-[#6B8E6B]/20 border-t-[#6B8E6B] rounded-full animate-spin"></div>
+                    <p className="text-slate-400 font-black animate-pulse">어르신의 일상을 정리 중...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#FDFCFB] pb-32 font-sans overflow-x-hidden">
+        <div className="min-h-screen bg-[#FDF8F3] pb-32 font-sans overflow-x-hidden">
             {/* Header */}
             <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-5 flex justify-between items-center shadow-sm">
                 <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-50 rounded-full transition-all">
                     <ChevronLeft className="w-6 h-6 text-slate-900" />
                 </button>
-                <h1 className="text-lg font-black text-slate-900 tracking-tight text-center flex-1">성장 기록 갤러리</h1>
+                <h1 className="text-lg font-black text-slate-900 tracking-tight text-center flex-1">돌봄 기록 갤러리</h1>
                 <div className="w-10"></div>
             </header>
 
@@ -178,13 +178,13 @@ export function ParentLogsPage() {
 
                                         <div className="relative z-10 space-y-4">
                                             <div className="flex justify-between items-center">
-                                                <div className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-2xl text-[11px] font-black">
+                                                <div className="px-4 py-1.5 bg-[#6B8E6B]/10 text-[#6B8E6B] rounded-2xl text-[11px] font-black">
                                                     {new Date(log.session_date).toLocaleDateString('ko-KR', { day: 'numeric', weekday: 'short' })}
                                                 </div>
                                                 <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{log.therapists?.name} 선생님</span>
                                             </div>
 
-                                            <h3 className="text-slate-900 font-black text-lg line-clamp-1 group-hover:text-primary transition-colors pr-4">
+                                            <h3 className="text-slate-900 font-black text-lg line-clamp-1 group-hover:text-[#6B8E6B] transition-colors pr-4">
                                                 {log.content || "기록된 일지가 없습니다."}
                                             </h3>
 
@@ -192,7 +192,7 @@ export function ParentLogsPage() {
                                                 {log.content ? `"${log.content.slice(0, 60)}..."` : '터치하여 상세 내용을 확인하세요.'}
                                             </p>
 
-                                            <div className="pt-2 flex items-center gap-1 text-primary font-black text-[10px] uppercase tracking-tighter">
+                                            <div className="pt-2 flex items-center gap-1 text-[#6B8E6B] font-black text-[10px] uppercase tracking-tighter">
                                                 자세히 보기 <ChevronRight className="w-3 h-3" />
                                             </div>
                                         </div>
@@ -203,8 +203,8 @@ export function ParentLogsPage() {
                     ))
                 ) : (
                     <div className="py-20 text-center space-y-6">
-                        <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-4xl">🌱</div>
-                        <p className="text-slate-400 font-black text-lg">아직 기록된 성장의 순간이 없습니다.</p>
+                        <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-4xl">🌳</div>
+                        <p className="text-slate-400 font-black text-lg">아직 기록된 돌봄의 순간이 없습니다.</p>
                     </div>
                 )}
 
@@ -212,8 +212,8 @@ export function ParentLogsPage() {
                 {parentObservations.length > 0 && (
                     <section className="pt-12 border-t border-slate-100">
                         <div className="flex items-center gap-3 mb-8">
-                            <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 text-xl">📝</div>
-                            <h2 className="text-xl font-black text-slate-900">우리 아이 관찰 노트</h2>
+                            <div className="w-10 h-10 bg-[#6B8E6B]/10 rounded-2xl flex items-center justify-center text-[#6B8E6B] text-xl">📝</div>
+                            <h2 className="text-xl font-black text-slate-900">어르신 관찰 노트</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {parentObservations.map((obs) => (
@@ -238,7 +238,7 @@ export function ParentLogsPage() {
                         {/* Modal Header */}
                         <div className="px-8 py-7 bg-white border-b border-slate-50 flex justify-between items-center shrink-0">
                             <div>
-                                <h2 className="text-2xl font-black text-slate-900 tracking-tight">{selectedLog.session_date} 수업 리포트</h2>
+                                <h2 className="text-2xl font-black text-slate-900 tracking-tight">{selectedLog.session_date} 돌봄 리포트</h2>
                                 <p className="text-[11px] font-bold text-slate-400 mt-1 flex items-center gap-1.5">
                                     <User className="w-3 h-3" /> {selectedLog.therapists?.name} 선생님의 전문 기록
                                 </p>
@@ -252,10 +252,10 @@ export function ParentLogsPage() {
                         <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar">
                             {/* 1. 상담 일지 */}
                             <section className="space-y-5">
-                                <div className="flex items-center gap-2 text-primary font-black text-[11px] uppercase tracking-[0.2em]">
+                                <div className="flex items-center gap-2 text-[#6B8E6B] font-black text-[11px] uppercase tracking-[0.2em]">
                                     <MessageSquare className="w-4 h-4" /> 회기 요약 일지
                                 </div>
-                                <div className="bg-primary/5 p-8 rounded-[40px] border border-primary/10">
+                                <div className="bg-[#6B8E6B]/5 p-8 rounded-[40px] border border-[#6B8E6B]/10">
                                     <p className="text-slate-800 font-bold leading-relaxed text-[17px] whitespace-pre-wrap tracking-tight">
                                         {selectedLog.content || '작성된 내용이 없습니다.'}
                                     </p>

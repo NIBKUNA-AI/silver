@@ -19,15 +19,15 @@ export interface CenterBranding {
 
 const DEFAULT_BRANDING: CenterBranding = {
     id: '',
-    name: 'Careple Center',
-    logo_url: null,
+    name: 'SilverTree',
+    logo_url: '/logo.png', // Default to the new logo
     phone: '',
     address: '',
     email: '',
     weekday_hours: '',
     saturday_hours: '',
     holiday_text: '일요일/공휴일 휴무',
-    brand_color: '#4f46e5',
+    brand_color: '#6B8E6B', // Sage Green
     settings: {
         center_email: '',
         center_address: '',
