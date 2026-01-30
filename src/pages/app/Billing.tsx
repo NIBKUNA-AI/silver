@@ -19,8 +19,9 @@ import { useCenter } from '@/contexts/CenterContext';
 import { ExcelExportButton } from '@/components/common/ExcelExportButton';
 import {
     ChevronLeft, ChevronRight, Search, CreditCard, Banknote, Receipt,
-    X, Loader2, CheckSquare, Square, Settings2, Trash2, User
+    X, Loader2, CheckSquare, Square, Settings2, Trash2, User, Calculator
 } from 'lucide-react';
+import { FeeCalculatorPanel } from '@/components/app/billing/FeeCalculatorPanel';
 
 export function Billing() {
     const { theme } = useTheme();
@@ -32,6 +33,7 @@ export function Billing() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedChild, setSelectedChild] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'settlement' | 'calculator'>('settlement'); // ✨ Tab state
     const { center } = useCenter(); // ✨ Use center from context
 
     const fetchData = async () => {
@@ -100,83 +102,121 @@ export function Billing() {
 
     return (
         <div className={cn("p-8 space-y-6 min-h-screen transition-colors", isDark ? "bg-slate-950" : "bg-slate-50")}>
-            <Helmet><title>수납 관리 - 자라다</title></Helmet>
+            <Helmet><title>수납 관리 - 이지케어</title></Helmet>
 
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-4">
                     <h1 className={cn("text-3xl font-black tracking-tight", isDark ? "text-white" : "text-slate-900")}>수납 관리</h1>
                     {/* ✨ [Export] Excel Download Button */}
-                    <ExcelExportButton
-                        data={stats.childList}
-                        fileName={`수납리스트_${selectedMonth}`}
-                        headers={['name', 'completed', 'paid', 'credit']}
-                        headerLabels={{
-                            name: '어르신',
-                            completed: '총 서비스료',
-                            paid: '기수납액',
-                            credit: '잔여 크레딧'
-                        }}
-                    />
-                </div>
-
-                <div className={cn("flex items-center gap-3 p-2 rounded-2xl border shadow-sm", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}>
-                    <button onClick={() => changeMonth(-1)} className={cn("p-1 rounded-xl transition-colors", isDark ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100")}><ChevronLeft /></button>
-                    <input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className={cn("font-bold border-none text-lg cursor-pointer outline-none bg-transparent", isDark ? "text-white" : "text-slate-900")} />
-                    <button onClick={() => changeMonth(1)} className={cn("p-1 rounded-xl transition-colors", isDark ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100")}><ChevronRight /></button>
-                </div>
-            </div>
-
-            <div className={cn("rounded-[32px] border shadow-xl overflow-hidden", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}>
-                <div className={cn("p-8 border-b flex justify-between items-center", isDark ? "bg-slate-900/50 border-slate-800" : "bg-slate-50/50 border-slate-200")}>
-                    <div className={cn("flex items-center gap-3 font-bold text-xl", isDark ? "text-white" : "text-slate-800")}><Receipt className="text-blue-600" /> {selectedMonth.split('-')[1]}월 수납 대장</div>
-
-                    <div className="relative w-80">
-                        <Search className={cn("absolute left-4 top-3.5 w-5 h-5", isDark ? "text-slate-500" : "text-slate-400")} />
-                        <input
-                            type="text"
-                            placeholder="어르신 이름 검색..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className={cn("w-full pl-12 pr-4 py-3.5 border rounded-2xl text-sm transition-all outline-none", isDark ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:ring-4 focus:ring-indigo-500/20" : "border-slate-200 focus:ring-4 focus:ring-blue-50")}
+                    {activeTab === 'settlement' && (
+                        <ExcelExportButton
+                            data={stats.childList}
+                            fileName={`수납리스트_${selectedMonth}`}
+                            headers={['name', 'completed', 'paid', 'credit']}
+                            headerLabels={{
+                                name: '어르신',
+                                completed: '총 서비스료',
+                                paid: '기수납액',
+                                credit: '잔여 크레딧'
+                            }}
                         />
-                    </div>
+                    )}
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className={cn("text-xs font-black uppercase tracking-widest", isDark ? "bg-slate-800 text-slate-400" : "bg-slate-50 text-slate-400")}>
-                            <tr><th className="p-4 md:p-8">어르신 정보</th><th className="p-4 md:p-8 text-right">서비스료(완료)</th><th className="p-4 md:p-8 text-right">기수납액</th><th className="p-4 md:p-8 text-right">잔액</th><th className="p-4 md:p-8 text-center">관리</th></tr>
-                        </thead>
-                        <tbody className={cn("divide-y", isDark ? "divide-slate-800" : "divide-slate-100")}>
-                            {loading ? (
-                                <tr><td colSpan={5} className="p-20 text-center"><Loader2 className="animate-spin inline-block w-8 h-8 text-blue-500" /></td></tr>
-                            ) : stats.childList.length === 0 ? (
-                                <tr><td colSpan={5} className={cn("p-20 text-center font-bold", isDark ? "text-slate-500" : "text-slate-400")}>해당 조건의 데이터가 없습니다.</td></tr>
-                            ) : (
-                                stats.childList.map(child => {
-                                    const balance = child.completed - child.paid;
-                                    return (
-                                        <tr key={child.id} className={cn("transition-all cursor-pointer group", isDark ? "hover:bg-slate-800/50" : "hover:bg-blue-50/20")} onClick={() => { setSelectedChild(child); setIsModalOpen(true); }}>
-                                            <td className={cn("p-4 md:p-8 font-bold text-lg md:text-xl flex items-center gap-4", isDark ? "text-white" : "text-slate-900")}>
-                                                <div className={cn("w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-colors shrink-0", isDark ? "bg-slate-800 text-slate-500 group-hover:bg-indigo-900 group-hover:text-indigo-400" : "bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-500")}><User /></div>
-                                                {child.name}
-                                            </td>
-                                            <td className={cn("p-4 md:p-8 text-right font-black", isDark ? "text-slate-200" : "text-slate-700")}>{child.completed.toLocaleString()}원</td>
-                                            <td className={cn("p-4 md:p-8 text-right font-bold", isDark ? "text-slate-500" : "text-slate-400")}>{child.paid.toLocaleString()}원</td>
-                                            <td className={cn("p-4 md:p-8 text-right font-black text-lg md:text-2xl", balance > 0 ? "text-rose-500" : balance < 0 ? "text-indigo-500" : "text-emerald-500")}>
-                                                {balance === 0 ? "0원" : balance > 0 ? `${balance.toLocaleString()}원` : `+${Math.abs(balance).toLocaleString()}원(과납)`}
-                                            </td>
-                                            <td className="p-4 md:p-8 text-center">
-                                                <button className={cn("px-6 py-2 md:px-8 md:py-3 rounded-2xl font-black transition-all shadow-lg active:scale-95 text-xs md:text-sm whitespace-nowrap", isDark ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-slate-900 text-white hover:bg-blue-600")}>상세 수납</button>
-                                            </td>
-                                        </tr>
-                                    )
-                                })
-                            )}
-                        </tbody>
-                    </table>
+                {/* ✨ Tab Navigation */}
+                <div className={cn("flex items-center gap-2 p-1.5 rounded-2xl", isDark ? "bg-slate-900" : "bg-slate-100")}>
+                    <button
+                        onClick={() => setActiveTab('settlement')}
+                        className={cn(
+                            "flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all",
+                            activeTab === 'settlement'
+                                ? isDark ? "bg-indigo-600 text-white shadow-lg" : "bg-white text-slate-900 shadow-lg"
+                                : isDark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
+                        )}
+                    >
+                        <Receipt className="w-4 h-4" /> 수납 대장
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('calculator')}
+                        className={cn(
+                            "flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm transition-all",
+                            activeTab === 'calculator'
+                                ? isDark ? "bg-indigo-600 text-white shadow-lg" : "bg-white text-slate-900 shadow-lg"
+                                : isDark ? "text-slate-400 hover:text-white" : "text-slate-500 hover:text-slate-900"
+                        )}
+                    >
+                        <Calculator className="w-4 h-4" /> 수가 계산기
+                    </button>
                 </div>
             </div>
+
+            {/* ✨ Tab Content: Calculator */}
+            {activeTab === 'calculator' && (
+                <FeeCalculatorPanel isDark={isDark} />
+            )}
+
+            {/* ✨ Tab Content: Settlement Table (Original) */}
+            {activeTab === 'settlement' && (
+                <>
+                    <div className={cn("flex items-center gap-3 p-2 rounded-2xl border shadow-sm w-fit", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}>
+                        <button onClick={() => changeMonth(-1)} className={cn("p-1 rounded-xl transition-colors", isDark ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100")}><ChevronLeft /></button>
+                        <input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className={cn("font-bold border-none text-lg cursor-pointer outline-none bg-transparent", isDark ? "text-white" : "text-slate-900")} />
+                        <button onClick={() => changeMonth(1)} className={cn("p-1 rounded-xl transition-colors", isDark ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100")}><ChevronRight /></button>
+                    </div>
+
+                    <div className={cn("rounded-[32px] border shadow-xl overflow-hidden", isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200")}>
+                        <div className={cn("p-8 border-b flex justify-between items-center", isDark ? "bg-slate-900/50 border-slate-800" : "bg-slate-50/50 border-slate-200")}>
+                            <div className={cn("flex items-center gap-3 font-bold text-xl", isDark ? "text-white" : "text-slate-800")}><Receipt className="text-blue-600" /> {selectedMonth.split('-')[1]}월 수납 대장</div>
+
+                            <div className="relative w-80">
+                                <Search className={cn("absolute left-4 top-3.5 w-5 h-5", isDark ? "text-slate-500" : "text-slate-400")} />
+                                <input
+                                    type="text"
+                                    placeholder="어르신 이름 검색..."
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                    className={cn("w-full pl-12 pr-4 py-3.5 border rounded-2xl text-sm transition-all outline-none", isDark ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:ring-4 focus:ring-indigo-500/20" : "border-slate-200 focus:ring-4 focus:ring-blue-50")}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className={cn("text-xs font-black uppercase tracking-widest", isDark ? "bg-slate-800 text-slate-400" : "bg-slate-50 text-slate-400")}>
+                                    <tr><th className="p-4 md:p-8">어르신 정보</th><th className="p-4 md:p-8 text-right">서비스료(완료)</th><th className="p-4 md:p-8 text-right">기수납액</th><th className="p-4 md:p-8 text-right">잔액</th><th className="p-4 md:p-8 text-center">관리</th></tr>
+                                </thead>
+                                <tbody className={cn("divide-y", isDark ? "divide-slate-800" : "divide-slate-100")}>
+                                    {loading ? (
+                                        <tr><td colSpan={5} className="p-20 text-center"><Loader2 className="animate-spin inline-block w-8 h-8 text-blue-500" /></td></tr>
+                                    ) : stats.childList.length === 0 ? (
+                                        <tr><td colSpan={5} className={cn("p-20 text-center font-bold", isDark ? "text-slate-500" : "text-slate-400")}>해당 조건의 데이터가 없습니다.</td></tr>
+                                    ) : (
+                                        stats.childList.map(child => {
+                                            const balance = child.completed - child.paid;
+                                            return (
+                                                <tr key={child.id} className={cn("transition-all cursor-pointer group", isDark ? "hover:bg-slate-800/50" : "hover:bg-blue-50/20")} onClick={() => { setSelectedChild(child); setIsModalOpen(true); }}>
+                                                    <td className={cn("p-4 md:p-8 font-bold text-lg md:text-xl flex items-center gap-4", isDark ? "text-white" : "text-slate-900")}>
+                                                        <div className={cn("w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-colors shrink-0", isDark ? "bg-slate-800 text-slate-500 group-hover:bg-indigo-900 group-hover:text-indigo-400" : "bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-500")}><User /></div>
+                                                        {child.name}
+                                                    </td>
+                                                    <td className={cn("p-4 md:p-8 text-right font-black", isDark ? "text-slate-200" : "text-slate-700")}>{child.completed.toLocaleString()}원</td>
+                                                    <td className={cn("p-4 md:p-8 text-right font-bold", isDark ? "text-slate-500" : "text-slate-400")}>{child.paid.toLocaleString()}원</td>
+                                                    <td className={cn("p-4 md:p-8 text-right font-black text-lg md:text-2xl", balance > 0 ? "text-rose-500" : balance < 0 ? "text-indigo-500" : "text-emerald-500")}>
+                                                        {balance === 0 ? "0원" : balance > 0 ? `${balance.toLocaleString()}원` : `+${Math.abs(balance).toLocaleString()}원(과납)`}
+                                                    </td>
+                                                    <td className="p-4 md:p-8 text-center">
+                                                        <button className={cn("px-6 py-2 md:px-8 md:py-3 rounded-2xl font-black transition-all shadow-lg active:scale-95 text-xs md:text-sm whitespace-nowrap", isDark ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-slate-900 text-white hover:bg-blue-600")}>상세 수납</button>
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </>
+            )}
             {isModalOpen && <PaymentModal childData={selectedChild} month={selectedMonth} onClose={() => setIsModalOpen(false)} onSuccess={fetchData} isDark={isDark} />}
         </div>
     );

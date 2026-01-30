@@ -1,0 +1,206 @@
+[
+    {
+        "grade": 1,
+        "limit": 2069900,
+        "visits": [
+            {
+                "time": 30,
+                "price": 16630
+            },
+            {
+                "time": 60,
+                "price": 24120
+            },
+            {
+                "time": 90,
+                "price": 32130
+            },
+            {
+                "time": 120,
+                "price": 40680
+            },
+            {
+                "time": 150,
+                "price": 47250
+            },
+            {
+                "time": 180,
+                "price": 54320
+            },
+            {
+                "time": 210,
+                "price": 60920
+            },
+            {
+                "time": 240,
+                "price": 67540
+            }
+        ]
+    },
+    {
+        "grade": 2,
+        "limit": 1869600,
+        "visits": [
+            {
+                "time": 30,
+                "price": 16630
+            },
+            {
+                "time": 60,
+                "price": 24120
+            },
+            {
+                "time": 90,
+                "price": 32130
+            },
+            {
+                "time": 120,
+                "price": 40680
+            },
+            {
+                "time": 150,
+                "price": 47250
+            },
+            {
+                "time": 180,
+                "price": 54320
+            },
+            {
+                "time": 210,
+                "price": 60920
+            },
+            {
+                "time": 240,
+                "price": 67540
+            }
+        ]
+    },
+    {
+        "grade": 3,
+        "limit": 1455800,
+        "visits": [
+            {
+                "time": 30,
+                "price": 16630
+            },
+            {
+                "time": 60,
+                "price": 24120
+            },
+            {
+                "time": 90,
+                "price": 32130
+            },
+            {
+                "time": 120,
+                "price": 40680
+            },
+            {
+                "time": 150,
+                "price": 47250
+            },
+            {
+                "time": 180,
+                "price": 54320
+            },
+            {
+                "time": 210,
+                "price": 60920
+            },
+            {
+                "time": 240,
+                "price": 67540
+            }
+        ]
+    },
+    {
+        "grade": 4,
+        "limit": 1341800,
+        "visits": [
+            {
+                "time": 30,
+                "price": 16630
+            },
+            {
+                "time": 60,
+                "price": 24120
+            },
+            {
+                "time": 90,
+                "price": 32130
+            },
+            {
+                "time": 120,
+                "price": 40680
+            },
+            {
+                "time": 150,
+                "price": 47250
+            },
+            {
+                "time": 180,
+                "price": 53520
+            }
+        ]
+    },
+    {
+        "grade": 5,
+        "limit": 1151600,
+        "visits": [
+            {
+                "time": 30,
+                "price": 16630
+            },
+            {
+                "time": 60,
+                "price": 24120
+            },
+            {
+                "time": 90,
+                "price": 32130
+            },
+            {
+                "time": 120,
+                "price": 40680
+            },
+            {
+                "time": 150,
+                "price": 47250
+            },
+            {
+                "time": 180,
+                "price": 53520
+            }
+        ]
+    },
+    {
+        "grade": "Cognitive",
+        "limit": 645100,
+        "visits": [
+            {
+                "time": 30,
+                "price": 16630
+            },
+            {
+                "time": 60,
+                "price": 24120
+            },
+            {
+                "time": 90,
+                "price": 32130
+            },
+            {
+                "time": 120,
+                "price": 40680
+            },
+            {
+                "time": 150,
+                "price": 47250
+            },
+            {
+                "time": 180,
+                "price": 53520
+            }
+        ]
+    }
+]

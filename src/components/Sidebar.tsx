@@ -129,6 +129,12 @@ const Icons = {
             <path d="M6 8h12M6 12h8M6 16h4" stroke="currentColor" />
         </svg>
     ),
+    documents: (className: string) => (
+        <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor" />
+            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" />
+        </svg>
+    ),
     settings: (className: string) => (
         <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3" stroke="currentColor" />
@@ -187,36 +193,36 @@ const Icons = {
 // ============================================
 const MENU_GROUPS = [
     {
-        name: '센터 운영',  // Operations
+        name: '방문 요양 관리',  // Operations (Silver)
         icon: Icons.calendar,
         items: [
-            // ✨ [Therapist] Only Schedule & Consultations
+            // ✨ [Therapist] Only Schedule & Care Logs
             // ✨ [Manager] Schedule, Billing, Programs
-            { name: '방문 케어 일정', path: '/app/schedule', icon: Icons.calendar, roles: ['super_admin', 'admin', 'therapist', 'manager', 'staff'] },
-            { name: '수납 관리', path: '/app/billing', icon: Icons.billing, roles: ['super_admin', 'admin', 'manager', 'staff'] },
-            { name: '케어일지', path: '/app/consultations', icon: Icons.consultation, roles: ['super_admin', 'admin', 'therapist'] },
-            { name: '서비스 관리', path: '/app/programs', icon: Icons.program, roles: ['super_admin', 'admin', 'manager', 'staff'] },
+            { name: '방문 일정 관리', path: '/app/schedule', icon: Icons.calendar, roles: ['super_admin', 'admin', 'therapist', 'manager', 'staff'] },
+            { name: '본인부담금 수납', path: '/app/billing', icon: Icons.billing, roles: ['super_admin', 'admin', 'manager', 'staff'] },
+            { name: '급여제공기록지', path: '/app/consultations', icon: Icons.consultation, roles: ['super_admin', 'admin', 'therapist'] }, // Care Logs -> 급여제공기록지
+            { name: '서비스 수가 관리', path: '/app/programs', icon: Icons.program, roles: ['super_admin', 'admin', 'manager', 'staff'] },
         ]
     },
     {
-        name: '리소스 관리',  // Management
+        name: '수급자/인사',  // Human Resources (Silver)
         icon: Icons.members,
         items: [
             // ✨ [Manager] Leads, Children, Parents allowed.
-            // ✨ [Therapist] REMOVED from Leads, Children, Parents (User request: Therapist only Schedule & Logs)
-            { name: '돌봄문의', path: '/app/leads', icon: Icons.leads, roles: ['super_admin', 'admin', 'manager', 'staff'] },
-            { name: '어르신 관리', path: '/app/children', icon: Icons.child, roles: ['super_admin', 'admin', 'manager', 'staff'] },
+            { name: '입소 상담', path: '/app/leads', icon: Icons.leads, roles: ['super_admin', 'admin', 'manager', 'staff'] },
+            { name: '수급자(어르신) 관리', path: '/app/children', icon: Icons.child, roles: ['super_admin', 'admin', 'manager', 'staff'] }, // Children -> Recipients UI
             { name: '보호자 관리', path: '/app/parents', icon: Icons.members, roles: ['super_admin', 'admin', 'manager', 'staff'] },
-            { name: '직원 관리', path: '/app/therapists', icon: Icons.staff, roles: ['super_admin', 'admin'] }, // Manager NO
-            { name: '급여 관리', path: '/app/settlement', icon: Icons.salary, roles: ['super_admin', 'admin'] }, // Manager NO
+            { name: '요양보호사 관리', path: '/app/therapists', icon: Icons.staff, roles: ['super_admin', 'admin'] }, // Therapist -> Care Worker UI
+            { name: '급여 정산', path: '/app/settlement', icon: Icons.salary, roles: ['super_admin', 'admin'] }, // Manager NO
         ]
     },
     {
-        name: '시스템',  // Platform
+        name: '행정 시스템',  // Architecture
         icon: Icons.system,
         items: [
-            { name: '대시보드', path: '/app/dashboard', icon: Icons.dashboard, roles: ['super_admin', 'admin', 'manager'] },
-            { name: '사이트 설정', path: '/app/settings', icon: Icons.settings, roles: ['super_admin'] },
+            { name: '운영 대시보드', path: '/app/dashboard', icon: Icons.dashboard, roles: ['super_admin', 'admin', 'manager'] },
+            { name: '전자 서류', path: '/app/documents', icon: Icons.documents, roles: ['super_admin', 'admin', 'manager', 'staff'] }, // ✨ New
+            { name: '기관 설정', path: '/app/settings', icon: Icons.settings, roles: ['super_admin'] },
             { name: '전체 센터 관리', path: '/master/centers', icon: Icons.globe, roles: ['super_admin'] },
         ]
     }

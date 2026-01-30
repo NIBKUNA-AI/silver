@@ -63,6 +63,7 @@ import Programs from '@/pages/app/Programs';
 import { Billing } from '@/pages/app/Billing';
 import { Settlement } from '@/pages/app/Settlement';
 import { ConsultationList } from '@/pages/app/consultations/ConsultationList';
+import { DocumentList } from '@/pages/app/documents/DocumentList';
 import { SettingsPage } from '@/pages/app/SettingsPage';
 import { CenterList } from '@/pages/app/admin/CenterList';
 import { CenterDetailPage } from '@/pages/app/admin/CenterDetailPage';
@@ -282,6 +283,13 @@ function App() {
             <Route path="consultations" element={
               <ProtectedRoute allowedRoles={['super_admin', 'admin', 'therapist']}>
                 <ConsultationList />
+              </ProtectedRoute>
+            } />
+
+            {/* 전자 서류 */}
+            <Route path="documents" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff']}>
+                <DocumentList />
               </ProtectedRoute>
             } />
 
