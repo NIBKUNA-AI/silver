@@ -703,13 +703,15 @@ export function Dashboard() {
                     >
                         운영 지표
                     </button>
-                    <button
-                        onClick={() => setSlide(1)}
-                        className={cn("px-6 py-3 rounded-2xl font-black transition-all gpu-accelerate", slide === 1 ? "text-white shadow-lg" : "text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800")}
-                        style={slide === 1 ? { backgroundColor: BRAND_COLOR } : undefined}
-                    >
-                        마케팅 지능
-                    </button>
+                    {isSuperAdmin && (
+                        <button
+                            onClick={() => setSlide(1)}
+                            className={cn("px-6 py-3 rounded-2xl font-black transition-all gpu-accelerate", slide === 1 ? "text-white shadow-lg" : "text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800")}
+                            style={slide === 1 ? { backgroundColor: BRAND_COLOR } : undefined}
+                        >
+                            마케팅 지능
+                        </button>
+                    )}
                 </div>
             </div>
 
