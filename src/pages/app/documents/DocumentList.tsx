@@ -77,8 +77,8 @@ export function DocumentList() {
     });
 
     const handleNewDocument = () => {
-        // TODO: Navigate to document editor with blank form
-        alert('새 문서 작성 기능은 추후 구현됩니다.');
+        // Navigate to document editor with default type (contract)
+        navigate('/app/documents/new/contract');
     };
 
     return (

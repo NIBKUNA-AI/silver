@@ -124,9 +124,9 @@ export function AssessmentFormModal({
                         child_id: childId,
                         schedule_id: scheduleId,
                         session_date: finalDate,
-                        content: summary || '상담 진행',
-                        activities: '상담/수업 진행',
-                        child_response: '상담/수업 진행'
+                        content: summary || '방문 요양 서비스 제공',
+                        activities: '신체활동지원, 정서지원',
+                        child_response: '서비스 제공 완료'
                     })
                     .select()
                     .single();
@@ -169,8 +169,8 @@ export function AssessmentFormModal({
                 {/* Header */}
                 <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 shrink-0">
                     <div>
-                        <h2 className="text-2xl font-black text-slate-800 dark:text-white">상담 및 회기 일지 작성</h2>
-                        <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mt-1">{childName} 아동 • 전문 의견 중심 작성</p>
+                        <h2 className="text-2xl font-black text-slate-800 dark:text-white">급여제공기록지 작성</h2>
+                        <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mt-1">{childName} 어르신 • 상태/특이사항 기록</p>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                         <X className="w-6 h-6" />
@@ -183,30 +183,30 @@ export function AssessmentFormModal({
                     <div className="space-y-4">
                         <label className="text-sm font-black text-slate-700 flex items-center gap-2">
                             <MessageCircle className="w-5 h-5 text-indigo-500" />
-                            상담 및 회기 일지 (부모님 공개)
+                            급여제공기록 (보호자 공개)
                         </label>
                         <p className="text-xs text-slate-400 font-bold ml-7 -mt-2">
-                            아이의 오늘 활동 내용과 변화를 자유롭게 서술해 주세요. 부모님 앱의 발달 리포트 하단에 노출됩니다.
+                            오늘 제공한 급여 내용(식사, 목욕, 이동도움 등)과 어르신의 상태 변화를 기록해주세요. 보호자 앱에 노출됩니다.
                         </p>
                         <textarea
                             value={summary}
                             onChange={(e) => setSummary(e.target.value)}
-                            placeholder="오늘 진행된 상담/평가 내용과 회기 기록을 상세히 입력해주세요. 발달 체크리스트는 이제 부모님이 직접 앱에서 체크하시게 됩니다."
+                            placeholder="예: [식사] 점심 식사 전량 섭취하셨습니다. [위생] 목욕 서비스 제공하였으며 특이사항 없습니다. [상태] 기분이 좋아 보이십니다."
                             className="w-full h-80 p-8 rounded-[32px] border border-slate-200 bg-slate-50 text-slate-800 text-sm font-medium focus:border-indigo-300 focus:bg-white outline-none resize-none transition-all placeholder:text-slate-300"
                         />
                     </div>
 
 
-                    {/* ✨ [치료사 전용] 비공개 메모 - 부모에게 안보임 */}
+                    {/* ✨ [요양보호사 전용] 비공개 메모 - 보호자에게 안보임 */}
                     <div className="space-y-4 pt-6 border-t border-slate-100">
                         <div className="flex items-center gap-2 ml-1">
-                            <label className="text-sm font-black text-rose-600 dark:text-rose-400">치료사 전용 내부 메모 (비공개)</label>
-                            <span className="text-[10px] bg-rose-100 dark:bg-rose-900/50 text-rose-500 dark:text-rose-400 px-2 py-0.5 rounded-full font-bold">부모 앱 미노출</span>
+                            <label className="text-sm font-black text-rose-600 dark:text-rose-400">요양보호사/센터 전용 메모 (비공개)</label>
+                            <span className="text-[10px] bg-rose-100 dark:bg-rose-900/50 text-rose-500 dark:text-rose-400 px-2 py-0.5 rounded-full font-bold">보호자 앱 미노출</span>
                         </div>
                         <textarea
                             value={therapistNotes}
                             onChange={(e) => setTherapistNotes(e.target.value)}
-                            placeholder="우리 아이의 특이 행동, 주의사항 등 치료진끼리 공유할 내용을 기록하세요. 부모님께는 공개되지 않습니다."
+                            placeholder="어르신의 특이 행동, 주의사항 등 센터 직원끼리 공유할 내용을 기록하세요. 보호자에게는 공개되지 않습니다."
                             className="w-full h-32 p-5 rounded-[24px] border-2 border-rose-100 dark:border-rose-900/40 bg-rose-50/20 dark:bg-rose-900/10 font-medium text-sm focus:outline-none focus:ring-4 focus:ring-rose-50 dark:focus:ring-rose-500/10 focus:border-rose-200 resize-none text-rose-900 dark:text-rose-100 placeholder:text-rose-300"
                         />
                     </div>

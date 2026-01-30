@@ -64,6 +64,7 @@ import { Billing } from '@/pages/app/Billing';
 import { Settlement } from '@/pages/app/Settlement';
 import { ConsultationList } from '@/pages/app/consultations/ConsultationList';
 import { DocumentList } from '@/pages/app/documents/DocumentList';
+import { DocumentEditor } from '@/pages/app/documents/DocumentEditor';
 import { SettingsPage } from '@/pages/app/SettingsPage';
 import { CenterList } from '@/pages/app/admin/CenterList';
 import { CenterDetailPage } from '@/pages/app/admin/CenterDetailPage';
@@ -286,10 +287,25 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* 전자 서류 */}
+            {/* 전자 서류 - 목록 및 에디터 */}
             <Route path="documents" element={
               <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff']}>
                 <DocumentList />
+              </ProtectedRoute>
+            } />
+            <Route path="documents/new" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff']}>
+                <DocumentEditor />
+              </ProtectedRoute>
+            } />
+            <Route path="documents/new/:type" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff']}>
+                <DocumentEditor />
+              </ProtectedRoute>
+            } />
+            <Route path="documents/:id" element={
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'manager', 'staff']}>
+                <DocumentEditor />
               </ProtectedRoute>
             } />
 
