@@ -106,7 +106,7 @@ export default function SessionNote() {
                         .maybeSingle();
 
                     if (myTherapist) {
-                        effectiveTherapistId = myTherapist.id;
+                        effectiveTherapistId = (myTherapist as any).id;
                         console.log('🩹 Fixed missing therapist_id with current user:', effectiveTherapistId);
                     }
                 }
@@ -200,12 +200,12 @@ export default function SessionNote() {
             </div>
 
             {/* Session Info Card */}
-            <div className="bg-slate-50 p-4 rounded-lg border flex justify-between items-center text-sm">
+            <div className="bg-slate-50 p-4 rounded-lg border flex flex-col md:flex-row justify-between items-start md:items-center text-sm gap-2 md:gap-0">
                 <div>
                     <span className="font-bold text-lg mr-2">{sessionInfo?.children?.name}</span>
                     <span className="text-slate-500">({sessionInfo?.service_type})</span>
                 </div>
-                <div className="text-right">
+                <div className="text-left md:text-right w-full md:w-auto border-t md:border-t-0 pt-2 md:pt-0 mt-1 md:mt-0 border-slate-200">
                     <div className="font-medium">
                         {new Date(sessionInfo?.start_time).toLocaleDateString()}
                     </div>

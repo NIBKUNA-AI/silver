@@ -392,7 +392,17 @@ export function ParentHomePage() {
                             <p className="text-white/70 text-sm font-medium">
                                 {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}
                             </p>
+
+                            {/* ✨ Mobile Only: Consultation Button */}
+                            <button
+                                onClick={() => setIsSurveyOpen(true)}
+                                className="md:hidden mt-4 w-full bg-white text-indigo-700 px-6 py-3.5 rounded-2xl font-black text-sm shadow-lg hover:bg-indigo-50 active:scale-95 transition-all flex items-center justify-center gap-2"
+                            >
+                                <MessageSquare className="w-4 h-4" /> 상담 신청하기
+                            </button>
                         </div>
+
+                        {/* Desktop Button */}
                         <button
                             onClick={() => setIsSurveyOpen(true)}
                             className="hidden md:flex bg-white text-indigo-700 px-6 py-3 rounded-2xl font-black text-sm shadow-lg hover:bg-indigo-50 active:scale-95 transition-all items-center gap-2 ring-2 ring-white/20"

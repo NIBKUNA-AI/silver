@@ -924,6 +924,7 @@ function SaveableInput({ label, initialValue, onSave, saving, placeholder, onCha
                     />
                 </div>
                 <button
+                    type="button"
                     onClick={() => onSave(value)}
                     disabled={!isChanged || saving}
                     className={cn(
@@ -970,6 +971,7 @@ function SaveableTextArea({ label, initialValue, onSave, saving, placeholder, ro
                 />
                 <div className="flex justify-end">
                     <button
+                        type="button"
                         onClick={() => onSave(value)}
                         disabled={!isChanged || saving}
                         className={cn(

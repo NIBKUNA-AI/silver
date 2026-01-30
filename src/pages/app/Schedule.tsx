@@ -298,20 +298,16 @@ export function Schedule() {
                 
                 .cancelled-event { text-decoration: line-through !important; opacity: 0.6 !important; }
                 
-                /* ✨ Mobile Calendar Optimization */
+                /* ✨ Mobile Calendar Optimization - Fit to Screen */
                 .fc-view-harness {
-                    overflow-x: auto; /* Allow grid to scroll horizontally */
-                    -webkit-overflow-scrolling: touch;
+                    min-height: 400px; /* Ensure minimum height */
                 }
                 .fc-scrollgrid {
-                    min-width: 800px; /* Force grid to be wide enough */
-                }
-                .fc-header-toolbar {
-                    flex-wrap: wrap; /* Allow buttons to wrap on small screens */
-                    gap: 0.5rem;
+                    border: none !important;
                 }
                 
-                /* 📱 Mobile Toolbar Optimization */
+                /* 📱 Mobile Specifics */
+                /* 📱 Mobile Specifics */
                 @media (max-width: 640px) {
                     .fc-header-toolbar {
                         flex-direction: column;
@@ -320,7 +316,7 @@ export function Schedule() {
                     }
                     .fc-toolbar-chunk {
                         display: flex;
-                        justify-content: space-between; /* Spread buttons */
+                        justify-content: space-between;
                         width: 100%;
                     }
                     /* Reset Title Chunk to center */
@@ -339,34 +335,46 @@ export function Schedule() {
                         width: 100%; /* Full width groups */
                         display: flex;
                     }
+
+                    /* Restore simple horizontal scroll */
+                    .fc-view-harness {
+                        overflow-x: auto;
+                        -webkit-overflow-scrolling: touch;
+                    }
+                    .fc-scrollgrid {
+                        min-width: 800px; /* Force grid to be wide enough */
+                    }
                 }
             `}</style>
 
-            <div className={cn("h-full flex flex-col relative", isDark && "bg-slate-900")}>
+            <div className={cn("flex flex-col relative", isDark && "bg-slate-900", "min-h-screen md:h-full")}>
                 {/* Header removed and Button relocated to Sidebar for maximum vertical space */}
 
-                <div className="flex-1 flex gap-4 min-h-0 pt-4 pb-4">
-                    {/* 1. Left Sidebar - Fixed Category Filter + Register Button */}
+                <div className="flex-1 flex flex-col md:flex-row gap-4 min-h-0 pt-4 pb-4 md:overflow-hidden">
+                    {/* 1. Sidebar - Responsive (Collapsible on Mobile, Fixed on Desktop) */}
                     <aside className={cn(
-                        "w-56 flex flex-col gap-5 p-5 rounded-[32px] border transition-all relative",
-                        isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100 shadow-xl shadow-slate-200/50"
+                        "flex flex-col gap-5 p-5 rounded-[32px] border transition-all relative shrink-0",
+                        "md:w-56 w-full md:h-auto", // Desktop: Fixed width, Mobile: Full width
+                        isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100 shadow-xl shadow-slate-200/50",
+                        "max-h-[200px] md:max-h-none overflow-y-auto md:overflow-visible" // Mobile: Limit height and scroll
                     )}>
                         {/* New Schedule Button inside Sidebar */}
                         <button
                             onClick={handleNewEventClick}
                             className={cn(
-                                "flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-black text-sm transition-all active:scale-95 shadow-lg hover:-translate-y-0.5",
+                                "flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-black text-sm transition-all active:scale-95 shadow-lg hover:-translate-y-0.5 shrink-0",
                                 isDark ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-900/20" : "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200"
                             )}
                         >
-                            <Plus className="w-5 h-5 stroke-[3]" /> 일정 등록
+                            <Plus className="w-5 h-5 stroke-[3]" /> <span className="md:inline">일정 등록</span>
                         </button>
 
-                        <div className="w-full h-px bg-slate-100 dark:bg-slate-800" />
+                        <div className="hidden md:block w-full h-px bg-slate-100 dark:bg-slate-800 shrink-0" />
+
                         {/* Therapist Selection (Category Filter) */}
                         <div className="flex-1 flex flex-col min-h-0">
-                            <div className="flex items-center justify-between mb-4 px-1">
-                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">치료사 카테고리</h3>
+                            <div className="flex items-center justify-between mb-4 px-1 shrink-0">
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">치료사 필터</h3>
                                 <button
                                     onClick={() => setSelectedTherapistIds(new Set(['all']))}
                                     className="text-[10px] font-bold text-indigo-500 hover:underline"
@@ -375,18 +383,22 @@ export function Schedule() {
                                 </button>
                             </div>
 
-                            <div className="space-y-1.5 overflow-y-auto pr-1 no-scrollbar">
+                            <div className={cn(
+                                "space-y-1.5 overflow-y-auto pr-1 no-scrollbar p-1",
+                                "flex flex-row md:flex-col gap-2 md:gap-0 overflow-x-auto md:overflow-x-hidden" // Mobile: Horizontal Scroll
+                            )}>
                                 <button
                                     onClick={() => setSelectedTherapistIds(new Set(['all']))}
                                     className={cn(
-                                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-sm transition-all",
+                                        "flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-sm transition-all shrink-0 whitespace-nowrap",
+                                        "md:w-full",
                                         selectedTherapistIds.has('all')
                                             ? "bg-slate-900 text-white shadow-md shadow-slate-900/20"
                                             : "hover:bg-slate-50 text-slate-500"
                                     )}
                                 >
                                     <div className={cn("w-2 h-2 rounded-full shrink-0", selectedTherapistIds.has('all') ? "bg-indigo-400" : "bg-slate-300")} />
-                                    <span className="truncate">전체 보기</span>
+                                    <span>전체</span>
                                 </button>
 
                                 {therapists.map(t => {
@@ -406,7 +418,8 @@ export function Schedule() {
                                                 setSelectedTherapistIds(newSet);
                                             }}
                                             className={cn(
-                                                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-sm transition-all text-left",
+                                                "flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-sm transition-all text-left shrink-0 whitespace-nowrap",
+                                                "md:w-full",
                                                 isSelected ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                                             )}
                                         >
@@ -429,10 +442,11 @@ export function Schedule() {
 
                     {/* 2. Main Calendar Content (Canvas Style) */}
                     <div className={cn(
-                        "flex-1 flex flex-col min-w-0 rounded-[40px] border shadow-2xl relative overflow-hidden transition-all",
+                        "flex-1 flex flex-col min-w-0 rounded-[40px] border shadow-2xl relative transition-all",
+                        "md:overflow-hidden", /* FIXED: Removed overflow-hidden logic that trapped mobile scroll */
                         isDark ? "bg-slate-950 border-slate-800" : "bg-white border-slate-50 shadow-slate-200/50"
                     )}>
-                        <div className="flex-1 p-2 flex flex-col">
+                        <div className="flex-1 p-2 flex flex-col md:overflow-hidden"> {/* Allow scroll on mobile */}
                             <FullCalendar
                                 ref={calendarRef}
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}

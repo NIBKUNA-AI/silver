@@ -145,7 +145,7 @@ export function Billing() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className={cn("text-xs font-black uppercase tracking-widest", isDark ? "bg-slate-800 text-slate-400" : "bg-slate-50 text-slate-400")}>
-                            <tr><th className="p-8">아동 정보</th><th className="p-8 text-right">수업료(완료)</th><th className="p-8 text-right">기수납액</th><th className="p-8 text-right">잔액</th><th className="p-8 text-center">관리</th></tr>
+                            <tr><th className="p-4 md:p-8">아동 정보</th><th className="p-4 md:p-8 text-right">수업료(완료)</th><th className="p-4 md:p-8 text-right">기수납액</th><th className="p-4 md:p-8 text-right">잔액</th><th className="p-4 md:p-8 text-center">관리</th></tr>
                         </thead>
                         <tbody className={cn("divide-y", isDark ? "divide-slate-800" : "divide-slate-100")}>
                             {loading ? (
@@ -157,17 +157,17 @@ export function Billing() {
                                     const balance = child.completed - child.paid;
                                     return (
                                         <tr key={child.id} className={cn("transition-all cursor-pointer group", isDark ? "hover:bg-slate-800/50" : "hover:bg-blue-50/20")} onClick={() => { setSelectedChild(child); setIsModalOpen(true); }}>
-                                            <td className={cn("p-8 font-bold text-xl flex items-center gap-4", isDark ? "text-white" : "text-slate-900")}>
-                                                <div className={cn("w-12 h-12 rounded-full flex items-center justify-center transition-colors", isDark ? "bg-slate-800 text-slate-500 group-hover:bg-indigo-900 group-hover:text-indigo-400" : "bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-500")}><User /></div>
+                                            <td className={cn("p-4 md:p-8 font-bold text-lg md:text-xl flex items-center gap-4", isDark ? "text-white" : "text-slate-900")}>
+                                                <div className={cn("w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-colors shrink-0", isDark ? "bg-slate-800 text-slate-500 group-hover:bg-indigo-900 group-hover:text-indigo-400" : "bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-500")}><User /></div>
                                                 {child.name}
                                             </td>
-                                            <td className={cn("p-8 text-right font-black", isDark ? "text-slate-200" : "text-slate-700")}>{child.completed.toLocaleString()}원</td>
-                                            <td className={cn("p-8 text-right font-bold", isDark ? "text-slate-500" : "text-slate-400")}>{child.paid.toLocaleString()}원</td>
-                                            <td className={cn("p-8 text-right font-black text-2xl", balance > 0 ? "text-rose-500" : balance < 0 ? "text-indigo-500" : "text-emerald-500")}>
+                                            <td className={cn("p-4 md:p-8 text-right font-black", isDark ? "text-slate-200" : "text-slate-700")}>{child.completed.toLocaleString()}원</td>
+                                            <td className={cn("p-4 md:p-8 text-right font-bold", isDark ? "text-slate-500" : "text-slate-400")}>{child.paid.toLocaleString()}원</td>
+                                            <td className={cn("p-4 md:p-8 text-right font-black text-lg md:text-2xl", balance > 0 ? "text-rose-500" : balance < 0 ? "text-indigo-500" : "text-emerald-500")}>
                                                 {balance === 0 ? "0원" : balance > 0 ? `${balance.toLocaleString()}원` : `+${Math.abs(balance).toLocaleString()}원(과납)`}
                                             </td>
-                                            <td className="p-8 text-center">
-                                                <button className={cn("px-8 py-3 rounded-2xl font-black transition-all shadow-lg active:scale-95", isDark ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-slate-900 text-white hover:bg-blue-600")}>상세 수납</button>
+                                            <td className="p-4 md:p-8 text-center">
+                                                <button className={cn("px-6 py-2 md:px-8 md:py-3 rounded-2xl font-black transition-all shadow-lg active:scale-95 text-xs md:text-sm whitespace-nowrap", isDark ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-slate-900 text-white hover:bg-blue-600")}>상세 수납</button>
                                             </td>
                                         </tr>
                                     )
@@ -239,41 +239,41 @@ function PaymentModal({ childData, month, onClose, onSuccess, isDark }) {
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
             {/* ✨ Fix: max-h-[90vh] + overflow-y-auto + proper padding */}
             <div className={cn(
-                "rounded-[50px] w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200",
+                "rounded-[32px] md:rounded-[50px] w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200",
                 isDark ? "bg-slate-900" : "bg-white"
             )}>
                 <div className={cn(
-                    "p-10 border-b flex justify-between items-center shrink-0",
+                    "p-6 md:p-10 border-b flex justify-between items-center shrink-0",
                     isDark ? "bg-slate-800/50 border-slate-700" : "bg-slate-50/50 border-slate-200"
                 )}>
-                    <h2 className={cn("text-4xl font-black", isDark ? "text-white" : "text-slate-800")}>{childData.name} 수납 상세</h2>
-                    <button onClick={onClose} className={cn("p-2 rounded-full transition-all", isDark ? "hover:bg-slate-700 text-slate-400" : "hover:bg-slate-100")}><X size={32} /></button>
+                    <h2 className={cn("text-2xl md:text-4xl font-black truncate max-w-[80%]", isDark ? "text-white" : "text-slate-800")}>{childData.name} 수납 상세</h2>
+                    <button onClick={onClose} className={cn("p-2 rounded-full transition-all", isDark ? "hover:bg-slate-700 text-slate-400" : "hover:bg-slate-100")}><X size={24} className="md:w-8 md:h-8" /></button>
                 </div>
-                <div className="flex-1 flex overflow-hidden min-h-0">
+                <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
                     <div className={cn(
-                        "w-1/2 p-10 border-r overflow-y-auto",
+                        "w-full md:w-1/2 p-6 md:p-10 border-b md:border-b-0 md:border-r overflow-y-auto custom-scrollbar",
                         isDark ? "bg-slate-900/50 border-slate-700" : "bg-slate-50/20 border-slate-200"
                     )}>
                         <div className="space-y-4">
                             {localSessions.map(s => (
                                 <div key={s.id} onClick={() => !s.isCanceled && setSelectedSessions(prev => prev.includes(s.id) ? prev.filter(i => i !== s.id) : [...prev, s.id])}
-                                    className={cn("p-8 rounded-[35px] border-2 transition-all cursor-pointer",
-                                        s.isCanceled ? "bg-slate-100 opacity-50" : selectedSessions.includes(s.id) ? "border-blue-500 bg-white shadow-xl ring-8 ring-blue-50" : "border-slate-100 bg-white")}>
-                                    <div className="flex justify-between items-center">
-                                        <div className="flex gap-5 items-center">
-                                            {!s.isCanceled && (selectedSessions.includes(s.id) ? <CheckSquare className="text-blue-600 w-7 h-7" /> : <Square className="text-slate-200 w-7 h-7" />)}
-                                            <div><p className="text-sm font-black text-slate-400">{s.date}</p><p className="text-2xl font-black text-slate-800">{s.programs?.name}</p></div>
+                                    className={cn("p-6 md:p-8 rounded-[24px] md:rounded-[35px] border-2 transition-all cursor-pointer",
+                                        s.isCanceled ? "bg-slate-100 opacity-50" : selectedSessions.includes(s.id) ? "border-blue-500 bg-white shadow-xl ring-4 md:ring-8 ring-blue-50" : "border-slate-100 bg-white")}>
+                                    <div className="flex justify-between items-center gap-2">
+                                        <div className="flex gap-3 md:gap-5 items-center flex-1 min-w-0">
+                                            {!s.isCanceled && (selectedSessions.includes(s.id) ? <CheckSquare className="text-blue-600 w-6 h-6 md:w-7 md:h-7 shrink-0" /> : <Square className="text-slate-200 w-6 h-6 md:w-7 md:h-7 shrink-0" />)}
+                                            <div className="truncate"><p className="text-xs md:text-sm font-black text-slate-400">{s.date}</p><p className="text-lg md:text-2xl font-black text-slate-800 truncate">{s.programs?.name}</p></div>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="text-right shrink-0">
                                             <select
                                                 value={s.status}
                                                 onClick={e => e.stopPropagation()}
                                                 onChange={(e) => handleStatusChange(s.id, e.target.value)}
-                                                className="text-xs font-bold bg-slate-100 px-3 py-1.5 rounded-xl border-none outline-none mb-2 cursor-pointer"
+                                                className="text-[10px] md:text-xs font-bold bg-slate-100 px-2 py-1 md:px-3 md:py-1.5 rounded-xl border-none outline-none mb-2 cursor-pointer"
                                             >
                                                 <option value="scheduled">예정</option><option value="completed">완료</option><option value="canceled">취소</option>
                                             </select>
-                                            <p className="text-xl font-black">{s.price.toLocaleString()}원</p>
+                                            <p className="text-lg md:text-xl font-black">{s.price.toLocaleString()}원</p>
                                         </div>
                                     </div>
                                 </div>
@@ -282,53 +282,53 @@ function PaymentModal({ childData, month, onClose, onSuccess, isDark }) {
                     </div>
                     {/* ✨ Fix: overflow-y-auto + pb-8 for button visibility */}
                     <div className={cn(
-                        "w-1/2 p-12 space-y-8 flex flex-col overflow-y-auto",
+                        "w-full md:w-1/2 p-6 md:p-12 space-y-6 md:space-y-8 flex flex-col overflow-y-auto custom-scrollbar",
                         isDark ? "bg-slate-800" : "bg-white"
                     )}>
                         <div className={cn(
-                            "p-10 rounded-[45px] border flex justify-between items-center shrink-0",
+                            "p-6 md:p-10 rounded-[32px] md:rounded-[45px] border flex justify-between items-center shrink-0",
                             isDark ? "bg-indigo-900/30 border-indigo-800" : "bg-indigo-50/50 border-indigo-100"
                         )}>
                             <div>
-                                <p className={cn("text-xs font-black mb-2 uppercase tracking-widest", isDark ? "text-indigo-400" : "text-indigo-400")}>Available Credit</p>
-                                <p className={cn("text-5xl font-black tracking-tighter", isDark ? "text-indigo-300" : "text-indigo-600")}>{childData.credit.toLocaleString()}원</p>
+                                <p className={cn("text-[10px] md:text-xs font-black mb-2 uppercase tracking-widest", isDark ? "text-indigo-400" : "text-indigo-400")}>Available Credit</p>
+                                <p className={cn("text-3xl md:text-5xl font-black tracking-tighter", isDark ? "text-indigo-300" : "text-indigo-600")}>{childData.credit.toLocaleString()}원</p>
                             </div>
-                            <button onClick={() => setInputs({ ...inputs, creditUsed: childData.credit })} className="bg-indigo-600 text-white px-8 py-4 rounded-[22px] font-black text-sm shadow-xl active:scale-95 transition-all">전액 사용</button>
+                            <button onClick={() => setInputs({ ...inputs, creditUsed: childData.credit })} className="bg-indigo-600 text-white px-5 py-3 md:px-8 md:py-4 rounded-[18px] md:rounded-[22px] font-black text-xs md:text-sm shadow-xl active:scale-95 transition-all whitespace-nowrap">전액 사용</button>
                         </div>
-                        <div className="grid grid-cols-2 gap-8">
+                        <div className="grid grid-cols-2 gap-4 md:gap-8">
                             <div className="space-y-2">
                                 <label className={cn("text-xs font-black ml-2", isDark ? "text-slate-500" : "text-slate-400")}>카드 결제</label>
                                 <input type="number" placeholder="0" className={cn(
-                                    "w-full p-6 rounded-[28px] text-right font-black text-2xl outline-none focus:ring-8 transition-all",
+                                    "w-full p-4 md:p-6 rounded-[24px] md:rounded-[28px] text-right font-black text-xl md:text-2xl outline-none focus:ring-4 md:focus:ring-8 transition-all",
                                     isDark ? "bg-slate-700 text-white focus:ring-indigo-900" : "bg-slate-50 focus:ring-blue-50"
                                 )} onChange={e => setInputs({ ...inputs, card: Number(e.target.value) })} />
                             </div>
                             <div className="space-y-2">
                                 <label className={cn("text-xs font-black ml-2", isDark ? "text-slate-500" : "text-slate-400")}>현금/이체</label>
                                 <input type="number" placeholder="0" className={cn(
-                                    "w-full p-6 rounded-[28px] text-right font-black text-2xl outline-none focus:ring-8 transition-all",
+                                    "w-full p-4 md:p-6 rounded-[24px] md:rounded-[28px] text-right font-black text-xl md:text-2xl outline-none focus:ring-4 md:focus:ring-8 transition-all",
                                     isDark ? "bg-slate-700 text-white focus:ring-indigo-900" : "bg-slate-50 focus:ring-blue-50"
                                 )} onChange={e => setInputs({ ...inputs, cash: Number(e.target.value) })} />
                             </div>
                         </div>
                         <div className={cn(
-                            "mt-auto pt-8 border-t-4 border-dashed space-y-6 pb-8",
+                            "mt-auto pt-8 border-t-4 border-dashed space-y-4 md:space-y-6 pb-8",
                             isDark ? "border-slate-700" : "border-slate-50"
                         )}>
-                            <div className="flex justify-between font-bold text-slate-400 text-lg px-4"><span>수업료 합계</span><span>{totalFee.toLocaleString()}원</span></div>
-                            <div className="flex justify-between font-bold text-blue-500 text-lg px-4"><span>기수납액(이번달)</span><span>-{alreadyPaid.toLocaleString()}원</span></div>
-                            <div className={cn("flex justify-between font-black text-5xl pt-6 px-4", isDark ? "text-white" : "text-slate-900")}><span>최종 결제</span><span>{Math.max(0, finalBalance).toLocaleString()}원</span></div>
-                            <div className="flex gap-4 mt-8">
+                            <div className="flex justify-between font-bold text-slate-400 text-base md:text-lg px-2 md:px-4"><span>수업료 합계</span><span>{totalFee.toLocaleString()}원</span></div>
+                            <div className="flex justify-between font-bold text-blue-500 text-base md:text-lg px-2 md:px-4"><span>기수납액(이번달)</span><span>-{alreadyPaid.toLocaleString()}원</span></div>
+                            <div className={cn("flex justify-between font-black text-3xl md:text-5xl pt-4 md:pt-6 px-2 md:px-4", isDark ? "text-white" : "text-slate-900")}><span>최종 결제</span><span>{Math.max(0, finalBalance).toLocaleString()}원</span></div>
+                            <div className="flex gap-3 md:gap-4 mt-6 md:mt-8">
                                 <button onClick={handleSave} disabled={loading} className={cn(
-                                    "flex-1 py-8 rounded-[35px] font-black text-2xl shadow-2xl active:scale-[0.97] transition-all flex justify-center items-center gap-4",
+                                    "flex-1 py-6 md:py-8 rounded-[28px] md:rounded-[35px] font-black text-lg md:text-2xl shadow-2xl active:scale-[0.97] transition-all flex justify-center items-center gap-4",
                                     isDark ? "bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-900/50" : "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
                                 )}>
                                     {loading ? <Loader2 className="animate-spin" /> : "수납 완료"}
                                 </button>
                                 <button onClick={handleManualAdjustment} className={cn(
-                                    "p-8 rounded-[35px] transition-all",
+                                    "p-6 md:p-8 rounded-[28px] md:rounded-[35px] transition-all",
                                     isDark ? "bg-slate-700 text-slate-400 hover:bg-rose-900 hover:text-rose-400" : "bg-slate-100 text-slate-400 hover:bg-rose-50 hover:text-rose-500"
-                                )}><Settings2 size={32} /></button>
+                                )}><Settings2 size={24} className="md:w-8 md:h-8" /></button>
                             </div>
                         </div>
                     </div>

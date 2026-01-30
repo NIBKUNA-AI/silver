@@ -55,7 +55,7 @@ export function Login() {
     const { center } = useCenter(); // ✨ Get Center Context
     const { branding } = useCenterBranding(); // ✨ Get Unified Branding
     const isDark = theme === 'dark';
-    const centerName = branding.name || getSetting('center_name') || 'Zarada';
+    const centerName = branding?.name || getSetting('center_name') || 'Zarada';
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

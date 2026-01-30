@@ -214,7 +214,7 @@ export function ParentStatsPage() {
                             disabled={saving}
                             className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-2xl font-black text-xs shadow-lg shadow-indigo-100 transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50"
                         >
-                            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '💾 저장하여 기록 남기기'}
+                            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span>💾 <span className="hidden md:inline">저장하여 기록 남기기</span><span className="md:hidden">저장</span></span>}
                         </button>
                     )}
                 </div>

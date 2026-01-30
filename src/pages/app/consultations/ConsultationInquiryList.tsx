@@ -108,13 +108,13 @@ export default function ConsultationInquiryList() {
     if (loading) return <div className="p-20 text-center font-black text-slate-300 dark:text-slate-500 animate-pulse">상담 정보를 동기화하고 있습니다...</div>;
 
     return (
-        <div className="p-8 max-w-6xl mx-auto space-y-8">
-            <header className="flex justify-between items-center bg-white dark:bg-slate-800 p-8 rounded-[40px] shadow-sm border border-slate-100 dark:border-slate-700">
+        <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white dark:bg-slate-800 p-6 md:p-8 rounded-[32px] md:rounded-[40px] shadow-sm border border-slate-100 dark:border-slate-700 gap-4">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">상담 문의 센터</h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-bold mt-2">비회원 문의부터 상담 기록까지 한 화면에서 관리하세요.</p>
+                    <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">상담 문의 센터</h1>
+                    <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 font-bold mt-2">비회원 문의부터 상담 기록까지 한 화면에서 관리하세요.</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full md:w-auto">
                     {/* ✨ [Export] Excel Download Button */}
                     <ExcelExportButton
                         data={inquiries}
@@ -133,18 +133,18 @@ export default function ConsultationInquiryList() {
                             created_at: '접수일시'
                         }}
                     />
-                    <button onClick={fetchData} className="p-4 bg-indigo-600 hover:bg-indigo-700 rounded-2xl transition-all shadow-lg shadow-indigo-100 group">
+                    <button onClick={fetchData} className="flex-1 md:flex-none justify-center p-4 bg-indigo-600 hover:bg-indigo-700 rounded-2xl transition-all shadow-lg shadow-indigo-100 group">
                         <RefreshCcw className="w-5 h-5 text-white group-hover:rotate-180 transition-all duration-500" />
                     </button>
                 </div>
             </header>
 
             {/* ✨ Tab Navigation */}
-            <div className="flex gap-4 border-b border-slate-200 dark:border-slate-700 pb-1">
+            <div className="flex gap-4 border-b border-slate-200 dark:border-slate-700 pb-1 overflow-x-auto no-scrollbar">
                 <button
                     onClick={() => setViewMode('pending')}
                     className={cn(
-                        "pb-4 px-4 text-base font-bold transition-all relative",
+                        "pb-4 px-4 text-sm md:text-base font-bold transition-all relative whitespace-nowrap",
                         viewMode === 'pending'
                             ? "text-indigo-600 dark:text-indigo-400"
                             : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
@@ -156,7 +156,7 @@ export default function ConsultationInquiryList() {
                 <button
                     onClick={() => setViewMode('archived')}
                     className={cn(
-                        "pb-4 px-4 text-base font-bold transition-all relative",
+                        "pb-4 px-4 text-sm md:text-base font-bold transition-all relative whitespace-nowrap",
                         viewMode === 'archived'
                             ? "text-slate-900 dark:text-white"
                             : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
@@ -167,7 +167,7 @@ export default function ConsultationInquiryList() {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-8">
+            <div className="grid grid-cols-1 gap-6 md:gap-8">
                 {inquiries
                     .filter(inq => {
                         if (viewMode === 'pending') return inq.status === 'pending' || inq.status === 'new' || !inq.status;
@@ -183,7 +183,7 @@ export default function ConsultationInquiryList() {
                         return inq.status === 'completed' || inq.status === 'canceled';
                     })
                     .map((inq) => (
-                        <div key={inq.id} className="bg-white dark:bg-slate-800 p-10 rounded-[48px] border border-slate-100 dark:border-slate-700 shadow-sm relative overflow-hidden">
+                        <div key={inq.id} className="bg-white dark:bg-slate-800 p-6 md:p-10 rounded-[32px] md:rounded-[48px] border border-slate-100 dark:border-slate-700 shadow-sm relative overflow-hidden">
                             <div className="flex justify-between items-start mb-6">
                                 <div className="flex items-center gap-3">
                                     {inq.child_id ? (
@@ -196,11 +196,11 @@ export default function ConsultationInquiryList() {
                                 <button onClick={() => deleteInquiry(inq.id)} className="p-3 text-slate-200 dark:text-slate-500 hover:text-rose-500 transition-all"><Trash2 className="w-5 h-5" /></button>
                             </div>
 
-                            <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-8">{inq.child_name} 아동 <span className="text-slate-300 dark:text-slate-500 text-lg">({inq.child_gender})</span></h3>
+                            <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-6 md:mb-8">{inq.child_name} 아동 <span className="text-slate-300 dark:text-slate-500 text-lg">({inq.child_gender})</span></h3>
 
                             {/* 부모님 작성 내용 */}
-                            <div className="bg-slate-50 dark:bg-slate-700/50 p-8 rounded-[32px] mb-6 border border-slate-100 dark:border-slate-600">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-6 pb-6 border-b border-slate-200/50 dark:border-slate-600">
+                            <div className="bg-slate-50 dark:bg-slate-700/50 p-5 md:p-8 rounded-[24px] md:rounded-[32px] mb-6 border border-slate-100 dark:border-slate-600">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 text-sm mb-6 pb-6 border-b border-slate-200/50 dark:border-slate-600">
                                     <p className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-3"><Phone className="w-5 h-5 text-indigo-400" /> {inq.guardian_phone} ({inq.guardian_name})</p>
                                     <p className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-3"><Clock className="w-5 h-5 text-indigo-400" /> {inq.preferred_consult_schedule}</p>
                                 </div>
@@ -211,7 +211,7 @@ export default function ConsultationInquiryList() {
                             </div>
 
                             {/* [추가] 상담사 메모란 */}
-                            <div className="mb-8 p-8 bg-indigo-50/30 dark:bg-indigo-900/20 rounded-[32px] border border-indigo-100/50 dark:border-indigo-800/50 space-y-4">
+                            <div className="mb-8 p-5 md:p-8 bg-indigo-50/30 dark:bg-indigo-900/20 rounded-[24px] md:rounded-[32px] border border-indigo-100/50 dark:border-indigo-800/50 space-y-4">
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
                                         <StickyNote className="w-4 h-4" />
@@ -233,7 +233,7 @@ export default function ConsultationInquiryList() {
                             </div>
 
                             {/* 상태 변경 버튼 */}
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <button onClick={() => updateStatus(inq.id, 'pending')} className={cn("py-4 rounded-2xl font-black text-[11px] flex items-center justify-center gap-2", inq.status === 'pending' ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-indigo-900/30" : "bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600 text-slate-400")}>
                                     <Hourglass className="w-4 h-4" /> 상담대기
                                 </button>
@@ -247,6 +247,6 @@ export default function ConsultationInquiryList() {
                         </div>
                     ))}
             </div>
-        </div >
+        </div>
     );
 }
