@@ -274,6 +274,15 @@ export function Settlement() {
 
                 {/* 직원 목록 */}
                 <div className="grid grid-cols-1 gap-4">
+                    {/* Debug Info (Only show if empty or for admin) */}
+                    {settlementList.length === 0 && (
+                        <div className="p-4 bg-yellow-50 text-yellow-800 text-xs rounded-lg mb-4">
+                            ⚠️ 목록이 비어 있습니다. <br />
+                            현재 센터 ID: {centerId} <br />
+                            (데이터베이스 조회 결과가 없거나, 조건에 맞는 직원이 없습니다.)
+                        </div>
+                    )}
+
                     {settlementList.map((t) => (
                         <div key={t.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all">
                             {editingId === t.id ? (
