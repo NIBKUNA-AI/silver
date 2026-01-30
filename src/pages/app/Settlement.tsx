@@ -96,15 +96,15 @@ export function Settlement() {
             let staffData = null;
 
             const { data: rpcData, error: rpcError } = await supabase
-                .rpc('get_settlement_targets', { p_center_id: centerId });
+                .rpc('get_payroll_staff_v4', { p_center_id: centerId });
 
             if (!rpcError && rpcData) {
-                console.log("⚠️ Using RPC Data for Settlement Visibility");
+                console.log("⚠️ Using RPC Data (V4) for Settlement Visibility");
                 staffData = rpcData;
                 setLastError(null); // Clear error if success
             } else {
-                console.warn("RPC Failed, falling back to standard select. (Please run database/fix_visibility.sql)", rpcError);
-                if (rpcError) setLastError({ type: 'RPC Error', ...rpcError });
+                console.warn("RPC V4 Failed. Please run database/fix_visibility_v4.sql", rpcError);
+                if (rpcError) setLastError({ type: 'RPC V4 Error', ...rpcError });
                 // Fallback
                 const { data: selectData } = await supabase
                     .from('therapists')
