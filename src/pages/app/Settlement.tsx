@@ -26,6 +26,7 @@ export function Settlement() {
     const centerId = center?.id;
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('therapist');
+    const [lastError, setLastError] = useState<any>(null); // ✨ Error State
 
     const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
     const [settlementList, setSettlementList] = useState<any[]>([]);
@@ -100,8 +101,10 @@ export function Settlement() {
             if (!rpcError && rpcData) {
                 console.log("⚠️ Using RPC Data for Settlement Visibility");
                 staffData = rpcData;
+                setLastError(null); // Clear error if success
             } else {
                 console.warn("RPC Failed, falling back to standard select. (Please run database/fix_visibility.sql)", rpcError);
+                if (rpcError) setLastError({ type: 'RPC Error', ...rpcError });
                 // Fallback
                 const { data: selectData } = await supabase
                     .from('therapists')
@@ -233,6 +236,7 @@ export function Settlement() {
 
         } catch (error) {
             console.error('Error fetching settlements:', error);
+            setLastError(error);
         } finally {
             setLoading(false);
         }
@@ -289,10 +293,17 @@ export function Settlement() {
                 <div className="grid grid-cols-1 gap-4">
                     {/* Debug Info (Only show if empty or for admin) */}
                     {settlementList.length === 0 && (
-                        <div className="p-4 bg-yellow-50 text-yellow-800 text-xs rounded-lg mb-4">
-                            ⚠️ 목록이 비어 있습니다. <br />
-                            현재 센터 ID: {centerId} <br />
-                            (데이터베이스 조회 결과가 없거나, 조건에 맞는 직원이 없습니다.)
+                        <div className="p-4 bg-yellow-50 text-yellow-800 text-xs rounded-lg mb-4 space-y-2">
+                            <h3 className="font-bold text-sm">⚠️ 목록이 비어 있습니다.</h3>
+                            <div>현재 센터 ID: {centerId}</div>
+
+                            {/* Error Details */}
+                            <div className="bg-white p-2 rounded border border-yellow-200 font-mono overflow-auto max-h-40">
+                                [상태 진단]<br />
+                                • RPC 호출 에러: {lastError ? JSON.stringify(lastError) : '없음 (성공했으나 데이터가 0건입니다)'}<br />
+                                • DB 연결: {supabase ? '정상' : '실패'}
+                            </div>
+                            <div>* 팁: '새로고침(F5)'을 해보세요. V3 패치가 적용되었다면 정상 표시됩니다.</div>
                         </div>
                     )}
 
